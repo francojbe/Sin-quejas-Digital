@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { CartaNaipe } from "@/components/ui/CartaNaipe";
 import { GameStatus } from "./GameStatus";
-import { PlayerCard, Card as CardType } from "@/types";
+import { PlayerCard, Card as CardType, Profile } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History } from "lucide-react";
 import Link from "next/link";
