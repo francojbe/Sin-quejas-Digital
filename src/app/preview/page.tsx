@@ -96,6 +96,7 @@ export default function PreviewPage() {
             day={3} 
             totalDays={15} 
             partnerName="Pareja" 
+            userName="Usuario"
             activitySummary={displayedCard ? (isAccepted ? `ACEPTADA: ${displayedCard.title}` : `REACCIONA A: ${displayedCard.title}`) : `Esperando jugada...`} 
           />
         </div>
