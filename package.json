@@ -1,6 +1,8 @@
 {
-  "name": "sin-quejas",
-  "version": "0.1.0",
+  "name": "sin-quejas-digital",
+  "version": "1.0.4",
+  "description": "Una experiencia digital para fortalecer vínculos de pareja.",
+  "author": "Franco JBE",
   "private": true,
   "scripts": {
     "dev": "next dev",
