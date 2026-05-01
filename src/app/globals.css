@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+:root {
+  --background: #050505;
+  --foreground: #f0f0f0;
+  
+  /* Rarity Colors */
+  --rarity-common: #00ffd5;
+  --rarity-rare: #0084ff;
+  --rarity-epic: #bf00ff;
+  --rarity-legendary: #ffaa00;
+  --rarity-special: #ff0044;
+  
+  /* Card Effects */
+  --card-glass: rgba(255, 255, 255, 0.03);
+  --card-border: rgba(255, 255, 255, 0.1);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-common: var(--rarity-common);
+  --color-rare: var(--rarity-rare);
+  --color-epic: var(--rarity-epic);
+  --color-legendary: var(--rarity-legendary);
+  --color-special: var(--rarity-special);
+  
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  --animate-shine: shine 3s infinite;
+  
+  @keyframes shine {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 50% -20%, rgba(0, 255, 213, 0.05), transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(191, 0, 255, 0.05), transparent 50%);
+}
+
+/* 
+ * Desktop Scaling (Simulate 90% Browser Zoom)
+ * We scale the root font-size to 90% (14.4px).
+ * Since Tailwind uses rem for almost everything, the whole UI will scale proportionally.
+ */
+@media (min-width: 1024px) {
+  html {
+    font-size: 14.4px;
+  }
+}
+
+
+.glass {
+  background: var(--card-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+}
+
+.card-shine {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  background-size: 200% 100%;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "title": "Tengo Sed",
+    "description": "Tu pareja debe traerte una bebida inmediatamente.",
+    "rarity": "common",
+    "category": "COMÚN",
+    "icon": "Beer"
+  },
+  {
+    "id": 2,
+    "title": "Control Remoto",
+    "description": "Tienes el control total de la TV por las próximas 2 horas.",
+    "rarity": "common",
+    "category": "COMÚN",
+    "icon": "Tv"
+  },
+  {
+    "id": 3,
+    "title": "Chef por una Noche",
+    "description": "Tu pareja debe cocinar la cena de hoy.",
+    "rarity": "rare",
+    "category": "RARA",
+    "icon": "Utensils"
+  },
+  {
+    "id": 4,
+    "title": "Masaje Pro",
+    "description": "Recibes un masaje de 15 minutos en la zona que elijas.",
+    "rarity": "rare",
+    "category": "RARA",
+    "icon": "Hand"
+  },
+  {
+    "id": 5,
+    "title": "Cita Sorpresa",
+    "description": "Tu pareja tiene 48h para planear una cita especial.",
+    "rarity": "epic",
+    "category": "ÉPICA",
+    "icon": "Sparkles"
+  },
+  {
+    "id": 6,
+    "title": "Intercambio de Plato",
+    "description": "Puedes cambiar tu plato por el de tu pareja en cualquier momento.",
+    "rarity": "epic",
+    "category": "ÉPICA",
+    "icon": "Repeat"
+  },
+  {
+    "id": 7,
+    "title": "Día Sin Quejas",
+    "description": "24 horas de absoluto silencio y amabilidad. ¡Cúmplelo!",
+    "rarity": "legendary",
+    "category": "LEGENDARIA",
+    "icon": "Heart"
+  },
+  {
+    "id": 8,
+    "title": "Deseo Libre",
+    "description": "Pide un deseo razonable y tu pareja debe cumplirlo.",
+    "rarity": "legendary",
+    "category": "LEGENDARIA",
+    "icon": "Zap"
+  },
+  {
+    "id": 9,
+    "title": "Escudo Sagrado",
+    "description": "Bloquea el efecto de una carta recibida.",
+    "rarity": "special",
+    "category": "ESPECIAL",
+    "icon": "Shield"
+  },
+  {
+    "id": 10,
+    "title": "Espejo Místico",
+    "description": "Devuelve el efecto de la carta recibida a quien la lanzó.",
+    "rarity": "special",
+    "category": "ESPECIAL",
+    "icon": "RotateCcw"
+  }
+]
