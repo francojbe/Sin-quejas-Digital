@@ -322,7 +322,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         const partner = partnerProfiles.find(p => p.id !== user?.id);
         if (partner) {
           setPartnerName(partner.display_name);
-          setPartnerAvatar(partner.avatar_url);
+          setPartnerAvatar(partner.avatar_url ?? null);
           setPartnerId(partner.id);
         }
       } else if (partnerError) {
@@ -441,7 +441,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         // Si es el perfil del compañero, actualizamos su nombre y avatar
         if (updatedProfile.id !== userId) {
           setPartnerName(updatedProfile.display_name);
-          setPartnerAvatar(updatedProfile.avatar_url);
+          setPartnerAvatar(updatedProfile.avatar_url ?? null);
         } else {
           // Si es nuestro propio perfil, disparamos el callback de actualización
           onProfileUpdate?.(); 
