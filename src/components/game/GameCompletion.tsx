@@ -2,7 +2,58 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Heart, Calendar, Star, ArrowLeft, RefreshCw } from "lucide-react";
-import { PlayerCard, Card as CardType } from "@/types";
+import { useEffect, useState } from "react";
+
+interface HeartParticle {
+  id: number;
+  x: number;
+  delay: number;
+  duration: number;
+  size: number;
+}
+
+const HeartRain = () => {
+  const [hearts, setHearts] = useState<HeartParticle[]>([]);
+
+  useEffect(() => {
+    const newHearts = Array.from({ length: 30 }).map((_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      delay: Math.random() * 5,
+      duration: 5 + Math.random() * 5,
+      size: 10 + Math.random() * 20,
+    }));
+    setHearts(newHearts);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-[201]">
+      {hearts.map((heart) => (
+        <motion.div
+          key={heart.id}
+          initial={{ y: -50, x: `${heart.x}vw`, opacity: 0 }}
+          animate={{ 
+            y: "110vh",
+            opacity: [0, 1, 1, 0],
+            rotate: [0, 45, -45, 0]
+          }}
+          transition={{ 
+            duration: heart.duration,
+            repeat: Infinity,
+            delay: heart.delay,
+            ease: "linear"
+          }}
+          className="absolute"
+        >
+          <Heart 
+            size={heart.size} 
+            className="text-pink-500 fill-pink-500/30 blur-[1px] drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]" 
+          />
+        </motion.div>
+      ))}
+    </div>
+  );
+};
 
 interface GameCompletionProps {
   day: number;
@@ -27,8 +78,10 @@ export function GameCompletion({
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 overflow-y-auto"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 overflow-y-auto"
     >
+      <HeartRain />
+
       {/* Background Glows */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-epic/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-pink-500/10 rounded-full blur-[100px] pointer-events-none" />
@@ -55,10 +108,10 @@ export function GameCompletion({
           className="space-y-4 mb-10"
         >
           <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter italic">
-            ¡Vínculo <span className="text-transparent bg-clip-text bg-gradient-to-r from-epic to-pink-500">Fortalecido</span>!
+            ¡Desafío <span className="text-transparent bg-clip-text bg-gradient-to-r from-epic to-pink-500">Completado</span>!
           </h1>
-          <p className="text-white/60 font-bold text-lg leading-relaxed">
-            Habéis completado vuestra aventura. {partnerName} y tú habéis demostrado que vuestra comunicación es de hierro.
+          <p className="text-white/70 font-bold text-lg leading-tight">
+            ¡Lo lograron! Han completado su aventura juntos. {partnerName} y tú tienen una conexión increíble.
           </p>
         </motion.div>
 
@@ -83,7 +136,7 @@ export function GameCompletion({
           >
             <Star className="text-yellow-400 mb-2 mx-auto" size={24} />
             <div className="text-2xl font-black text-white">{achievementsCount}</div>
-            <div className="text-[10px] text-white/40 uppercase font-black tracking-widest">Logros Obtenidos</div>
+            <div className="text-[10px] text-white/40 uppercase font-black tracking-widest">Logros Ganados</div>
           </motion.div>
         </div>
 
@@ -97,7 +150,7 @@ export function GameCompletion({
             className="w-full bg-white text-black font-black uppercase tracking-widest text-xs py-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
           >
             <RefreshCw size={18} />
-            Comenzar Nueva Aventura
+            Empezar otra vez
           </motion.button>
           
           <motion.button
@@ -108,13 +161,9 @@ export function GameCompletion({
             className="w-full bg-white/5 text-white/40 font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2"
           >
             <ArrowLeft size={14} />
-            Volver al Menú Principal
+            Volver al inicio
           </motion.button>
         </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute -top-10 -left-10 w-20 h-20 bg-pink-500/20 rounded-full blur-2xl animate-pulse" />
-        <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-epic/20 rounded-full blur-3xl animate-pulse" />
       </motion.div>
     </motion.div>
   );
