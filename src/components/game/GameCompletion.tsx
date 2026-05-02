@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Heart, Calendar, Star, ArrowLeft, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface HeartParticle {
   id: number;
@@ -74,6 +75,8 @@ export function GameCompletion({
   onRestart,
   onGoHome 
 }: GameCompletionProps) {
+  const router = useRouter();
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -128,16 +131,17 @@ export function GameCompletion({
             <div className="text-[10px] text-white/40 uppercase font-black tracking-widest">Días de juego</div>
           </motion.div>
 
-          <motion.div 
+          <motion.button 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.7 }}
-            className="bg-white/5 border border-white/10 rounded-3xl p-5"
+            onClick={() => router.push('/achievements')}
+            className="bg-white/5 border border-white/10 rounded-3xl p-5 hover:bg-white/10 hover:border-yellow-400/30 transition-all group"
           >
-            <Star className="text-yellow-400 mb-2 mx-auto" size={24} />
+            <Star className="text-yellow-400 mb-2 mx-auto group-hover:scale-125 transition-transform" size={24} />
             <div className="text-2xl font-black text-white">{achievementsCount}</div>
             <div className="text-[10px] text-white/40 uppercase font-black tracking-widest">Logros Ganados</div>
-          </motion.div>
+          </motion.button>
         </div>
 
         {/* Action Buttons */}
