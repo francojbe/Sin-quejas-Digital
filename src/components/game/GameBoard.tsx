@@ -391,11 +391,17 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         
         setPartnerHandCount(pCount || 0);
 
-        // Obtener conteo de logros
+        // Obtener conteo de logros oficiales
         const { count: aCount } = await supabase
           .from('achievements')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', user?.id);
+          .eq('user_id', user?.id)
+          .in('achievement_code', [
+            'ACHV_UNBREAKABLE', 
+            'ACHV_CONSTANCY', 
+            'ACHV_DESIRE_MASTERS', 
+            'ACHV_IRON_SHIELD'
+          ]);
         
         setAchievementsCount(aCount || 0);
 
