@@ -125,7 +125,7 @@ export function GameCompletion({
           >
             <Calendar className="text-epic mb-2 mx-auto" size={24} />
             <div className="text-2xl font-black text-white">{day}</div>
-            <div className="text-[10px] text-white/40 uppercase font-black tracking-widest">Días Juntos</div>
+            <div className="text-[10px] text-white/40 uppercase font-black tracking-widest">Días de juego</div>
           </motion.div>
 
           <motion.div 
