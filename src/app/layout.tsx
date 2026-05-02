@@ -78,7 +78,8 @@ export default function RootLayout({
                   },
                   allowLocalhostAsSecureOrigin: true,
                   serviceWorkerPath: 'OneSignalSDKWorker.js',
-                  serviceWorkerParam: { scope: '/' }
+                  serviceWorkerParam: { scope: '/' },
+                  notificationClickBehavior: "focus"
                 });
               });
             `}
