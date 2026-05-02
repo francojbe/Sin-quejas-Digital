@@ -86,6 +86,54 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [history, setHistory] = useState<any[]>([]);
   const [hasNewHistory, setHasNewHistory] = useState(false);
   const [achievementsCount, setAchievementsCount] = useState(0);
+
+  const handleRestartGame = async () => {
+    if (!game) return;
+    setLoading(true);
+    try {
+      // 1. Reset all cards to in_hand
+      const { error: cardsError } = await supabase
+        .from('player_cards')
+        .update({ status: 'in_hand' })
+        .eq('game_id', game.id);
+
+      if (cardsError) throw cardsError;
+
+      // 2. Reset day to 1
+      const { error: gameError } = await supabase
+        .from('games')
+        .update({ current_day: 1 })
+        .eq('id', game.id);
+
+      if (gameError) throw gameError;
+
+      // 3. Reload everything
+      await fetchGame();
+    } catch (err) {
+      console.error("Error restarting game:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinishGame = async () => {
+    if (!game) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('games')
+        .update({ status: 'finished' })
+        .eq('id', game.id);
+
+      if (error) throw error;
+      window.location.href = '/';
+    } catch (err) {
+      console.error("Error finishing game:", err);
+      window.location.href = '/';
+    } finally {
+      setLoading(false);
+    }
+  };
   const [partnerHandCount, setPartnerHandCount] = useState(0);
   const [serverTimeOffset, setServerTimeOffset] = useState<number>(0);
   const [timeSynced, setTimeSynced] = useState(false);
@@ -1380,19 +1428,20 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       </div>
 
       <div className="flex-1 min-h-0 flex items-center justify-center relative overflow-hidden bg-white/[0.02] rounded-3xl border border-white/5 mt-2">
-        <AnimatePresence>
-          {/* Pantalla de Finalización */}
-          {hand.length === 0 && partnerHandCount === 0 && !loading && game?.status === 'active' && (
-            <GameCompletion 
-              day={game?.current_day || 1}
-              totalDays={game?.duration_days || 15}
-              partnerName={partnerName}
-              userName={profile?.display_name || 'Tú'}
-              achievementsCount={achievementsCount}
-              onRestart={() => window.location.reload()}
-              onGoHome={() => window.location.href = '/'}
-            />
-          )}
+      {/* Pantalla de Finalización */}
+      <AnimatePresence>
+        {hand.length === 0 && partnerHandCount === 0 && !loading && game?.status === 'active' && (
+          <GameCompletion 
+            day={game?.current_day || 1}
+            totalDays={game?.duration_days || 15}
+            partnerName={partnerName}
+            userName={profile?.display_name || 'Tú'}
+            achievementsCount={achievementsCount}
+            onRestart={handleRestartGame}
+            onGoHome={handleFinishGame}
+          />
+        )}
+      </AnimatePresence>
 
           {showReflected && (
             <motion.div 
