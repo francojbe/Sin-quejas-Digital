@@ -49,6 +49,19 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">
         <ToastProvider>
+          <Script id="clear-idb" strategy="beforeInteractive">
+            {`
+              if (window.location.search.includes('reset=1')) {
+                try {
+                  window.indexedDB.deleteDatabase("ONE_SIGNAL_SDK_DB");
+                  localStorage.removeItem("isPushNotificationsEnabled");
+                  alert("Datos de OneSignal limpiados con éxito. Recarga la página normal.");
+                } catch(e) {
+                  alert("Error limpiando DB: " + e.message);
+                }
+              }
+            `}
+          </Script>
           <Script 
             src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" 
             strategy="beforeInteractive"
