@@ -88,7 +88,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [achievementsCount, setAchievementsCount] = useState(0);
 
   const handleRestartGame = async () => {
-    if (!game) return;
+    if (!game || !userId) return;
     setLoading(true);
     try {
       // 1. Reset all cards to in_hand
@@ -102,13 +102,27 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       // 2. Reset day to 1
       const { error: gameError } = await supabase
         .from('games')
-        .update({ current_day: 1 })
+        .update({ 
+          current_day: 1,
+          restart_requests: [] 
+        })
         .eq('id', game.id);
 
       if (gameError) throw gameError;
 
-      // 3. Reload everything
+      // 3. Notify partner via game_history
+      await supabase
+        .from('game_history')
+        .insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'REQUEST_RESTART',
+          metadata: { message: "Ha reiniciado la partida" }
+        });
+
+      // 4. Reload everything
       await fetchGame();
+      showNotification("¡Partida reiniciada!", 'success');
     } catch (err) {
       console.error("Error restarting game:", err);
     } finally {
@@ -126,9 +140,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         .eq('id', game.id);
 
       if (error) throw error;
-      window.location.href = '/';
+      
+      // En lugar de redirigir, refrescamos para que desaparezca el modal de victoria
+      // y se vea el tablero vacío
+      await fetchGame();
+      showNotification("Partida guardada en el historial", 'info');
     } catch (err) {
       console.error("Error finishing game:", err);
+      // Fallback redirect if something fails
       window.location.href = '/';
     } finally {
       setLoading(false);
@@ -805,10 +824,25 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   };
 
   const handleRestart = async () => {
-    if (!game) return;
+    if (!game || !userId) return;
     setRestarting(true);
-    await supabase.rpc('request_restart', { game_id_in: game.id });
-    await fetchGame();
+    try {
+      await supabase.rpc('request_restart', { game_id_in: game.id });
+      
+      // Registrar en el historial para disparar notificación push
+      await supabase
+        .from('game_history')
+        .insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'REQUEST_RESTART',
+          metadata: { message: "Ha solicitado reiniciar" }
+        });
+
+      await fetchGame();
+    } catch (err) {
+      console.error("Error in handleRestart:", err);
+    }
     setRestarting(false);
   };
 
