@@ -455,7 +455,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       }, (payload) => {
         // Solo recargar si cambia el estado o se crea un juego nuevo
         // Esto evita el bucle infinito con auto_finalize_games
-        if (payload.eventType === 'INSERT' || (payload.old && payload.new && payload.old.status !== payload.new.status)) {
+        const oldStatus = (payload.old as any)?.status;
+        const newStatus = (payload.new as any)?.status;
+        
+        if (payload.eventType === 'INSERT' || (oldStatus && newStatus && oldStatus !== newStatus)) {
           fetchGame();
         }
       })
