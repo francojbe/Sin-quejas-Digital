@@ -19,11 +19,10 @@ interface Achievement {
 }
 
 const ALL_ACHV_DEFINITIONS = [
-  { code: 'ACHV_FIRST_STEP', title: 'Primer Paso', description: 'Has jugado tu primera carta en la aventura.' },
   { code: 'ACHV_UNBREAKABLE', title: 'Vínculo Inquebrantable', description: 'Completar vuestra primera partida juntos.' },
-  { code: 'ACHV_CONSTANCY', title: 'Persistencia Cristalina', description: 'Terminar una partida de 30 días sin pausas.' },
-  { code: 'ACHV_DESIRE_MASTERS', title: 'Maestros del Deseo', description: 'Jugar más de 20 cartas de la categoría Pasión.' },
-  { code: 'ACHV_IRON_SHIELD', title: 'Escudo de Hierro', description: 'Usar con éxito 5 cartas de defensa.' },
+  { code: 'ACHV_CONSTANCY', title: 'Persistencia Cristalina', description: 'Alcanzar el día 30 de juego en una aventura.' },
+  { code: 'ACHV_DESIRE_MASTERS', title: 'Maestros del Deseo', description: 'Jugar más de 40 cartas de la categoría Pasión o Mimos.' },
+  { code: 'ACHV_IRON_SHIELD', title: 'Escudo de Hierro', description: 'Usar con éxito 10 cartas de defensa.' },
 ];
 
 const RARITY_COLORS = {
