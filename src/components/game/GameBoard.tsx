@@ -874,14 +874,25 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
                   <button
                     onClick={async () => { 
-                      if (isPushEnabled) {
-                        toast("Ya estás suscrito", { message: "Recibirás alertas en tiempo real.", type: 'info' });
-                      } else {
-                        const granted = await requestNotificationPermission();
-                        if (granted) {
-                          toast("Notificaciones activadas", { message: "¡Perfecto! Ya no te perderás nada.", type: 'success' });
+                      window.OneSignalDeferred = window.OneSignalDeferred || [];
+                      window.OneSignalDeferred.push(async function(OneSignal: any) {
+                        if (isPushEnabled) {
+                          await OneSignal.User.PushSubscription.optOut();
+                          toast("Notificaciones desactivadas", { message: "Ya no recibirás alertas en este dispositivo.", type: 'info' });
+                        } else {
+                          // Intentar suscribir
+                          const permission = OneSignal.Notifications.permission;
+                          if (permission) {
+                            await OneSignal.User.PushSubscription.optIn();
+                            toast("Notificaciones reactivadas", { message: "¡Bienvenido de vuelta!", type: 'success' });
+                          } else {
+                            const granted = await requestNotificationPermission();
+                            if (granted) {
+                              toast("Notificaciones activadas", { message: "¡Perfecto! Ya no te perderás nada.", type: 'success' });
+                            }
+                          }
                         }
-                      }
+                      });
                       setMenuOpen(false); 
                     }}
                     className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
