@@ -111,7 +111,18 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     const checkStatus = () => {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       window.OneSignalDeferred.push(async function(OneSignal: any) {
-        setIsPushEnabled(OneSignal.User.PushSubscription.optedIn);
+        const optedIn = OneSignal.User.PushSubscription.optedIn;
+        setIsPushEnabled(optedIn);
+        
+        // Auto-sincronizar si ya está activo
+        const pushId = OneSignal.User.PushSubscription.id;
+        if (optedIn && pushId && userId) {
+          await supabase.from('push_subscriptions').upsert({
+            user_id: userId,
+            subscription: { onesignal_id: pushId },
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+        }
         
         OneSignal.User.PushSubscription.addEventListener("change", (event: any) => {
           setIsPushEnabled(event.current.optedIn);
@@ -120,7 +131,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     };
 
     checkStatus();
-  }, []);
+  }, [userId]);
 
   // Realtime History Notifications
   useEffect(() => {
@@ -759,7 +770,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         if (pushId && userId) {
                           await supabase.from('push_subscriptions').upsert({
                             user_id: userId,
-                            subscription: { onesignal_id: pushId }
+                            subscription: { onesignal_id: pushId },
+                            updated_at: new Date().toISOString()
                           }, { onConflict: 'user_id' });
                         }
                       });
@@ -903,7 +915,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                               if (pushId && userId) {
                                 await supabase.from('push_subscriptions').upsert({
                                   user_id: userId,
-                                  subscription: { onesignal_id: pushId }
+                                  subscription: { onesignal_id: pushId },
+                                  updated_at: new Date().toISOString()
                                 }, { onConflict: 'user_id' });
                               }
                               

@@ -27,6 +27,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'No OneSignal ID found' }), { status: 404 })
     }
 
+    console.log(`Intentando enviar notificación a User: ${user_id} con ID: ${sub.subscription.onesignal_id}`);
+
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
       headers: {
@@ -43,7 +45,8 @@ serve(async (req) => {
     })
 
     const result = await response.json()
-    console.log("OneSignal Response:", result)
+    console.log("OneSignal Response Details:", JSON.stringify(result))
+    
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -38,14 +38,19 @@ export function SWRegistration() {
           const onesignalId = event.current.id;
           const isOptedIn = event.current.optedIn;
           
+          console.log('OneSignal v16 cambio detectable:', { onesignalId, isOptedIn });
+          
           if (onesignalId && isOptedIn) {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-              await supabase.from('push_subscriptions').upsert({
+              const { error } = await supabase.from('push_subscriptions').upsert({
                 user_id: user.id,
-                subscription: { onesignal_id: onesignalId }
+                subscription: { onesignal_id: onesignalId },
+                updated_at: new Date().toISOString()
               }, { onConflict: 'user_id' });
-              console.log('OneSignal v16 sincronizado por cambio (activo):', onesignalId);
+              
+              if (error) console.error('Error sincronizando suscripción:', error);
+              else console.log('OneSignal v16 sincronizado por cambio (activo):', onesignalId);
             }
           }
         });
@@ -63,6 +68,24 @@ export async function requestNotificationPermission() {
       window.OneSignalDeferred.push(async function(OneSignal: any) {
         try {
           await OneSignal.Notifications.requestPermission();
+          
+          // Darle un pequeño respiro para que el ID se genere si es nuevo
+          setTimeout(async () => {
+            const pushId = OneSignal.User.PushSubscription.id;
+            const isOptedIn = OneSignal.User.PushSubscription.optedIn;
+            
+            if (pushId && isOptedIn) {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                await supabase.from('push_subscriptions').upsert({
+                  user_id: user.id,
+                  subscription: { onesignal_id: pushId },
+                  updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+              }
+            }
+          }, 2000);
+          
           resolve(true);
         } catch (e) {
           console.error("Error OneSignal:", e);
