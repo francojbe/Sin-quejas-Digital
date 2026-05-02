@@ -53,26 +53,11 @@ export default function RootLayout({
             {`
               if (window.location.search.includes('reset=1')) {
                 try {
-                  // Limpieza agresiva de OneSignal
-                  window.localStorage.clear();
-                  window.sessionStorage.clear();
-                  
-                  const databases = ["ONE_SIGNAL_SDK_DB", "OneSignalSDK"];
-                  databases.forEach(dbName => {
-                    const req = window.indexedDB.deleteDatabase(dbName);
-                    req.onsuccess = () => console.log("DB eliminada: " + dbName);
-                  });
-
-                  // Eliminar Service Workers antiguos
-                  navigator.serviceWorker.getRegistrations().then(registrations => {
-                    for(let registration of registrations) {
-                      registration.unregister();
-                    }
-                  });
-
-                  alert("Limpieza total completada. Por favor, cierra todas las pestañas de este sitio y ábrelo de nuevo normalmente.");
+                  window.indexedDB.deleteDatabase("ONE_SIGNAL_SDK_DB");
+                  localStorage.removeItem("isPushNotificationsEnabled");
+                  alert("Datos de OneSignal limpiados con éxito. Recarga la página normal.");
                 } catch(e) {
-                  alert("Error en limpieza: " + e.message);
+                  alert("Error limpiando DB: " + e.message);
                 }
               }
             `}
