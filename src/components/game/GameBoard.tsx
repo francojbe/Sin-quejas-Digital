@@ -8,7 +8,7 @@ import { PlayerCard, Card as CardType, Profile } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/lib/contexts/ToastContext";
+import { useToast, ToastType } from "@/lib/contexts/ToastContext";
 import { requestNotificationPermission } from "@/components/SWRegistration";
 
 const HeartsSpinner = () => {
@@ -47,6 +47,16 @@ const HeartsSpinner = () => {
 
 export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { coupleId: string; profile: any; onLogout?: () => void; onProfileUpdate?: () => void }) {
   const { toast } = useToast();
+  const showNotification = (message: string, type: ToastType = 'info') => {
+    const titleMap: Record<ToastType, string> = {
+      success: 'Éxito',
+      error: 'Error',
+      info: 'Información',
+      warning: 'Atención',
+      'partner-request': 'Solicitud'
+    };
+    toast(titleMap[type] || 'Aviso', { message, type });
+  };
   const [loading, setLoading] = useState(true);
   const [game, setGame] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -65,7 +75,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [partnerHand, setPartnerHand] = useState<PlayerCard[]>([]);
   const [showReflected, setShowReflected] = useState(false);
   const [activeEvent, setActiveEvent] = useState<any>(null);
-  const [notification, setNotification] = useState<{ message: string, type: 'error' | 'info' | 'success' } | null>(null);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
@@ -1774,31 +1784,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         </motion.div>
       )}
 
-      {/* SISTEMA DE NOTIFICACIONES PREMIUM */}
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 20, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            className="fixed top-0 left-0 right-0 z-[300] flex justify-center px-6 pointer-events-none"
-          >
-            <div className={`
-              pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-2xl border backdrop-blur-xl shadow-2xl
-              ${notification.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-white/10 border-white/20 text-white'}
-            `}>
-              {notification.type === 'error' ? (
-                <Shield size={20} className="animate-pulse" />
-              ) : (
-                <CheckCircle2 size={20} className="text-common" />
-              )}
-              <span className="text-sm font-black uppercase tracking-widest drop-shadow-sm">
-                {notification.message}
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* HISTORIAL DE DESAFÍOS (MODAL) */}
       <AnimatePresence>
