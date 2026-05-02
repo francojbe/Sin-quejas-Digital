@@ -1,7 +1,14 @@
 # Hoja de Ruta: Sin Quejas Digital (Juego para Parejas)
 
-## Estado Actual (Cierre de Sesión - 01 Mayo 2026)
-El proyecto ha alcanzado un nivel de pulido visual y funcional "Premium", con un sistema de identidad robusto y sincronización total.
+## Estado Actual (Cierre de Sesión - 02 Mayo 2026)
+El proyecto ha alcanzado una estabilidad crítica con la integración de notificaciones push robustas y sincronización de estado en tiempo real.
+
+### ✅ Logros Completados (Estabilidad y Notificaciones):
+1. **OneSignal SDK v16 Integrado:** Notificaciones push funcionales en Chrome (Desktop/Android) y Safari (iOS).
+2. **Sincronización de Tiempo (Server Offset):** Implementación de RPC `get_server_time` para alinear los temporizadores de 10 minutos con el reloj del servidor, eliminando errores por desajustes en el reloj local de los usuarios.
+3. **Mano Realtime:** Sincronización proactiva de la mano del jugador mediante Supabase Realtime para reflejar instantáneamente robos, intercambios y resurrecciones.
+4. **Enfoque de Ventana (Focus Click):** Configuración de `notificationClickBehavior` y ajuste de URL en Edge Functions para que las notificaciones enfoquen la pestaña abierta en lugar de abrir nuevas.
+5. **Auto-Corrección de Errores (IDB Reset):** Mecanismo `?reset=1` para limpiar bases de datos de OneSignal corruptas en dispositivos móviles.
 
 ### ✅ Logros Completados (Identidad y UI):
 1. **Sistema de Identidad Completo:** Perfiles dinámicos con nombre, bio, género, edad y selección de avatar (DiceBear). Sincronización instantánea.
@@ -16,7 +23,7 @@ El proyecto ha alcanzado un nivel de pulido visual y funcional "Premium", con un
 - [x] **Cambiar Mazo:** Intercambio de manos (RPC `swap_game_hands`).
 - [x] **Reiniciar Mano:** Resurrección de descartes (RPC `resurrect_discarded_cards`).
 - [x] **Pausa Temporal:** Congelación del juego por 24h.
-- [x] **Auto-Aceptación:** Las cartas se aceptan solas tras 10 minutos de inactividad del receptor.
+- [x] **Auto-Aceptación Sincronizada:** Las cartas se aceptan solas tras 10 minutos basados en el tiempo del servidor.
 
 ### ⏳ Pendientes y Próximos Pasos (Hacia la v1.0):
 
