@@ -13,6 +13,8 @@ interface GameStatusProps {
   activitySummary: string;
   partnerOnline?: boolean;
   userOnline?: boolean;
+  onPartnerClick?: () => void;
+  onUserClick?: () => void;
 }
 
 export function GameStatus({ 
@@ -24,7 +26,9 @@ export function GameStatus({
   userAvatar, 
   activitySummary,
   partnerOnline = false,
-  userOnline = false
+  userOnline = false,
+  onPartnerClick,
+  onUserClick
 }: GameStatusProps) {
   const progress = (day / totalDays) * 100;
 
@@ -36,27 +40,34 @@ export function GameStatus({
       <div className="flex items-center gap-3 shrink-0 relative z-10">
         <div className="flex -space-x-2">
           {/* Pareja */}
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 bg-black/40 flex items-center justify-center relative overflow-hidden shadow-lg">
+          <button 
+            onClick={onPartnerClick}
+            className="w-10 h-10 rounded-full border-2 border-white/10 bg-black/40 flex items-center justify-center relative overflow-hidden shadow-lg hover:scale-110 hover:border-epic/50 hover:z-20 transition-all cursor-pointer group"
+          >
             {partnerAvatar ? (
-              <img src={partnerAvatar} alt={partnerName} className="w-full h-full object-cover" />
+              <img src={partnerAvatar} alt={partnerName} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/5 to-white/10">
-                <User className="text-white/20" size={18} />
+                <User className="text-white/20 group-hover:text-epic transition-colors" size={18} />
               </div>
             )}
             <div className={`absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-2 border-black ${partnerOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
-          </div>
+          </button>
+
           {/* Usuario */}
-          <div className="w-10 h-10 rounded-full border-2 border-common/40 bg-common/10 flex items-center justify-center relative overflow-hidden shadow-lg">
+          <button 
+            onClick={onUserClick}
+            className="w-10 h-10 rounded-full border-2 border-common/40 bg-common/10 flex items-center justify-center relative overflow-hidden shadow-lg hover:scale-110 hover:border-common hover:z-20 transition-all cursor-pointer group"
+          >
             {userAvatar ? (
-              <img src={userAvatar} alt={userName} className="w-full h-full object-cover" />
+              <img src={userAvatar} alt={userName} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-common/10 to-common/20">
                 <User className="text-common" size={18} />
               </div>
             )}
             <div className={`absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-2 border-black ${userOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
-          </div>
+          </button>
         </div>
         <div className="flex flex-col -space-y-1">
           <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Vínculo Activo</span>

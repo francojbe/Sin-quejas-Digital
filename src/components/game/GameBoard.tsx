@@ -76,6 +76,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [showReflected, setShowReflected] = useState(false);
   const [activeEvent, setActiveEvent] = useState<any>(null);
 
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [partnerProfile, setPartnerProfile] = useState<any>(null);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
@@ -375,12 +378,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       const { data: partnerProfiles, error: partnerError } = await supabase
         .from("profiles")
-        .select("id, display_name, avatar_url")
+        .select("*")
         .eq("couple_id", coupleId);
       
       if (partnerProfiles) {
         const partner = partnerProfiles.find(p => p.id !== user?.id);
         if (partner) {
+          setPartnerProfile(partner);
           setPartnerName(partner.display_name);
           setPartnerAvatar(partner.avatar_url ?? null);
           setPartnerId(partner.id);
@@ -1322,6 +1326,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           partnerOnline={partnerId ? onlineUsers.includes(partnerId) : false}
           userOnline={userId ? onlineUsers.includes(userId) : false}
           activitySummary={displayedCard ? (isPending ? `REACCIÓN A: ${displayedCard.cards_master?.title || 'CARTA'}` : `ÚLTIMA JUGADA: ${displayedCard.cards_master?.title || 'CARTA'}`) : "Esperando primera jugada..."}
+          onUserClick={() => setShowProfileModal(true)}
+          onPartnerClick={() => setShowPartnerModal(true)}
         />
       </div>
 
@@ -2024,6 +2030,84 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     </div>
                   ))
                 )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Modal: Perfil de Pareja (Solo Lectura) */}
+        {showPartnerModal && partnerProfile && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="w-full max-w-md glass rounded-[40px] border border-white/10 shadow-2xl flex flex-col overflow-hidden"
+            >
+              <div className="p-6 pb-2 flex justify-between items-center shrink-0">
+                <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                  <User className="text-epic" size={20} />
+                  PERFIL DE {partnerProfile.display_name.toUpperCase()}
+                </h2>
+                <button onClick={() => setShowPartnerModal(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-8 overflow-y-auto max-h-[70vh]">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-common to-epic p-1 shadow-[0_0_30px_rgba(208,255,0,0.3)]">
+                    <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+                      {partnerProfile.avatar_url ? (
+                        <img src={partnerProfile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <User size={40} className="text-common" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-2xl font-black text-white">{partnerProfile.display_name}</h3>
+                    <div className="flex items-center justify-center gap-3 mt-1">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white/5 text-white/40 uppercase border border-white/5">
+                        {partnerProfile.gender || 'Sin Género'}
+                      </span>
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white/5 text-white/40 uppercase border border-white/5">
+                        {partnerProfile.age ? `${partnerProfile.age} Años` : 'Edad Oculta'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Sobre {partnerProfile.display_name}</label>
+                    <div className="p-5 bg-white/5 rounded-3xl border border-white/5 italic text-white/70 text-sm leading-relaxed">
+                      "{partnerProfile.bio || 'Esta persona aún no ha escrito su biografía...'}"
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-white/[0.02] rounded-3xl border border-white/5 flex flex-col items-center text-center">
+                      <Calendar size={16} className="text-common mb-2" />
+                      <span className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Días en Juego</span>
+                      <span className="text-lg font-black text-white">{game?.current_day || 1}</span>
+                    </div>
+                    <div className="p-4 bg-white/[0.02] rounded-3xl border border-white/5 flex flex-col items-center text-center">
+                      <Trophy size={16} className="text-epic mb-2" />
+                      <span className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Nivel Vínculo</span>
+                      <span className="text-lg font-black text-white">Sincronizado</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 pt-2">
+                <button 
+                  onClick={() => setShowPartnerModal(false)}
+                  className="w-full py-4 rounded-full bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-gray-200 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl"
+                >
+                  Cerrar Perfil
+                </button>
               </div>
             </motion.div>
           </div>
