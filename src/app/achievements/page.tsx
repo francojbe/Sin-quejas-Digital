@@ -19,6 +19,7 @@ interface Achievement {
 }
 
 const ALL_ACHV_DEFINITIONS = [
+  { code: 'ACHV_FIRST_STEP', title: 'Primer Paso', description: 'Has jugado tu primera carta en la aventura.' },
   { code: 'ACHV_UNBREAKABLE', title: 'Vínculo Inquebrantable', description: 'Completar vuestra primera partida juntos.' },
   { code: 'ACHV_CONSTANCY', title: 'Persistencia Cristalina', description: 'Terminar una partida de 30 días sin pausas.' },
   { code: 'ACHV_DESIRE_MASTERS', title: 'Maestros del Deseo', description: 'Jugar más de 20 cartas de la categoría Pasión.' },
