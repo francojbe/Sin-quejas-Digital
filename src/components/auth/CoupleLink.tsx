@@ -6,7 +6,10 @@ import { motion } from "framer-motion";
 import { Users, Copy, Check, Loader2, Link2, Dice5, Spade } from "lucide-react";
 import { Profile } from "@/types";
 
+import { useToast } from "@/lib/contexts/ToastContext";
+
 export function CoupleLink({ profile }: { profile: Profile }) {
+  const { toast } = useToast();
   const [partnerCode, setPartnerCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -22,9 +25,19 @@ export function CoupleLink({ profile }: { profile: Profile }) {
         target_code: partnerCode.toUpperCase() 
       });
       if (error) throw error;
-      window.location.reload(); 
+      
+      toast("¡Vínculo establecido!", { 
+        message: "Ahora están conectados y listos para jugar.", 
+        type: "success" 
+      });
+      
+      setTimeout(() => window.location.reload(), 1500);
     } catch (err: any) {
       setError(err.message);
+      toast("Error al vincular", { 
+        message: err.message, 
+        type: "error" 
+      });
     } finally {
       setLoading(false);
     }
@@ -34,6 +47,11 @@ export function CoupleLink({ profile }: { profile: Profile }) {
     if (profile.invite_code) {
       navigator.clipboard.writeText(profile.invite_code);
       setCopied(true);
+      toast("Código copiado", { 
+        message: "Compártelo con tu pareja para vincularse.", 
+        type: "info",
+        duration: 2000
+      });
       setTimeout(() => setCopied(false), 2000);
     }
   };

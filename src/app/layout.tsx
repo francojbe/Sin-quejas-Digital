@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/lib/contexts/ToastContext";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +33,9 @@ export const metadata: Metadata = {
   },
 };
 
+
+import { SWRegistration } from "@/components/SWRegistration";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -42,7 +47,31 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body suppressHydrationWarning className="min-h-full flex flex-col">{children}</body>
+      <body suppressHydrationWarning className="min-h-full flex flex-col">
+        <ToastProvider>
+          <Script 
+            src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" 
+            strategy="beforeInteractive"
+          />
+          <Script id="onesignal-init" strategy="afterInteractive">
+            {`
+              window.OneSignalDeferred = window.OneSignalDeferred || [];
+              window.OneSignalDeferred.push(async function(OneSignal) {
+                await OneSignal.init({
+                  appId: "76adeb83-c2dc-4b7e-b701-a88a4afdb945",
+                  safari_web_id: "web.onesignal.auto.364542e4-0165-4e49-b6eb-0136f3f4eaa9",
+                  notifyButton: {
+                    enable: true,
+                  },
+                  allowLocalhostAsSecureOrigin: true,
+                });
+              });
+            `}
+          </Script>
+          {children}
+          <SWRegistration />
+        </ToastProvider>
+      </body>
     </html>
   );
 }

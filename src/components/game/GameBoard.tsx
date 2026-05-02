@@ -8,6 +8,8 @@ import { PlayerCard, Card as CardType, Profile } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/lib/contexts/ToastContext";
+import { requestNotificationPermission } from "@/components/SWRegistration";
 
 const HeartsSpinner = () => {
   return (
@@ -44,6 +46,7 @@ const HeartsSpinner = () => {
 };
 
 export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { coupleId: string; profile: any; onLogout?: () => void; onProfileUpdate?: () => void }) {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [game, setGame] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -135,17 +138,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     setLoading(true);
     const { data, error } = await supabase.rpc('get_partner_hand', { game_id_in: game.id });
     if (error) {
-      showNotification(error.message, 'error');
+      toast("Error", { message: error.message, type: 'error' });
     } else {
       setPartnerHand(data || []);
       setShowPartnerHand(true);
     }
     setLoading(false);
-  };
-
-  const showNotification = (message: string, type: 'error' | 'info' | 'success' = 'info') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 4000);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,9 +265,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     });
     
     if (error) {
-      showNotification(error.message, 'error');
+      toast("Error", { message: error.message, type: 'error' });
     } else {
-      if (!data.success) showNotification(data.message, 'error');
+      if (!data.success) toast("Aviso", { message: data.message, type: 'warning' });
       await fetchGame();
     }
     setLoading(false);
@@ -413,9 +411,28 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         table: 'games',
         filter: `couple_id=eq.${coupleId}`
       }, (payload: any) => {
-        setGame(payload.new);
-        if (payload.new.last_event_data) {
-          setActiveEvent(payload.new.last_event_data);
+        const oldGame = game;
+        const newGame = payload.new;
+        setGame(newGame);
+
+        // Notificaciones de Solicitudes (Partner Request)
+        if (newGame.restart_requests?.length > (oldGame?.restart_requests?.length || 0) && !newGame.restart_requests.includes(userId)) {
+          toast("¡Petición de Reinicio!", { 
+            message: `${partnerName} ha solicitado reiniciar la partida.`, 
+            type: 'partner-request' 
+          });
+        }
+        
+        if (newGame.break_requests?.length > (oldGame?.break_requests?.length || 0) && !newGame.break_requests.includes(userId)) {
+          toast("¡Solicitud de Ruptura!", { 
+            message: `${partnerName} ha solicitado eliminar el vínculo.`, 
+            type: 'partner-request',
+            duration: Infinity
+          });
+        }
+
+        if (newGame.last_event_data) {
+          setActiveEvent(newGame.last_event_data);
           setTimeout(() => setActiveEvent(null), 5000);
         }
       })
@@ -741,6 +758,24 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                       <User size={14} className="group-hover:text-common transition-colors" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-widest">Editar Perfil</span>
+                  </button>
+
+                  <button
+                    onClick={async () => { 
+                      const granted = await requestNotificationPermission();
+                      if (granted) {
+                        toast("Notificaciones activadas", { message: "Recibirás alertas incluso con la app cerrada.", type: 'success' });
+                      } else {
+                        toast("Permiso denegado", { message: "No podremos enviarte notificaciones push.", type: 'error' });
+                      }
+                      setMenuOpen(false); 
+                    }}
+                    className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-epic/20 transition-colors">
+                      <Bell size={14} className="group-hover:text-epic transition-colors" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Activar Push</span>
                   </button>
                   
                   <button
