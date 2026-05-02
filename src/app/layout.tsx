@@ -64,6 +64,8 @@ export default function RootLayout({
                     enable: true,
                   },
                   allowLocalhostAsSecureOrigin: true,
+                  serviceWorkerPath: 'OneSignalSDKWorker.js',
+                  serviceWorkerParam: { scope: '/' }
                 });
               });
             `}
