@@ -1441,7 +1441,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             onGoHome={handleFinishGame}
           />
         )}
-      </AnimatePresence>
 
           {showReflected && (
             <motion.div 
