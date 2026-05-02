@@ -390,19 +390,43 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     return () => { supabase.removeChannel(gameChannel); };
   }, [coupleId]);
 
+  const fetchHandOnly = async () => {
+    if (!game || !userId) return;
+    const { data: cardsData } = await supabase
+      .from("player_cards")
+      .select("*, cards_master!inner(*)")
+      .eq("game_id", game.id)
+      .eq("user_id", userId)
+      .eq("status", "in_hand");
+    if (cardsData) setHand(cardsData as any);
+  };
+
   useEffect(() => {
     if (!game || !userId) return;
     const channel = supabase
       .channel('game_updates')
       .on('postgres_changes', {
-        event: 'UPDATE',
+        event: '*',
         schema: 'public',
         table: 'player_cards',
         filter: `game_id=eq.${game.id}`,
       }, (payload) => {
-        const updatedCard = payload.new as PlayerCard;
-        if (updatedCard.status !== 'in_hand') {
+        const newRecord = payload.new as any;
+        const oldRecord = payload.old as any;
+        
+        // Update latest card if a card was played or status changed
+        if (newRecord?.status && newRecord.status !== 'in_hand') {
           fetchLatestCard(game.id);
+        }
+        
+        // Refresh hand if the card is related to the current user
+        if (
+          newRecord?.user_id === userId || 
+          oldRecord?.user_id === userId || 
+          newRecord?.status === 'in_hand' || 
+          oldRecord?.status === 'in_hand'
+        ) {
+          fetchHandOnly();
         }
       })
       .subscribe();
@@ -557,6 +581,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     };
     el.addEventListener('scroll', handleScroll);
     return () => el.removeEventListener('scroll', handleScroll);
+  }, [hand.length]);
+
+  // Clamp current index when hand size changes
+  useEffect(() => {
+    setCurrentIndex(prev => {
+      if (hand.length === 0) return 0;
+      return Math.min(prev, hand.length) || 1;
+    });
   }, [hand.length]);
 
   const playCard = async (playerCard: any) => {
