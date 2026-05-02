@@ -12,35 +12,24 @@ El proyecto ha alcanzado una estabilidad crítica con la integración de notific
 
 ### ✅ Logros Completados (Identidad y UI):
 1. **Sistema de Identidad Completo:** Perfiles dinámicos con nombre, bio, género, edad y selección de avatar (DiceBear). Sincronización instantánea.
-2. **Vínculo Seguro y Consensual:** La ruptura del vínculo requiere aceptación mutua (RPC `break_couple_link`).
-3. **Presencia Realtime (Online/Offline):** Puntos de estado (Verde/Rojo) mediante **Supabase Presence**.
-4. **Rediseño Visual High-End:** Setup futurista, GameStatus Pro con avatares grandes y mini-avatares en jugadas.
-5. **Optimización de UX:** Carrusel de cartas sin recortes (padding dinámico) y animaciones fluidas.
+2. **Interactividad de Vínculo:** Acceso directo al perfil propio y de la pareja desde el header del tablero.
+3. **Visor de Perfiles Pro:** Modal dedicado para ver los detalles de la pareja y sistema de **Zoom de Imagen** a pantalla completa con desenfoque de fondo.
+4. **Vínculo Seguro y Consensual:** La ruptura del vínculo requiere aceptación mutua (RPC `break_couple_link`).
+5. **Presencia Realtime (Online/Offline):** Puntos de estado (Verde/Rojo) mediante **Supabase Presence**.
+6. **Rediseño Visual High-End:** Setup futurista, GameStatus Pro con avatares grandes y mini-avatares en jugadas.
 
-### ✅ Mecánicas de Juego Implementadas:
-- [x] **Espejo Místico:** Rebote de efecto al atacante.
-- [x] **Robo de Suerte:** Robo de carta al azar (RPC `steal_random_card`).
-- [x] **Cambiar Mazo:** Intercambio de manos (RPC `swap_game_hands`).
-- [x] **Reiniciar Mano:** Resurrección de descartes (RPC `resurrect_discarded_cards`).
-- [x] **Pausa Temporal:** Congelación del juego por 24h.
+7. **Fotos Reales (Supabase Storage):** Sistema de carga de archivos integrado para perfiles con validación de tamaño y formato.
+
+### ✅ Mecánicas y Backend (Estabilidad):
+- [x] **Avance de Días Automático:** Lógica robusta en base de datos para incrementar `current_day` basándose en el calendario real.
+- [x] **Sistema Anti-Pausa (Keep-Alive):** GitHub Action configurada con secretos para mantener Supabase activo 24/7.
 - [x] **Auto-Aceptación Sincronizada:** Las cartas se aceptan solas tras 10 minutos basados en el tiempo del servidor.
 
 ### ⏳ Pendientes y Próximos Pasos (Hacia la v1.0):
 
-#### Fase 4: Social y Persistencia
-- [x] **Supabase Storage:** Permitir que los usuarios suban sus propias fotos de perfil reales.
-- [x] **Sistema de Logros (Medallas):** 
-  - [x] Base de datos y Galería de Trofeos diseñada (v1.0).
-  - [x] Componente `AchievementCard` con PNGs transparentes.
-  - [x] Lógica de concesión automática vía Triggers.
-- [x] **Historial de Desafíos (Memoria de Pareja):** 
-  - [x] Registro automático de jugadas (Lanzadas, Aceptadas, Bloqueadas).
-  - [x] Modal de Timeline accesible vía icono de campana.
-  - [x] Notificación visual reactiva (Corazón pulsante en tiempo real).
-- [x] **Optimización UI Desktop:** Escalado al 90% para mayor amplitud.
-- [ ] **Notificaciones In-App (Toasts):** Alertas flotantes para peticiones de pareja.
+#### Fase 4: Social y Persistencia (Finalizada)
 
 #### Fase 5: Gamificación y Cierre
-- [x] **Finalización Automática:** Lógica para concluir la partida según `duration_days`.
-- [/] **Celebración de Pareja:** Reporte final y entrega de medalla `ACHV_UNBREAKABLE`.
-- [ ] **Optimización Offline:** Caché básica para funcionamiento sin red.
+- [/] **Celebración de Pareja:** Crear la pantalla final de "Victoria" cuando el contador de días llegue a su fin, mostrando un resumen de los logros obtenidos juntos.
+- [ ] **Optimización Offline:** Configurar Service Workers para que el tablero cargue incluso con mala conexión (PWA completa).
+- [ ] **Tutorial Interactivo:** Un pequeño tour guiado para nuevos usuarios al iniciar su primera partida.

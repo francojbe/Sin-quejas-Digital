@@ -10,6 +10,7 @@ import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon,
 import Link from "next/link";
 import { useToast, ToastType } from "@/lib/contexts/ToastContext";
 import { requestNotificationPermission } from "@/components/SWRegistration";
+import { GameCompletion } from "./GameCompletion";
 
 const HeartsSpinner = () => {
   return (
@@ -84,6 +85,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [hasNewHistory, setHasNewHistory] = useState(false);
+  const [achievementsCount, setAchievementsCount] = useState(0);
+  const [partnerHandCount, setPartnerHandCount] = useState(0);
   const [serverTimeOffset, setServerTimeOffset] = useState<number>(0);
   const [timeSynced, setTimeSynced] = useState(false);
   const [isPushEnabled, setIsPushEnabled] = useState<boolean>(true); // Default true to avoid flash
@@ -345,63 +348,86 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
   async function fetchGame() {
     setLoading(true);
-    
-    // Auto-finalizar si el tiempo ha expirado
-    await supabase.rpc('auto_finalize_games', { couple_id_in: coupleId });
-
-    const { data: gameData } = await supabase
-      .from("games")
-      .select("*")
-      .eq("couple_id", coupleId)
-      .eq("couple_id", coupleId)
-      .in("status", ["active", "pending_start"])
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (gameData) {
-      setGame(gameData);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) setUserId(user.id);
+    try {
+      setLoading(true);
       
-      const { data: cardsData } = await supabase
-        .from("player_cards")
-        .select("*, cards_master!inner(*)")
-        .eq("game_id", gameData.id)
-        .eq("user_id", user?.id)
-        .eq("status", "in_hand");
+      // Auto-finalizar si el tiempo ha expirado
+      await supabase.rpc('auto_finalize_games', { couple_id_in: coupleId });
 
-      if (cardsData) {
-        setHand(cardsData as any);
-      } else {
-        setHand([]);
-      }
-
-      const { data: partnerProfiles, error: partnerError } = await supabase
-        .from("profiles")
+      const { data: gameData } = await supabase
+        .from("games")
         .select("*")
-        .eq("couple_id", coupleId);
-      
-      if (partnerProfiles) {
-        const partner = partnerProfiles.find(p => p.id !== user?.id);
-        if (partner) {
-          setPartnerProfile(partner);
-          setPartnerName(partner.display_name);
-          setPartnerAvatar(partner.avatar_url ?? null);
-          setPartnerId(partner.id);
-        }
-      } else if (partnerError) {
-        console.error("Error fetching partner profile:", partnerError);
-      }
+        .eq("couple_id", coupleId)
+        .in("status", ["active", "pending_start"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      // Buscar la última carta jugada para mostrarla
-      fetchLatestCard(gameData.id);
-    } else {
-      setGame(null);
-      setHand([]);
-      setDisplayedCard(null);
+      if (gameData) {
+        setGame(gameData);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) setUserId(user.id);
+        
+        const { data: cardsData } = await supabase
+          .from("player_cards")
+          .select("*, cards_master!inner(*)")
+          .eq("game_id", gameData.id)
+          .eq("user_id", user?.id)
+          .eq("status", "in_hand");
+
+        if (cardsData) {
+          setHand(cardsData as any);
+        } else {
+          setHand([]);
+        }
+
+        // Contar cartas de la pareja
+        const { count: pCount } = await supabase
+          .from("player_cards")
+          .select("*", { count: 'exact', head: true })
+          .eq("game_id", gameData.id)
+          .neq("user_id", user?.id)
+          .eq("status", "in_hand");
+        
+        setPartnerHandCount(pCount || 0);
+
+        // Obtener conteo de logros
+        const { count: aCount } = await supabase
+          .from('achievements')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user?.id);
+        
+        setAchievementsCount(aCount || 0);
+
+        const { data: partnerProfiles, error: partnerError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("couple_id", coupleId);
+        
+        if (partnerProfiles) {
+          const partner = partnerProfiles.find(p => p.id !== user?.id);
+          if (partner) {
+            setPartnerProfile(partner);
+            setPartnerName(partner.display_name);
+            setPartnerAvatar(partner.avatar_url ?? null);
+            setPartnerId(partner.id);
+          }
+        } else if (partnerError) {
+          console.error("Error fetching partner profile:", partnerError);
+        }
+
+        // Buscar la última carta jugada para mostrarla
+        fetchLatestCard(gameData.id);
+      } else {
+        setGame(null);
+        setHand([]);
+        setDisplayedCard(null);
+      }
+    } catch (err) {
+      console.error("Error in fetchGame:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function fetchLatestCard(gameId: string) {
@@ -426,9 +452,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         schema: 'public',
         table: 'games',
         filter: `couple_id=eq.${coupleId}`,
-      }, () => {
-        // Cuando la otra persona inicia el juego, recargamos el estado
-        fetchGame();
+      }, (payload) => {
+        // Solo recargar si cambia el estado o se crea un juego nuevo
+        // Esto evita el bucle infinito con auto_finalize_games
+        if (payload.eventType === 'INSERT' || (payload.old && payload.new && payload.old.status !== payload.new.status)) {
+          fetchGame();
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(gameChannel); };
@@ -443,6 +472,17 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       .eq("user_id", userId)
       .eq("status", "in_hand");
     if (cardsData) setHand(cardsData as any);
+  };
+
+  const fetchPartnerHandCount = async () => {
+    if (!game || !userId) return;
+    const { count } = await supabase
+      .from("player_cards")
+      .select("*", { count: 'exact', head: true })
+      .eq("game_id", game.id)
+      .neq("user_id", userId)
+      .eq("status", "in_hand");
+    setPartnerHandCount(count || 0);
   };
 
   useEffect(() => {
@@ -464,13 +504,11 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         }
         
         // Refresh hand if the card is related to the current user
-        if (
-          newRecord?.user_id === userId || 
-          oldRecord?.user_id === userId || 
-          newRecord?.status === 'in_hand' || 
-          oldRecord?.status === 'in_hand'
-        ) {
+        if (newRecord?.user_id === userId || oldRecord?.user_id === userId) {
           fetchHandOnly();
+        } else {
+          // If it belongs to partner, refresh their count
+          fetchPartnerHandCount();
         }
       })
       .subscribe();
@@ -1334,6 +1372,19 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       <div className="flex-1 min-h-0 flex items-center justify-center relative overflow-hidden bg-white/[0.02] rounded-3xl border border-white/5 mt-2">
         <AnimatePresence>
+          {/* Pantalla de Finalización */}
+          {hand.length === 0 && partnerHandCount === 0 && !loading && game?.status === 'active' && (
+            <GameCompletion 
+              day={game?.current_day || 1}
+              totalDays={game?.duration_days || 15}
+              partnerName={partnerName}
+              userName={profile?.display_name || 'Tú'}
+              achievementsCount={achievementsCount}
+              onRestart={() => window.location.reload()}
+              onGoHome={() => window.location.href = '/'}
+            />
+          )}
+
           {showReflected && (
             <motion.div 
               initial={{ scale: 0.5, opacity: 0 }}
