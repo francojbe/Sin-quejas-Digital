@@ -38,7 +38,7 @@ serve(async (req) => {
         include_player_ids: [sub.subscription.onesignal_id],
         contents: { "en": body, "es": body },
         headings: { "en": title, "es": title },
-        url: "https://recuperadora-sinquejas.nojauc.easypanel.host/"
+        url: "https://sin-quejas.digital"
       })
     })
 
