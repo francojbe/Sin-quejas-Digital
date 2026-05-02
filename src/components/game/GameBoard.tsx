@@ -80,6 +80,23 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [hasNewHistory, setHasNewHistory] = useState(false);
+  const [serverTimeOffset, setServerTimeOffset] = useState<number>(0);
+
+  // Sync time with server
+  useEffect(() => {
+    async function syncTime() {
+      const start = Date.now();
+      const { data, error } = await supabase.rpc('get_server_time');
+      if (!error && data) {
+        const end = Date.now();
+        const rtt = end - start;
+        const serverTime = new Date(data).getTime();
+        const localTime = start + (rtt / 2);
+        setServerTimeOffset(serverTime - localTime);
+      }
+    }
+    syncTime();
+  }, []);
 
   // Realtime History Notifications
   useEffect(() => {
@@ -553,9 +570,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     
     // Función para actualizar inmediatamente al montar
     const updateTime = () => {
-      const now = new Date().getTime();
+      const now = new Date().getTime() + serverTimeOffset;
       const diff = Math.max(0, expiryTime - now);
-      const remainingSeconds = Math.floor(diff / 1000);
+      let remainingSeconds = Math.floor(diff / 1000);
+      
+      if (remainingSeconds > 600) remainingSeconds = 600; // clamp to 10 mins
+
       setTimeLeft(remainingSeconds);
       
       // Auto-aceptar si llega a 0 (Solo el receptor lo dispara para evitar conflictos)
@@ -568,7 +588,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     const interval = setInterval(updateTime, 1000);
 
     return () => clearInterval(interval);
-  }, [displayedCard]);
+  }, [displayedCard, serverTimeOffset]);
 
   useEffect(() => {
     const el = document.getElementById('cards-carousel');
@@ -593,6 +613,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
   const playCard = async (playerCard: any) => {
     const isDefense = playerCard.cards_master?.category === "DEFENSA";
+    const serverNow = new Date(Date.now() + serverTimeOffset).toISOString();
     
     if (isPending && isReceiver && isDefense) {
       // REFUERZO DE SEGURIDAD: Verificar si el ataque es imparable (ahora en la propia carta)
@@ -607,13 +628,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         setTimeout(() => setShowReflected(false), 3000);
         
         // 1. Descartar el espejo
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: new Date().toISOString() }).eq("id", playerCard.id);
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
         // 2. Cambiar dueño del ataque y resetear tiempo (el atacante ahora es el receptor)
-        await supabase.from("player_cards").update({ user_id: userId, played_at: new Date().toISOString() }).eq("id", displayedCard!.id);
+        await supabase.from("player_cards").update({ user_id: userId, played_at: serverNow }).eq("id", displayedCard!.id);
       } else {
         // Bloqueo normal: Consumir defensa y bloquear ataque
         await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard!.id);
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: new Date().toISOString() }).eq("id", playerCard.id);
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
       }
       
       setHand(hand.filter(c => c.id !== playerCard.id));
@@ -622,7 +643,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     }
 
     // CONSUMIR MODIFICADORES GLOBALES Y ASIGNARLOS A LA CARTA
-    const updates: any = { status: "pending", played_at: new Date().toISOString() };
+    const updates: any = { status: "pending", played_at: serverNow };
     const gameUpdates: any = {};
     
     if (game?.modifier_unblockable_by === userId && !isDefense) {
