@@ -753,6 +753,16 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                   onClick={async () => {
                     const granted = await requestNotificationPermission();
                     if (granted) {
+                      window.OneSignalDeferred = window.OneSignalDeferred || [];
+                      window.OneSignalDeferred.push(async function(OneSignal: any) {
+                        const pushId = OneSignal.User.PushSubscription.id;
+                        if (pushId && userId) {
+                          await supabase.from('push_subscriptions').upsert({
+                            user_id: userId,
+                            subscription: { onesignal_id: pushId }
+                          }, { onConflict: 'user_id' });
+                        }
+                      });
                       toast("¡Listo!", { message: "Notificaciones activadas.", type: "success" });
                     }
                   }}
@@ -876,21 +886,38 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     onClick={async () => { 
                       window.OneSignalDeferred = window.OneSignalDeferred || [];
                       window.OneSignalDeferred.push(async function(OneSignal: any) {
-                        if (isPushEnabled) {
-                          await OneSignal.User.PushSubscription.optOut();
-                          toast("Notificaciones desactivadas", { message: "Ya no recibirás alertas en este dispositivo.", type: 'info' });
-                        } else {
-                          // Intentar suscribir
-                          const permission = OneSignal.Notifications.permission;
-                          if (permission) {
-                            await OneSignal.User.PushSubscription.optIn();
-                            toast("Notificaciones reactivadas", { message: "¡Bienvenido de vuelta!", type: 'success' });
+                        try {
+                          if (isPushEnabled) {
+                            await OneSignal.User.PushSubscription.optOut();
+                            toast("Notificaciones desactivadas", { message: "Ya no recibirás alertas en este dispositivo.", type: 'info' });
                           } else {
-                            const granted = await requestNotificationPermission();
-                            if (granted) {
-                              toast("Notificaciones activadas", { message: "¡Perfecto! Ya no te perderás nada.", type: 'success' });
+                            // Asegurar identidad
+                            if (userId) await OneSignal.login(userId);
+                            
+                            const permission = OneSignal.Notifications.permission;
+                            if (permission) {
+                              await OneSignal.User.PushSubscription.optIn();
+                              
+                              // Sincronización forzada con Supabase
+                              const pushId = OneSignal.User.PushSubscription.id;
+                              if (pushId && userId) {
+                                await supabase.from('push_subscriptions').upsert({
+                                  user_id: userId,
+                                  subscription: { onesignal_id: pushId }
+                                }, { onConflict: 'user_id' });
+                              }
+                              
+                              toast("Notificaciones reactivadas", { message: "¡Bienvenido de vuelta!", type: 'success' });
+                            } else {
+                              const granted = await requestNotificationPermission();
+                              if (granted) {
+                                toast("Notificaciones activadas", { message: "¡Perfecto! Ya no te perderás nada.", type: 'success' });
+                              }
                             }
                           }
+                        } catch (err) {
+                          console.error("Error toggling push:", err);
+                          toast("Error", { message: "No se pudo cambiar el estado de las notificaciones.", type: 'error' });
                         }
                       });
                       setMenuOpen(false); 

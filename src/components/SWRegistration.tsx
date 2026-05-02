@@ -33,18 +33,19 @@ export function SWRegistration() {
 
         await syncSubscription();
 
-        // Escuchar cambios de suscripción en v16
+        // Escuchar cambios de suscripción en v16 (IDs, opt-in/out, etc)
         OneSignal.User.PushSubscription.addEventListener("change", async (event: any) => {
-          if (event.current.id) {
-            const onesignalId = event.current.id;
+          const onesignalId = event.current.id;
+          const isOptedIn = event.current.optedIn;
+          
+          if (onesignalId && isOptedIn) {
             const { data: { user } } = await supabase.auth.getUser();
-            
             if (user) {
               await supabase.from('push_subscriptions').upsert({
                 user_id: user.id,
                 subscription: { onesignal_id: onesignalId }
               }, { onConflict: 'user_id' });
-              console.log('OneSignal v16 sincronizado por cambio:', onesignalId);
+              console.log('OneSignal v16 sincronizado por cambio (activo):', onesignalId);
             }
           }
         });
