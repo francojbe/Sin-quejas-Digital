@@ -20,9 +20,16 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Solo manejamos fetch si es estrictamente necesario, 
-// para evitar errores de "Failed to convert value to Response"
+// Manejador de mensajes para satisfacer requisitos de navegadores (como Safari)
+// Debe registrarse en la evaluación inicial del script
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Solo manejamos fetch si es estrictamente necesario
 self.addEventListener('fetch', (event) => {
-  // Dejamos que las peticiones pasen de largo por defecto
-  return;
+  // Dejamos que las peticiones pasen de largo con una respuesta por defecto
+  // o simplemente no llamamos a event.respondWith() para que siga el curso normal
 });
