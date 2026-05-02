@@ -1026,14 +1026,17 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             )}
           </button>
 
-          {/* Perfil de usuario estilizado */}
+          {/* Perfil de usuario estilizado - Ahora interactivo */}
           {profile && (
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-2 sm:px-3 py-1.5 rounded-full shadow-lg backdrop-blur-md">
+            <button 
+              onClick={() => setShowProfileModal(true)}
+              className="flex items-center gap-2 bg-white/5 border border-white/10 px-2 sm:px-3 py-1.5 rounded-full shadow-lg backdrop-blur-md hover:bg-white/10 hover:scale-105 transition-all cursor-pointer group"
+            >
               <div className="hidden xs:flex flex-col items-end">
-                <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.2em] leading-none mb-1">Sesión</span>
+                <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.2em] leading-none mb-1 group-hover:text-common transition-colors">Sesión</span>
                 <span className="text-[10px] font-black text-white leading-none">{profile.display_name}</span>
               </div>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-common to-epic p-0.5 shadow-[0_0_15px_rgba(208,255,0,0.2)]">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-common to-epic p-0.5 shadow-[0_0_15px_rgba(208,255,0,0.2)] group-hover:shadow-[0_0_20px_rgba(208,255,0,0.4)] transition-all">
                 <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
                   {profile.avatar_url ? (
                     <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -1042,7 +1045,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                   )}
                 </div>
               </div>
-            </div>
+            </button>
           )}
         </div>
       </div>
