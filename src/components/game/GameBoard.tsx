@@ -81,6 +81,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [history, setHistory] = useState<any[]>([]);
   const [hasNewHistory, setHasNewHistory] = useState(false);
   const [serverTimeOffset, setServerTimeOffset] = useState<number>(0);
+  const [timeSynced, setTimeSynced] = useState(false);
 
   // Sync time with server
   useEffect(() => {
@@ -93,6 +94,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         const serverTime = new Date(data).getTime();
         const localTime = start + (rtt / 2);
         setServerTimeOffset(serverTime - localTime);
+        setTimeSynced(true);
+      } else {
+        // Fallback in case RPC fails
+        setTimeSynced(true); 
       }
     }
     syncTime();
@@ -374,20 +379,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       .limit(1)
       .single();
     
-    if (data) {
-      // Verificar si la carta ha expirado
-      if (data.status === 'pending' && data.played_at) {
-        const expiryTime = new Date(data.played_at).getTime() + 10 * 60 * 1000;
-        if (new Date().getTime() > expiryTime) {
-          await supabase.from("player_cards").update({ status: 'active' }).eq("id", data.id);
-          fetchLatestCard(gameId); // Recargar tras auto-aceptar
-          return;
-        }
-      }
-      setDisplayedCard(data as any);
-    } else {
-      setDisplayedCard(null);
-    }
+    setDisplayedCard(data ? (data as any) : null);
   }
 
   useEffect(() => {
@@ -574,12 +566,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       const diff = Math.max(0, expiryTime - now);
       let remainingSeconds = Math.floor(diff / 1000);
       
+      // Padding visual para que empiece exactamente en 10:00 el primer segundo
+      if (remainingSeconds >= 599) remainingSeconds = 600;
       if (remainingSeconds > 600) remainingSeconds = 600; // clamp to 10 mins
 
       setTimeLeft(remainingSeconds);
       
       // Auto-aceptar si llega a 0 (Solo el receptor lo dispara para evitar conflictos)
-      if (remainingSeconds <= 0 && displayedCard.user_id !== userId) {
+      if (remainingSeconds <= 0 && displayedCard.user_id !== userId && timeSynced) {
         handleAction('active');
       }
     };
@@ -588,7 +582,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     const interval = setInterval(updateTime, 1000);
 
     return () => clearInterval(interval);
-  }, [displayedCard, serverTimeOffset]);
+  }, [displayedCard, serverTimeOffset, timeSynced]);
 
   useEffect(() => {
     const el = document.getElementById('cards-carousel');
