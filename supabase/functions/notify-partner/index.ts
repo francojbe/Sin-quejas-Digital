@@ -27,16 +27,24 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'No OneSignal ID found' }), { status: 404 })
     }
 
-    console.log(`Intentando enviar notificación a User: ${user_id} con ID: ${sub.subscription.onesignal_id}`);
+    console.log(`[NOTIFY] Intentando enviar notificación a User: ${user_id} con ID OneSignal: ${sub.subscription.onesignal_id}`);
+
+    const osApiKey = Deno.env.get('ONESIGNAL_REST_API_KEY');
+    const osAppId = Deno.env.get('NEXT_PUBLIC_ONESIGNAL_APP_ID');
+
+    if (!osApiKey || !osAppId) {
+      console.error("[NOTIFY] Error: Faltan secretos ONESIGNAL_REST_API_KEY o NEXT_PUBLIC_ONESIGNAL_APP_ID");
+      return new Response(JSON.stringify({ error: 'Configuración incompleta en Supabase Secrets' }), { status: 500 });
+    }
 
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Authorization": "Key os_v2_app_o2w6xa6c3rfx5nybvcfev7nzivb32225iq2uqkuh2h3o3lqhfvuno2gmh727owisao6cerrvf7nw6iggrh5ornth6a4cyc6xrx5633a"
+        "Authorization": `Key ${osApiKey}`
       },
       body: JSON.stringify({
-        app_id: "76adeb83-c2dc-4b7e-b701-a88a4afdb945",
+        app_id: osAppId,
         include_subscription_ids: [sub.subscription.onesignal_id],
         contents: { "en": body, "es": body },
         headings: { "en": title, "es": title },
@@ -45,10 +53,15 @@ serve(async (req) => {
     })
 
     const result = await response.json()
-    console.log("OneSignal Response Details:", JSON.stringify(result))
+    console.log("[NOTIFY] Respuesta de OneSignal:", JSON.stringify(result))
     
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (!response.ok) {
+      console.error("[NOTIFY] Error en OneSignal:", response.status, result)
+    }
+
+    return new Response(JSON.stringify({ success: response.ok, onesignal: result }), {
+      status: response.status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { 
