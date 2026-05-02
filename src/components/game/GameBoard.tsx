@@ -480,12 +480,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         table: 'games',
         filter: `couple_id=eq.${coupleId}`,
       }, (payload) => {
-        // Solo recargar si cambia el estado o se crea un juego nuevo
-        // Esto evita el bucle infinito con auto_finalize_games
-        const oldStatus = (payload.old as any)?.status;
         const newStatus = (payload.new as any)?.status;
         
-        if (payload.eventType === 'INSERT' || (oldStatus && newStatus && oldStatus !== newStatus)) {
+        if (payload.eventType === 'INSERT' || newStatus === 'finished' || newStatus === 'pending_start') {
           fetchGame();
         }
       })
@@ -559,6 +556,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       }, (payload: any) => {
         const oldGame = game;
         const newGame = payload.new;
+        
+        if (newGame.status === 'finished' || newGame.status === 'pending_start') {
+          // No setear el juego directo aquí. La suscripción 'game_creation' 
+          // disparará fetchGame() que limpiará todo correctamente (cartas, manos, etc).
+          return;
+        }
+        
         setGame(newGame);
 
         // Notificaciones de Solicitudes (Partner Request)
