@@ -78,6 +78,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
   const [showPartnerModal, setShowPartnerModal] = useState(false);
   const [partnerProfile, setPartnerProfile] = useState<any>(null);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -2056,7 +2057,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
               <div className="p-6 space-y-8 overflow-y-auto max-h-[70vh]">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-common to-epic p-1 shadow-[0_0_30px_rgba(208,255,0,0.3)]">
+                  <button 
+                    onClick={() => setZoomedImage(partnerProfile.avatar_url)}
+                    className="w-32 h-32 rounded-full bg-gradient-to-br from-common to-epic p-1 shadow-[0_0_30px_rgba(208,255,0,0.3)] hover:scale-105 transition-transform cursor-zoom-in"
+                  >
                     <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
                       {partnerProfile.avatar_url ? (
                         <img src={partnerProfile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -2064,7 +2068,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         <User size={40} className="text-common" />
                       )}
                     </div>
-                  </div>
+                  </button>
                   <div className="text-center">
                     <h3 className="text-2xl font-black text-white">{partnerProfile.display_name}</h3>
                     <div className="flex items-center justify-center gap-3 mt-1">
@@ -2111,6 +2115,41 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Capa de Zoom de Imagen Fullscreen */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setZoomedImage(null)}
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/95 backdrop-blur-xl cursor-zoom-out p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 20 }}
+              className="relative max-w-4xl w-full aspect-square flex items-center justify-center"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-common/20 to-epic/20 rounded-full blur-[100px] animate-pulse" />
+              <img 
+                src={zoomedImage} 
+                alt="Zoomed Profile" 
+                className="relative z-10 w-full h-full object-contain rounded-3xl shadow-2xl border border-white/10"
+              />
+              <div className="absolute top-4 right-4 z-20">
+                <div className="bg-black/50 backdrop-blur-md p-3 rounded-full text-white/50 border border-white/10">
+                  <X size={24} />
+                </div>
+              </div>
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border border-white/10">
+                <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Click para cerrar</span>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
