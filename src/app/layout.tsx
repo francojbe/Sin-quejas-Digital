@@ -66,21 +66,7 @@ export default function RootLayout({
                   appId: "76adeb83-c2dc-4b7e-b701-a88a4afdb945",
                   safari_web_id: "web.onesignal.auto.364542e4-0165-4e49-b6eb-0136f3f4eaa9",
                   notifyButton: {
-                    enable: true,
-                    text: {
-                      'tip.state.unsubscribed': 'Suscríbete a las notificaciones',
-                      'tip.state.subscribed': 'Estás suscrito a las notificaciones',
-                      'tip.state.blocked': 'Has bloqueado las notificaciones',
-                      'message.prenotify': 'Haz clic para suscribirte a las notificaciones',
-                      'message.action.subscribed': '¡Gracias por suscribirte!',
-                      'message.action.resubscribed': 'Estás suscrito a las notificaciones',
-                      'message.action.unsubscribed': 'Ya no recibirás notificaciones',
-                      'dialog.main.title': 'Administrar notificaciones',
-                      'dialog.main.button.subscribe': 'SUSCRIBIRSE',
-                      'dialog.main.button.unsubscribe': 'DESUSCRIBIRSE',
-                      'dialog.blocked.title': 'Desbloquear notificaciones',
-                      'dialog.blocked.message': 'Sigue estas instrucciones para permitir las notificaciones:'
-                    }
+                    enable: false,
                   },
                   allowLocalhostAsSecureOrigin: true,
                   serviceWorkerPath: 'OneSignalSDKWorker.js',

@@ -82,6 +82,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [hasNewHistory, setHasNewHistory] = useState(false);
   const [serverTimeOffset, setServerTimeOffset] = useState<number>(0);
   const [timeSynced, setTimeSynced] = useState(false);
+  const [isPushEnabled, setIsPushEnabled] = useState<boolean>(true); // Default true to avoid flash
 
   // Sync time with server
   useEffect(() => {
@@ -101,6 +102,24 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       }
     }
     syncTime();
+  }, []);
+
+  // OneSignal Status Tracking
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const checkStatus = () => {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(async function(OneSignal: any) {
+        setIsPushEnabled(OneSignal.User.PushSubscription.optedIn);
+        
+        OneSignal.User.PushSubscription.addEventListener("change", (event: any) => {
+          setIsPushEnabled(event.current.optedIn);
+        });
+      });
+    };
+
+    checkStatus();
   }, []);
 
   // Realtime History Notifications
@@ -710,6 +729,42 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     <div className="w-full h-[100dvh] flex flex-col gap-0.5 overflow-hidden px-1 pt-1">
       {/* HEADER con menú hamburguesa */}
       <div className="shrink-0 flex items-center justify-between px-1">
+        {/* Banner de Notificaciones Rápidas */}
+        <AnimatePresence>
+          {!isPushEnabled && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-[60px] left-4 right-4 z-[150]"
+            >
+              <div className="glass border border-epic/30 rounded-2xl p-3 shadow-[0_8px_32px_rgba(0,0,0,0.4)] flex items-center justify-between gap-3 overflow-hidden relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-epic/10 to-transparent opacity-50" />
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className="w-8 h-8 rounded-full bg-epic/20 flex items-center justify-center animate-pulse">
+                    <Bell size={14} className="text-epic" />
+                  </div>
+                  <div>
+                    <h4 className="text-[9px] font-black uppercase tracking-widest text-white">Push Desactivado</h4>
+                    <p className="text-[8px] text-white/50 font-medium">Habilita para ver jugadas.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={async () => {
+                    const granted = await requestNotificationPermission();
+                    if (granted) {
+                      toast("¡Listo!", { message: "Notificaciones activadas.", type: "success" });
+                    }
+                  }}
+                  className="relative z-10 px-3 py-1.5 rounded-lg bg-epic text-white text-[9px] font-black uppercase tracking-tighter hover:scale-105 active:scale-95 transition-all shadow-[0_4px_12px_rgba(168,85,247,0.3)]"
+                >
+                  Activar
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Left: Logo + Menú */}
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -817,8 +872,28 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     <span className="text-[10px] font-black uppercase tracking-widest">Editar Perfil</span>
                   </button>
 
+                  <button
+                    onClick={async () => { 
+                      if (isPushEnabled) {
+                        toast("Ya estás suscrito", { message: "Recibirás alertas en tiempo real.", type: 'info' });
+                      } else {
+                        const granted = await requestNotificationPermission();
+                        if (granted) {
+                          toast("Notificaciones activadas", { message: "¡Perfecto! Ya no te perderás nada.", type: 'success' });
+                        }
+                      }
+                      setMenuOpen(false); 
+                    }}
+                    className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
+                  >
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isPushEnabled ? 'bg-common/20' : 'bg-white/5 group-hover:bg-epic/20'}`}>
+                      <Bell size={14} className={isPushEnabled ? 'text-common' : 'group-hover:text-epic transition-colors'} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      {isPushEnabled ? 'Push Activo' : 'Activar Push'}
+                    </span>
+                  </button>
 
-                  
                   <button
                     onClick={() => { setMenuOpen(false); onLogout?.(); }}
                     className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-red-500/10 text-white/60 hover:text-red-400 transition-all"
