@@ -31,18 +31,19 @@ serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Authorization": "Basic os_v2_app_o2w6xa6c3rfx5nybvcfev7nziwypo36rxneu2x54ry5nfbx5guaitu7oq3q3p4k4c2a7lf32nb2rkvn6qj7itsepqlp2j6tcfamxxwa"
+        "Authorization": "Key os_v2_app_o2w6xa6c3rfx5nybvcfev7nzivb32225iq2uqkuh2h3o3lqhfvuno2gmh727owisao6cerrvf7nw6iggrh5ornth6a4cyc6xrx5633a"
       },
       body: JSON.stringify({
         app_id: "76adeb83-c2dc-4b7e-b701-a88a4afdb945",
-        include_player_ids: [sub.subscription.onesignal_id],
+        include_subscription_ids: [sub.subscription.onesignal_id],
         contents: { "en": body, "es": body },
         headings: { "en": title, "es": title },
-        url: "https://sin-quejas.digital"
+        url: "https://recuperadora-sinquejas.nojauc.easypanel.host/"
       })
     })
 
     const result = await response.json()
+    console.log("OneSignal Response:", result)
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -817,23 +817,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     <span className="text-[10px] font-black uppercase tracking-widest">Editar Perfil</span>
                   </button>
 
-                  <button
-                    onClick={async () => { 
-                      const granted = await requestNotificationPermission();
-                      if (granted) {
-                        toast("Notificaciones activadas", { message: "Recibirás alertas incluso con la app cerrada.", type: 'success' });
-                      } else {
-                        toast("Permiso denegado", { message: "No podremos enviarte notificaciones push.", type: 'error' });
-                      }
-                      setMenuOpen(false); 
-                    }}
-                    className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-epic/20 transition-colors">
-                      <Bell size={14} className="group-hover:text-epic transition-colors" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Activar Push</span>
-                  </button>
+
                   
                   <button
                     onClick={() => { setMenuOpen(false); onLogout?.(); }}
