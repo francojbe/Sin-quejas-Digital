@@ -78,10 +78,11 @@ async function initOneSignalNative() {
         }
       }, 4000);
     }
-  } catch (e) {
+  } catch (e: any) {
     alert("Error OneSignal: " + e.message);
   }
 }
+
 
 export async function loginOneSignalNative(userId: string) {
   const win = window as any;
