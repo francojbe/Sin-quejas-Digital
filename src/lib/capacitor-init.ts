@@ -11,8 +11,7 @@ export async function initNativePlugins() {
   if (!Capacitor.isNativePlatform()) return;
 
   try {
-    // ALERTA DE PRUEBA: Si no ves esto, la app tiene código viejo
-    alert("🚀 Sin Quejas Digital: Cargando plugins nativos v2...");
+    console.log('[Native] Inicializando plugins...');
     
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: '#050505' });
@@ -25,7 +24,6 @@ export async function initNativePlugins() {
     
   } catch (error) {
     console.error('[Native] Error:', error);
-    alert("Error Init: " + JSON.stringify(error));
   }
 }
 
@@ -44,7 +42,7 @@ async function initOneSignalNative() {
   const OneSignal = win.plugins?.OneSignal;
 
   if (!OneSignal) {
-    alert("⚠️ Error: Plugin OneSignal no encontrado. ¿Hiciste cap sync?");
+    console.error('[OneSignal] Plugin no encontrado');
     return;
   }
 
@@ -56,52 +54,65 @@ async function initOneSignalNative() {
     if (accepted) {
       await OneSignal.User.pushSubscription.optIn();
       
-      // Obtener el ID
+      // Intentar registro inicial si ya hay sesión
       setTimeout(async () => {
         const nativeSubId = OneSignal.User.pushSubscription.id;
         if (nativeSubId) {
-          alert("ID Nativo detectado: " + nativeSubId.substring(0, 8) + "...");
-          
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
-            const { error } = await supabase.from('push_subscriptions').upsert({
-              user_id: user.id,
-              subscription: { onesignal_id: nativeSubId },
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id' });
-
-            if (!error) alert("✅ Registro exitoso en Supabase");
-            else alert("❌ Error Supabase: " + error.message);
+            await saveNativeSubscription(user.id, nativeSubId);
           }
-        } else {
-          alert("⚠️ No se pudo obtener el ID de OneSignal todavía.");
         }
-      }, 4000);
+      }, 5000);
     }
-  } catch (e: any) {
-    alert("Error OneSignal: " + e.message);
+  } catch (e) {
+    console.error('[OneSignal] Error:', e);
   }
 }
 
+async function saveNativeSubscription(userId: string, subscriptionId: string) {
+  try {
+    const { error } = await supabase.from('push_subscriptions').upsert({
+      user_id: userId,
+      subscription: { onesignal_id: subscriptionId },
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
 
+    if (!error) {
+      console.log('[OneSignal] Registro nativo exitoso en Supabase');
+    } else {
+      console.error('[OneSignal] Error Supabase:', error.message);
+    }
+  } catch (e) {
+    console.error('[OneSignal] Error en saveNativeSubscription:', e);
+  }
+}
+
+// Vincular el usuario de Supabase con OneSignal + guardar subscription ID nativo
 export async function loginOneSignalNative(userId: string) {
   const win = window as any;
   const OneSignal = win.plugins?.OneSignal;
   if (!OneSignal) return;
   
   try {
+    console.log('[OneSignal] Vinculando usuario:', userId);
     await OneSignal.login(userId);
+    
+    // Esperar a que OneSignal procese el login y genere/actualice la subscripción
     setTimeout(async () => {
       const nativeSubId = OneSignal.User.pushSubscription.id;
       if (nativeSubId) {
-        await supabase.from('push_subscriptions').upsert({
-          user_id: userId,
-          subscription: { onesignal_id: nativeSubId },
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
+        await saveNativeSubscription(userId, nativeSubId);
+      } else {
+        console.warn('[OneSignal] No se obtuvo ID nativo tras login, reintentando...');
+        // Segundo reintento
+        setTimeout(async () => {
+          const retryId = OneSignal.User.pushSubscription.id;
+          if (retryId) await saveNativeSubscription(userId, retryId);
+        }, 5000);
       }
-    }, 5000);
+    }, 3000);
   } catch (e) {
-    console.error('[OneSignal] Error login:', e);
+    console.error('[OneSignal] Error en login:', e);
   }
 }
