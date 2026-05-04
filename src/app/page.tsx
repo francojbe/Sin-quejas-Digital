@@ -7,6 +7,7 @@ import { GameBoard } from "@/components/game/GameBoard";
 import { Loader2, LogOut } from "lucide-react";
 import { Profile } from "@/types";
 import { useRouter } from "next/navigation";
+import { loginOneSignalNative } from "@/lib/capacitor-init";
 
 export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -28,12 +29,17 @@ export default function Home() {
         .eq("id", user.id)
         .single();
 
-      if (data) setProfile(data);
+      if (data) {
+        setProfile(data);
+        // Vincular usuario a OneSignal nativo en Android
+        loginOneSignalNative(user.id);
+      }
       setLoading(false);
     }
 
     getProfile();
   }, [router]);
+
 
   useEffect(() => {
     if (!profile) return;
