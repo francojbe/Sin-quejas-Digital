@@ -22,30 +22,41 @@ export function TutorialOverlay({ steps, onComplete }: TutorialOverlayProps) {
 
   const step = steps[currentStep];
 
-  // Actualizar coordenadas del elemento iluminado
+  // Bucle de actualización continua para seguir al elemento
   useEffect(() => {
-    if (step.targetId) {
-      const updateCoords = () => {
-        const el = document.getElementById(step.targetId!);
+    let animationFrameId: number;
+    
+    const update = () => {
+      if (step.targetId) {
+        const el = document.getElementById(step.targetId);
         if (el) {
           const rect = el.getBoundingClientRect();
-          setCoords({
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height,
-            padding: 10
+          // Solo actualizar si hay cambios significativos para evitar re-renders innecesarios
+          setCoords(prev => {
+            if (prev && 
+                Math.abs(prev.top - rect.top) < 1 && 
+                Math.abs(prev.left - rect.left) < 1 &&
+                prev.width === rect.width) {
+              return prev;
+            }
+            return {
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height,
+              padding: 10
+            };
           });
         }
-      };
+      } else {
+        setCoords(null);
+      }
+      animationFrameId = requestAnimationFrame(update);
+    };
 
-      updateCoords();
-      window.addEventListener('resize', updateCoords);
-      return () => window.removeEventListener('resize', updateCoords);
-    } else {
-      setCoords(null);
-    }
-  }, [step, currentStep]);
+    update();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [step.targetId, currentStep]);
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -61,9 +72,40 @@ export function TutorialOverlay({ steps, onComplete }: TutorialOverlayProps) {
     }
   };
 
+  // Lógica para posicionar el modal sin que se desborde
+  const modalStyle = useMemo(() => {
+    if (step.position === 'center' || !coords) return {};
+
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
+    
+    // Márgenes de seguridad
+    const margin = 20;
+    
+    let style: React.CSSProperties = {
+      position: 'absolute',
+      left: '50%',
+      width: 'calc(100vw - 40px)',
+      maxWidth: '320px',
+      transform: 'translateX(-50%)',
+    };
+
+    if (step.position === 'top') {
+      style.bottom = (viewportHeight - coords.top) + margin;
+    } else if (step.position === 'bottom') {
+      style.top = (coords.top + coords.height) + margin;
+    } else {
+      // Si está en el centro o algo falla
+      style.top = '50%';
+      style.transform = 'translate(-50%, -50%)';
+    }
+
+    return style;
+  }, [coords, step.position]);
+
   return (
-    <div className="fixed inset-0 z-[1000] pointer-events-none">
-      {/* Overlay Oscuro con Recorte (Clip Path) */}
+    <div className="fixed inset-0 z-[9999] pointer-events-none">
+      {/* Overlay Oscuro */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -76,30 +118,21 @@ export function TutorialOverlay({ steps, onComplete }: TutorialOverlayProps) {
       />
 
       {/* Contenedor del Mensaje */}
-      <div className="absolute inset-0 flex items-center justify-center p-6">
+      <div className="relative w-full h-full">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.9 }}
-            className={`
-              pointer-events-auto
-              max-w-xs w-full glass-card p-6 rounded-[32px] border border-white/20 shadow-2xl flex flex-col gap-4
-              ${step.position === 'center' ? '' : 'absolute'}
-            `}
-            style={step.position !== 'center' && coords ? {
-              top: step.position === 'bottom' ? coords.top + coords.height + 40 : 'auto',
-              bottom: step.position === 'top' ? (window.innerHeight - coords.top) + 40 : 'auto',
-              left: '50%',
-              transform: 'translateX(-50%)'
-            } : {}}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            className="pointer-events-auto glass-card p-6 rounded-[32px] border border-white/20 shadow-2xl flex flex-col gap-4"
+            style={modalStyle}
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-common/20 flex items-center justify-center">
                 <Sparkles size={16} className="text-common" />
               </div>
-              <h3 className="text-lg font-black text-white uppercase tracking-tighter">{step.title}</h3>
+              <h3 className="text-lg font-black text-white uppercase tracking-tighter leading-none">{step.title}</h3>
             </div>
 
             <p className="text-sm text-white/70 leading-relaxed font-medium">
@@ -107,9 +140,9 @@ export function TutorialOverlay({ steps, onComplete }: TutorialOverlayProps) {
             </p>
 
             <div className="flex items-center justify-between mt-2">
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 {steps.map((_, i) => (
-                  <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentStep ? 'bg-common w-4' : 'bg-white/20'}`} />
+                  <div key={i} className={`h-1 rounded-full transition-all ${i === currentStep ? 'bg-common w-5' : 'bg-white/10 w-2'}`} />
                 ))}
               </div>
 
@@ -124,7 +157,7 @@ export function TutorialOverlay({ steps, onComplete }: TutorialOverlayProps) {
                   className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-common text-black font-black uppercase text-[10px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
                 >
                   {currentStep === steps.length - 1 ? (
-                    <>Comenzar <Check size={14} /></>
+                    <>Entendido <Check size={14} /></>
                   ) : (
                     <>Siguiente <ChevronRight size={14} /></>
                   )}
@@ -138,15 +171,16 @@ export function TutorialOverlay({ steps, onComplete }: TutorialOverlayProps) {
       {/* Brillo en el elemento enfocado */}
       {coords && (
         <motion.div 
-          layoutId="spotlight"
-          className="absolute border-2 border-common/50 rounded-2xl pointer-events-none shadow-[0_0_50px_rgba(208,255,0,0.3)]"
+          key={`spotlight-${step.targetId}`}
+          layoutId="spotlight-border"
+          className="absolute border-2 border-common/50 rounded-2xl pointer-events-none shadow-[0_0_30px_rgba(208,255,0,0.2)]"
           style={{
             top: coords.top - coords.padding,
             left: coords.left - coords.padding,
             width: coords.width + (coords.padding * 2),
             height: coords.height + (coords.padding * 2),
           }}
-          animate={{ scale: [1, 1.02, 1] }}
+          animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 2, repeat: Infinity }}
         />
       )}

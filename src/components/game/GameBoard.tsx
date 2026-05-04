@@ -2368,44 +2368,38 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         <TutorialOverlay 
           steps={[
             {
-              title: "¡Bienvenido a Sin Quejas!",
-              content: "Prepárate para fortalecer tu vínculo con desafíos divertidos. Empecemos el tour.",
+              title: "¡Bienvenido! 🔥",
+              content: "Fortalece tu vínculo con retos divertidos.",
               position: "center"
             },
             {
-              targetId: "tutorial-history",
-              title: "Memoria de Pareja",
-              content: "Aquí podrás ver todos los desafíos que habéis lanzado y aceptado. ¡No pierdas el hilo!",
+              targetId: "tutorial-status",
+              title: "Tu Progreso",
+              content: "Mira vuestro nivel y conexión aquí.",
               position: "bottom"
             },
             {
               targetId: "tutorial-center-area",
-              title: "El Centro de la Acción",
-              content: "Aquí aparecerán las cartas que te lance tu pareja. Es el corazón del juego.",
+              title: "Desafío Actual",
+              content: "Aquí verás lo que tu pareja te lanza.",
               position: "bottom"
             },
             {
               targetId: "tutorial-timer",
-              title: "El Tiempo Corre",
-              content: "Tienes 10 minutos para reaccionar a un desafío. Si no lo haces, la carta se perderá.",
-              position: "bottom"
-            },
-            {
-              targetId: "tutorial-action-buttons",
-              title: "Toma una Decisión",
-              content: "Acepta el reto para activarlo o usa una carta de defensa si la tienes en tu mano.",
+              title: "Temporizador",
+              content: "Tienes 10 minutos para reaccionar.",
               position: "bottom"
             },
             {
               targetId: "tutorial-deck",
-              title: "Tu Mazo Místico",
-              content: "Desliza y elige tu próximo movimiento. ¡Lanza desafíos a tu pareja para ganar puntos!",
+              title: "Tu Mano",
+              content: "Elige una carta y lánzala para jugar.",
               position: "top"
             },
             {
-              targetId: "tutorial-status",
-              title: "Vínculo Sincronizado",
-              content: "Mira el progreso de vuestra partida y si tu pareja está en línea en tiempo real.",
+              targetId: "tutorial-history",
+              title: "Historial",
+              content: "Revisa todas vuestras jugadas pasadas.",
               position: "bottom"
             }
           ]}
