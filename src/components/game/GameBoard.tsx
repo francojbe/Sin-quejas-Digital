@@ -310,7 +310,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     setLoading(true);
     const { data, error } = await supabase.rpc('steal_random_card', { 
       game_id_in: game.id,
-      player_card_id: displayedCard.id 
+      player_card_id: displayedCard?.id 
     });
     
     if (error) {
@@ -329,7 +329,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     setLoading(true);
     const { data, error } = await supabase.rpc('swap_game_hands', { 
       game_id_in: game.id,
-      player_card_id: displayedCard.id 
+      player_card_id: displayedCard?.id 
     });
     
     if (error) {
@@ -346,7 +346,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     setLoading(true);
     const { data, error } = await supabase.rpc('resurrect_discarded_cards', { 
       game_id_in: game.id,
-      player_card_id: displayedCard.id 
+      player_card_id: displayedCard?.id 
     });
     
     if (error) {
@@ -363,7 +363,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     setLoading(true);
     const { data, error } = await supabase.rpc('freeze_game', { 
       game_id_in: game.id,
-      player_card_id: displayedCard.id 
+      player_card_id: displayedCard?.id 
     });
     
     if (error) {
@@ -693,11 +693,11 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
   // El temporizador se maneja ahora mediante un useEffect reactivo
   useEffect(() => {
-    if (!displayedCard || displayedCard.status !== 'pending' || !displayedCard.played_at) {
+    if (!displayedCard || displayedCard?.status !== 'pending' || !displayedCard?.played_at) {
       return;
     }
 
-    const expiryTime = new Date(displayedCard.played_at).getTime() + 10 * 60 * 1000;
+    const expiryTime = new Date(displayedCard?.played_at || 0).getTime() + 10 * 60 * 1000;
     
     // Función para actualizar inmediatamente al montar
     const updateTime = () => {
@@ -712,7 +712,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       setTimeLeft(remainingSeconds);
       
       // Auto-aceptar si llega a 0 (Solo el receptor lo dispara para evitar conflictos)
-      if (remainingSeconds <= 0 && displayedCard.user_id !== userId && timeSynced) {
+      if (remainingSeconds <= 0 && displayedCard?.user_id !== userId && timeSynced) {
         handleAction('active');
       }
     };
@@ -763,10 +763,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         // 1. Descartar el espejo
         await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
         // 2. Cambiar dueño del ataque y resetear tiempo (el atacante ahora es el receptor)
-        await supabase.from("player_cards").update({ user_id: userId, played_at: serverNow }).eq("id", displayedCard!.id);
+        await supabase.from("player_cards").update({ user_id: userId, played_at: serverNow }).eq("id", displayedCard?.id);
       } else {
         // Bloqueo normal: Consumir defensa y bloquear ataque
-        await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard!.id);
+        await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard?.id);
         await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
       }
       
@@ -816,7 +816,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       const { error: updateError } = await supabase
         .from("player_cards")
         .update({ status })
-        .eq("id", displayedCard.id);
+        .eq("id", displayedCard?.id);
       
       if (updateError) throw updateError;
 
@@ -827,9 +827,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           game_id: game.id,
           user_id: userId,
           action_type: status === 'active' ? 'ACCEPTED' : 'BLOCKED',
-          card_id: displayedCard.card_id,
+          card_id: displayedCard?.card_id,
           metadata: { 
-            card_title: displayedCard.cards_master?.title,
+            card_title: displayedCard?.cards_master?.title,
             message: status === 'active' ? 'ha aceptado el desafío' : 'ha bloqueado el desafío'
           }
         });
@@ -847,7 +847,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           body: JSON.stringify({
             user_id: partnerId,
             title: status === 'active' ? "¡Desafío Aceptado! 🔥" : "Desafío Bloqueado 🛡️",
-            body: `${profile?.display_name || 'Tu pareja'} ${status === 'active' ? 'ha aceptado' : 'ha bloqueado'} tu carta: ${displayedCard.cards_master?.title}`
+            body: `${profile?.display_name || 'Tu pareja'} ${status === 'active' ? 'ha aceptado' : 'ha bloqueado'} tu carta: ${displayedCard?.cards_master?.title}`
           })
         }).catch(err => console.error("Error notifying partner:", err));
       }
@@ -1789,10 +1789,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     <div className="flex items-center gap-2 px-4 py-1.5 bg-common/10 rounded-full border border-common/20">
                       <CheckCircle2 size={14} className="text-common" />
                       <span className="text-[10px] font-black text-common uppercase tracking-widest">
-                        {displayedCard.status === 'discarded' ? 'Carta Descartada/Bloqueada' : 'Carta Aceptada'}
+                        {displayedCard?.status === 'discarded' ? 'Carta Descartada/Bloqueada' : 'Carta Aceptada'}
                       </span>
                     </div>
-                    {displayedCard.cards_master?.id === 54 && !isReceiver && displayedCard.status === 'active' && (
+                    {displayedCard?.cards_master?.id === 54 && !isReceiver && displayedCard?.status === 'active' && (
                       <button 
                         onClick={fetchPartnerHand}
                         className="bg-epic text-white font-black uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:shadow-[0_0_30_rgba(168,85,247,0.6)] hover:scale-105 transition-all animate-pulse"
@@ -1800,7 +1800,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         Echar un vistazo al mazo
                       </button>
                     )}
-                    {displayedCard.cards_master?.id === 51 && !isReceiver && displayedCard.status === 'active' && (
+                    {displayedCard?.cards_master?.id === 51 && !isReceiver && displayedCard?.status === 'active' && (
                       <button 
                         onClick={handleStealCard}
                         className="bg-common text-black font-black uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(208,255,0,0.4)] hover:shadow-[0_0_30px_rgba(208,255,0,0.6)] hover:scale-105 transition-all animate-pulse"
@@ -1808,7 +1808,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         ¡Robar Carta!
                       </button>
                     )}
-                    {displayedCard.cards_master?.id === 55 && !isReceiver && displayedCard.status === 'active' && (
+                    {displayedCard?.cards_master?.id === 55 && !isReceiver && displayedCard?.status === 'active' && (
                       <button 
                         onClick={handleSwapHands}
                         className="bg-rare text-white font-black uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:scale-105 transition-all animate-pulse"
@@ -1816,7 +1816,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         ¡Intercambiar Manos!
                       </button>
                     )}
-                    {displayedCard.cards_master?.id === 59 && !isReceiver && displayedCard.status === 'active' && (
+                    {displayedCard?.cards_master?.id === 59 && !isReceiver && displayedCard?.status === 'active' && (
                       <button 
                         onClick={handleResurrection}
                         className="bg-epic text-white font-black uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:scale-105 transition-all animate-pulse"
@@ -1824,7 +1824,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         ¡Resucitar Cartas!
                       </button>
                     )}
-                    {displayedCard.cards_master?.id === 52 && !isReceiver && displayedCard.status === 'active' && (
+                    {displayedCard?.cards_master?.id === 52 && !isReceiver && displayedCard?.status === 'active' && (
                       <button 
                         onClick={handleFreezeGame}
                         className="bg-blue-400 text-white font-black uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(96,165,250,0.4)] hover:shadow-[0_0_30px_rgba(96,165,250,0.6)] hover:scale-105 transition-all animate-pulse"
@@ -1832,7 +1832,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         ¡Congelar Juego!
                       </button>
                     )}
-                    {displayedCard.cards_master?.id === 58 && !isReceiver && displayedCard.status === 'active' && (
+                    {displayedCard?.cards_master?.id === 58 && !isReceiver && displayedCard?.status === 'active' && (
                       <button 
                         onClick={() => handleActivateModifier('unblockable')}
                         className="bg-red-500 text-white font-black uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:shadow-[0_0_30px_rgba(239,68,68,0.6)] hover:scale-105 transition-all animate-pulse"
@@ -1840,7 +1840,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         ¡Activar Ataque Imparable!
                       </button>
                     )}
-                    {displayedCard.cards_master?.id === 56 && !isReceiver && displayedCard.status === 'active' && (
+                    {displayedCard?.cards_master?.id === 56 && !isReceiver && displayedCard?.status === 'active' && (
                       <button 
                         onClick={() => handleActivateModifier('double')}
                         className="bg-common text-black font-black uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(208,255,0,0.4)] hover:shadow-[0_0_30px_rgba(208,255,0,0.6)] hover:scale-105 transition-all animate-pulse"
