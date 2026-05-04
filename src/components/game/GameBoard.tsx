@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useToast, ToastType } from "@/lib/contexts/ToastContext";
 import { requestNotificationPermission } from "@/components/SWRegistration";
 import { GameCompletion } from "./GameCompletion";
+import { TutorialOverlay } from "./TutorialOverlay";
 
 const HeartsSpinner = () => {
   return (
@@ -86,6 +87,29 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [history, setHistory] = useState<any[]>([]);
   const [hasNewHistory, setHasNewHistory] = useState(false);
   const [achievementsCount, setAchievementsCount] = useState(0);
+
+  // Tutorial State
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    if (profile && profile.has_seen_tutorial === false && game?.status === 'active') {
+      // Solo mostramos el tutorial si ya hay un juego activo (para que el contexto sea real)
+      setShowTutorial(true);
+    }
+  }, [profile, game?.status]);
+
+  const completeTutorial = async () => {
+    setShowTutorial(false);
+    if (userId) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ has_seen_tutorial: true })
+        .eq('id', userId);
+      
+      if (error) console.error("Error updating tutorial status:", error);
+      if (onProfileUpdate) onProfileUpdate();
+    }
+  };
 
   const handleFinishGame = async () => {
     if (!game) return;
@@ -1159,6 +1183,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         <div className="flex items-center gap-1 sm:gap-3">
           {/* Subtle History Bell */}
           <button 
+            id="tutorial-history"
             onClick={() => { 
               fetchHistory(); 
               setShowHistory(true); 
@@ -1477,7 +1502,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         <div className="fixed inset-0 z-[99]" onClick={() => setMenuOpen(false)} />
       )}
 
-      <div className="shrink-0">
+      <div className="shrink-0" id="tutorial-status">
         <GameStatus 
           day={game?.current_day || 1} 
           totalDays={game?.duration_days || 30} 
@@ -1678,9 +1703,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         </AnimatePresence>
 
         <AnimatePresence mode="wait">
-          {displayedCard ? (
+          {(displayedCard || (showTutorial)) ? (
             <motion.div
-              key={displayedCard.id + displayedCard.status}
+              id="tutorial-center-area"
+              key={displayedCard?.id || 'tutorial-ghost-card'}
               initial={{ scale: 0.3, opacity: 0, y: 100 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0, opacity: 0 }}
@@ -1705,9 +1731,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               </div>
 
               <CartaNaipe 
-                title={displayedCard.cards_master?.title || 'Carta'} 
-                description={displayedCard.cards_master?.description || '...'} 
-                rarity={(displayedCard.cards_master?.rarity as any) || 'common'} 
+                title={showTutorial ? "Cena Romántica" : (displayedCard?.cards_master?.title || 'Carta')} 
+                description={showTutorial ? "Una noche especial para reconectar y disfrutar juntos." : (displayedCard?.cards_master?.description || '...')} 
+                rarity={showTutorial ? 'rare' : ((displayedCard?.cards_master?.rarity as any) || 'common')} 
               />
               
               {/* Sticker de Doble Reto */}
@@ -1739,13 +1765,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               <div className="flex flex-col items-center gap-2">
                 {isPending ? (
                   <>
-                    <div className="flex items-center gap-2 px-3 py-1 glass rounded-full border border-white/10">
+                    <div id="tutorial-timer" className="flex items-center gap-2 px-3 py-1 glass rounded-full border border-white/10">
                       <Clock size={12} className={timeLeft < 60 ? "text-red-500 animate-pulse" : "text-common"} />
-                      <span className="text-sm font-mono font-black text-white">{minutes}:{seconds.toString().padStart(2, '0')}</span>
+                      <span className="text-sm font-mono font-black text-white">{showTutorial ? "10:00" : `${minutes}:${seconds.toString().padStart(2, '0')}`}</span>
                     </div>
                     {isReceiver && (
-                      <div className="flex gap-2">
-                        <button onClick={() => handleAction('active')} className="px-8 py-2.5 rounded-full bg-white text-black font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all hover:scale-105 shadow-lg">
+                      <div id="tutorial-action-buttons" className="flex gap-2">
+                        <button onClick={() => showTutorial ? null : handleAction('active')} className="px-8 py-2.5 rounded-full bg-white text-black font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all hover:scale-105 shadow-lg">
                           Aceptar Carta
                         </button>
                       </div>
@@ -1964,7 +1990,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest">[Carta {currentIndex} de {hand.length}]</span>
         </div>
 
-        <div className="w-full relative group -my-4">
+        <div id="tutorial-deck" className="w-full relative group -my-4">
           <div id="cards-carousel" className="w-full overflow-x-auto pb-12 pt-12 scrollbar-hide snap-x snap-mandatory scroll-smooth flex gap-3 px-4">
             {hand.map((item) => {
               const isDefenseCard = item.cards_master?.category === "DEFENSA";
@@ -2326,6 +2352,55 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Tutorial Overlay */}
+      {showTutorial && (
+        <TutorialOverlay 
+          steps={[
+            {
+              title: "¡Bienvenido a Sin Quejas!",
+              content: "Prepárate para fortalecer tu vínculo con desafíos divertidos. Empecemos el tour.",
+              position: "center"
+            },
+            {
+              targetId: "tutorial-history",
+              title: "Memoria de Pareja",
+              content: "Aquí podrás ver todos los desafíos que habéis lanzado y aceptado. ¡No pierdas el hilo!",
+              position: "bottom"
+            },
+            {
+              targetId: "tutorial-center-area",
+              title: "El Centro de la Acción",
+              content: "Aquí aparecerán las cartas que te lance tu pareja. Es el corazón del juego.",
+              position: "bottom"
+            },
+            {
+              targetId: "tutorial-timer",
+              title: "El Tiempo Corre",
+              content: "Tienes 10 minutos para reaccionar a un desafío. Si no lo haces, la carta se perderá.",
+              position: "bottom"
+            },
+            {
+              targetId: "tutorial-action-buttons",
+              title: "Toma una Decisión",
+              content: "Acepta el reto para activarlo o usa una carta de defensa si la tienes en tu mano.",
+              position: "bottom"
+            },
+            {
+              targetId: "tutorial-deck",
+              title: "Tu Mazo Místico",
+              content: "Desliza y elige tu próximo movimiento. ¡Lanza desafíos a tu pareja para ganar puntos!",
+              position: "top"
+            },
+            {
+              targetId: "tutorial-status",
+              title: "Vínculo Sincronizado",
+              content: "Mira el progreso de vuestra partida y si tu pareja está en línea en tiempo real.",
+              position: "bottom"
+            }
+          ]}
+          onComplete={completeTutorial}
+        />
+      )}
     </div>
   );
 }
