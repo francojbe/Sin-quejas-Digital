@@ -19,6 +19,7 @@ export interface Profile {
   age?: number;
   bio?: string;
   birth_date?: string;
+  has_seen_tutorial?: boolean;
 }
 
 export interface Game {
