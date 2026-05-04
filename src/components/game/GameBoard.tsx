@@ -92,8 +92,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    if (profile && profile.has_seen_tutorial === false && game?.status === 'active') {
-      // Solo mostramos el tutorial si ya hay un juego activo (para que el contexto sea real)
+    console.log("DEBUG: Perfil tutorial status:", profile?.has_seen_tutorial, "Game status:", game?.status);
+    if (profile && !profile.has_seen_tutorial && game?.status === 'active') {
       setShowTutorial(true);
     }
   }, [profile, game?.status]);
