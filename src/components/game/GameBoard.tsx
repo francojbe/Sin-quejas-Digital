@@ -557,12 +557,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         const oldGame = game;
         const newGame = payload.new;
         
-        if (newGame.status === 'finished' || newGame.status === 'pending_start') {
-          // No setear el juego directo aquí. La suscripción 'game_creation' 
-          // disparará fetchGame() que limpiará todo correctamente (cartas, manos, etc).
+        if (newGame.status === 'finished') {
+          // Para juegos terminados, fetchGame() limpiará todo correctamente.
+          // La suscripción 'game_creation' ya se encarga de esto.
           return;
         }
         
+        // Para pending_start Y active: actualizar el estado local directamente.
+        // Esto es crítico para que ambos dispositivos vean restart_requests y duration_days actualizados.
         setGame(newGame);
 
         // Notificaciones de Solicitudes (Partner Request)
@@ -891,206 +893,216 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
         {/* Left: Logo + Menú */}
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen(v => !v)}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white/60 hover:text-white"
-            >
-              {menuOpen ? <X size={14} /> : <Menu size={14} />}
-            </button>
-
-            {/* Dropdown del menú */}
-            <AnimatePresence>
-              {menuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95, filter: 'blur(10px)' }}
-                  animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95, filter: 'blur(10px)' }}
-                  transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                  className="absolute top-12 left-0 z-[100] w-64 bg-black/60 backdrop-blur-3xl rounded-[24px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden p-1.5 flex flex-col gap-0.5"
-                >
-                  {/* Perfil Mini Preview */}
-                  <div className="px-3 py-3 mb-1 flex items-center gap-3 bg-white/5 rounded-2xl border border-white/5">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-common/20 to-epic/20 flex items-center justify-center border border-white/10 shrink-0 overflow-hidden">
-                      {profile?.avatar_url ? (
-                        <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-contain" />
-                      ) : (
-                        <User size={18} className="text-common" />
-                      )}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Sesión Activa</span>
-                      <span className="text-sm font-black text-white truncate leading-none">{profile?.display_name || 'Usuario'}</span>
-                    </div>
-                  </div>
-
-                  <div className="px-3 py-1.5 mt-1">
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Misión y Partida</span>
-                  </div>
-
-                  {game && (
-                    <button
-                      onClick={() => { handleRestart(); setMenuOpen(false); }}
-                      disabled={restarting}
-                      className={`group relative w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all overflow-hidden ${
-                        game.restart_requests?.length > 0 && !game.restart_requests?.includes(userId)
-                          ? 'bg-epic/20 text-white shadow-[0_0_20px_rgba(168,85,247,0.2)]'
-                          : 'hover:bg-white/10 text-white/60 hover:text-white'
-                      }`}
-                    >
-                      {game.restart_requests?.length > 0 && !game.restart_requests?.includes(userId) && (
-                        <div className="absolute inset-0 bg-epic/10 animate-pulse pointer-events-none" />
-                      )}
-                      <RotateCcw size={14} className={restarting || game.restart_requests?.includes(userId) ? "animate-spin text-epic" : "group-hover:rotate-180 transition-transform duration-500"} />
-                      <span className="text-[10px] font-black uppercase tracking-widest relative z-10">
-                        {game.restart_requests?.includes(userId)
-                          ? `Esperando pareja...`
-                          : game.restart_requests?.length > 0
-                          ? '¡Aceptar Reinicio!'
-                          : 'Reiniciar Partida'}
-                      </span>
-                    </button>
-                  )}
-
-                  <div className="px-3 py-1.5 mt-1">
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Explorar</span>
-                  </div>
-
-                  <Link
-                    href="/collection"
-                    onClick={() => setMenuOpen(false)}
-                    className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-epic/20 transition-colors">
-                      <Layers size={14} className="group-hover:text-epic transition-colors" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Mazo Maestro</span>
-                  </Link>
-
-                  <div className="h-px bg-white/5 my-1.5 mx-2" />
-                  
-                  <Link
-                    href="/achievements"
-                    onClick={() => setMenuOpen(false)}
-                    className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-yellow-500/20 transition-colors">
-                      <Trophy size={14} className="group-hover:text-yellow-500 transition-colors" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Mis Logros</span>
-                  </Link>
-
-                  <div className="h-px bg-white/5 my-1.5 mx-2" />
-                  
-                  <div className="px-3 py-1.5">
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Configuración</span>
-                  </div>
-
-                  <button
-                    onClick={() => { setShowProfileModal(true); setMenuOpen(false); }}
-                    className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-common/20 transition-colors">
-                      <User size={14} className="group-hover:text-common transition-colors" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Editar Perfil</span>
-                  </button>
-
-                  <button
-                    onClick={async () => { 
-                      window.OneSignalDeferred = window.OneSignalDeferred || [];
-                      window.OneSignalDeferred.push(async function(OneSignal: any) {
-                        try {
-                          if (isPushEnabled) {
-                            await OneSignal.User.PushSubscription.optOut();
-                            toast("Notificaciones desactivadas", { message: "Ya no recibirás alertas en este dispositivo.", type: 'info' });
-                          } else {
-                            // Asegurar identidad
-                            if (userId) await OneSignal.login(userId);
-                            
-                            const permission = OneSignal.Notifications.permission;
-                            if (permission) {
-                              await OneSignal.User.PushSubscription.optIn();
-                              
-                              // Sincronización forzada con Supabase
-                              const pushId = OneSignal.User.PushSubscription.id;
-                              if (pushId && userId) {
-                                await supabase.from('push_subscriptions').upsert({
-                                  user_id: userId,
-                                  subscription: { onesignal_id: pushId },
-                                  updated_at: new Date().toISOString()
-                                }, { onConflict: 'user_id' });
-                              }
-                              
-                              toast("Notificaciones reactivadas", { message: "¡Bienvenido de vuelta!", type: 'success' });
-                            } else {
-                              const granted = await requestNotificationPermission();
-                              if (granted) {
-                                toast("Notificaciones activadas", { message: "¡Perfecto! Ya no te perderás nada.", type: 'success' });
-                              }
-                            }
-                          }
-                        } catch (err) {
-                          console.error("Error toggling push:", err);
-                          toast("Error", { message: "No se pudo cambiar el estado de las notificaciones.", type: 'error' });
-                        }
-                      });
-                      setMenuOpen(false); 
-                    }}
-                    className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
-                  >
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isPushEnabled ? 'bg-common/20' : 'bg-white/5 group-hover:bg-epic/20'}`}>
-                      <Bell size={14} className={isPushEnabled ? 'text-common' : 'group-hover:text-epic transition-colors'} />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">
-                      {isPushEnabled ? 'Push Activo' : 'Activar Push'}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => { setMenuOpen(false); onLogout?.(); }}
-                    className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-red-500/10 text-white/60 hover:text-red-400 transition-all"
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
-                      <LogOut size={14} className="group-hover:text-red-500 transition-colors" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Cerrar Sesión</span>
-                  </button>
-
-                  <div className="h-px bg-white/5 my-1.5 mx-2" />
-
-                  <button
-                    onClick={() => { setShowBreakLinkConfirm(true); setMenuOpen(false); }}
-                    className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
-                      game?.break_requests?.length > 0 && !game?.break_requests?.includes(userId)
-                        ? 'bg-red-500/20 text-white animate-pulse'
-                        : 'hover:bg-red-900/20 text-red-500/40 hover:text-red-500'
-                    }`}
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
-                      <LinkIcon size={14} className={game?.break_requests?.includes(userId) ? "animate-pulse text-red-500" : "group-hover:text-red-500 transition-colors"} />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">
-                      {game?.break_requests?.includes(userId) 
-                        ? 'Esperando Pareja...' 
-                        : game?.break_requests?.length > 0 
-                        ? '¡Aceptar Ruptura!' 
-                        : 'Eliminar Vínculo'}
-                    </span>
-                  </button>
-
-                  <div className="mt-2 p-3 bg-gradient-to-t from-white/[0.02] to-transparent rounded-b-2xl border-t border-white/5 flex justify-center">
-                    <span className="text-[8px] font-bold text-white/10 uppercase tracking-[0.3em]">Sin Quejas v1.0.4</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white/60 hover:text-white"
+          >
+            {menuOpen ? <X size={14} /> : <Menu size={14} />}
+          </button>
 
           <h1 className="text-sm font-black tracking-tighter text-white leading-none">
             SIN QUEJAS <span className="text-common">DIGITAL</span>
           </h1>
         </div>
+
+        {/* Overlay de cierre */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[99]"
+              onClick={() => setMenuOpen(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Dropdown del menú - Fixed para Android WebView */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ type: "spring", damping: 22, stiffness: 320 }}
+              className="fixed top-14 left-2 z-[100] w-72 rounded-[24px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-y-auto max-h-[80dvh] p-1.5 flex flex-col gap-0.5"
+              style={{ background: 'rgba(8, 8, 16, 0.97)' }}
+            >
+
+              {/* Perfil Mini Preview */}
+              <div className="px-3 py-3 mb-1 flex items-center gap-3 bg-white/5 rounded-2xl border border-white/5">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-common/20 to-epic/20 flex items-center justify-center border border-white/10 shrink-0 overflow-hidden">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-contain" />
+                  ) : (
+                    <User size={18} className="text-common" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Sesión Activa</span>
+                  <span className="text-sm font-black text-white truncate leading-none">{profile?.display_name || 'Usuario'}</span>
+                </div>
+              </div>
+
+              <div className="px-3 py-1.5 mt-1">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Misión y Partida</span>
+              </div>
+
+              {game && (
+                <button
+                  onClick={() => { handleRestart(); setMenuOpen(false); }}
+                  disabled={restarting}
+                  className={`group relative w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all overflow-hidden ${
+                    game.restart_requests?.length > 0 && !game.restart_requests?.includes(userId)
+                      ? 'bg-epic/20 text-white shadow-[0_0_20px_rgba(168,85,247,0.2)]'
+                      : 'hover:bg-white/10 text-white/60 hover:text-white'
+                  }`}
+                >
+                  {game.restart_requests?.length > 0 && !game.restart_requests?.includes(userId) && (
+                    <div className="absolute inset-0 bg-epic/10 animate-pulse pointer-events-none" />
+                  )}
+                  <RotateCcw size={14} className={restarting || game.restart_requests?.includes(userId) ? "animate-spin text-epic" : "group-hover:rotate-180 transition-transform duration-500"} />
+                  <span className="text-[10px] font-black uppercase tracking-widest relative z-10">
+                    {game.restart_requests?.includes(userId)
+                      ? `Esperando pareja...`
+                      : game.restart_requests?.length > 0
+                      ? '¡Aceptar Reinicio!'
+                      : 'Reiniciar Partida'}
+                  </span>
+                </button>
+              )}
+
+              <div className="px-3 py-1.5 mt-1">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Explorar</span>
+              </div>
+
+              <Link
+                href="/collection"
+                onClick={() => setMenuOpen(false)}
+                className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
+              >
+                <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-epic/20 transition-colors">
+                  <Layers size={14} className="group-hover:text-epic transition-colors" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Mazo Maestro</span>
+              </Link>
+
+              <div className="h-px bg-white/5 my-1.5 mx-2" />
+              
+              <Link
+                href="/achievements"
+                onClick={() => setMenuOpen(false)}
+                className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
+              >
+                <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-yellow-500/20 transition-colors">
+                  <Trophy size={14} className="group-hover:text-yellow-500 transition-colors" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Mis Logros</span>
+              </Link>
+
+              <div className="h-px bg-white/5 my-1.5 mx-2" />
+              
+              <div className="px-3 py-1.5">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Configuración</span>
+              </div>
+
+              <button
+                onClick={() => { setShowProfileModal(true); setMenuOpen(false); }}
+                className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
+              >
+                <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-common/20 transition-colors">
+                  <User size={14} className="group-hover:text-common transition-colors" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Editar Perfil</span>
+              </button>
+
+              <button
+                onClick={async () => { 
+                  window.OneSignalDeferred = window.OneSignalDeferred || [];
+                  window.OneSignalDeferred.push(async function(OneSignal: any) {
+                    try {
+                      if (isPushEnabled) {
+                        await OneSignal.User.PushSubscription.optOut();
+                        toast("Notificaciones desactivadas", { message: "Ya no recibirás alertas en este dispositivo.", type: 'info' });
+                      } else {
+                        if (userId) await OneSignal.login(userId);
+                        const permission = OneSignal.Notifications.permission;
+                        if (permission) {
+                          await OneSignal.User.PushSubscription.optIn();
+                          const pushId = OneSignal.User.PushSubscription.id;
+                          if (pushId && userId) {
+                            await supabase.from('push_subscriptions').upsert({
+                              user_id: userId,
+                              subscription: { onesignal_id: pushId },
+                              updated_at: new Date().toISOString()
+                            }, { onConflict: 'user_id' });
+                          }
+                          toast("Notificaciones reactivadas", { message: "¡Bienvenido de vuelta!", type: 'success' });
+                        } else {
+                          const granted = await requestNotificationPermission();
+                          if (granted) {
+                            toast("Notificaciones activadas", { message: "¡Perfecto! Ya no te perderás nada.", type: 'success' });
+                          }
+                        }
+                      }
+                    } catch (err) {
+                      console.error("Error toggling push:", err);
+                      toast("Error", { message: "No se pudo cambiar el estado de las notificaciones.", type: 'error' });
+                    }
+                  });
+                  setMenuOpen(false); 
+                }}
+                className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-white/10 text-white/60 hover:text-white transition-all"
+              >
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isPushEnabled ? 'bg-common/20' : 'bg-white/5 group-hover:bg-epic/20'}`}>
+                  <Bell size={14} className={isPushEnabled ? 'text-common' : 'group-hover:text-epic transition-colors'} />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {isPushEnabled ? 'Push Activo' : 'Activar Push'}
+                </span>
+              </button>
+
+              <button
+                onClick={() => { setMenuOpen(false); onLogout?.(); }}
+                className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-red-500/10 text-white/60 hover:text-red-400 transition-all"
+              >
+                <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                  <LogOut size={14} className="group-hover:text-red-500 transition-colors" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Cerrar Sesión</span>
+              </button>
+
+              <div className="h-px bg-white/5 my-1.5 mx-2" />
+
+              <button
+                onClick={() => { setShowBreakLinkConfirm(true); setMenuOpen(false); }}
+                className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
+                  game?.break_requests?.length > 0 && !game?.break_requests?.includes(userId)
+                    ? 'bg-red-500/20 text-white animate-pulse'
+                    : 'hover:bg-red-900/20 text-red-500/40 hover:text-red-500'
+                }`}
+              >
+                <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                  <LinkIcon size={14} className={game?.break_requests?.includes(userId) ? "animate-pulse text-red-500" : "group-hover:text-red-500 transition-colors"} />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {game?.break_requests?.includes(userId) 
+                    ? 'Esperando Pareja...' 
+                    : game?.break_requests?.length > 0 
+                    ? '¡Aceptar Ruptura!' 
+                    : 'Eliminar Vínculo'}
+                </span>
+              </button>
+
+              <div className="mt-2 p-3 bg-gradient-to-t from-white/[0.02] to-transparent rounded-b-2xl border-t border-white/5 flex justify-center">
+                <span className="text-[8px] font-bold text-white/10 uppercase tracking-[0.3em]">Sin Quejas v1.0.4</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+
 
         <div className="flex items-center gap-1 sm:gap-3">
           {/* Subtle History Bell */}
@@ -1831,16 +1843,16 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     <button 
                       onClick={async () => {
                         if (durationOption === 0) return alert("Ingresa un número de días válido.");
-                        setLoading(true);
+                        setRestarting(true);
                         const { error } = await supabase.rpc('request_start_game', { proposed_duration_in: durationOption });
-                        if (error) alert(error.message);
+                        if (error) { alert(error.message); setRestarting(false); return; }
                         setIsCounterProposing(false);
-                        await fetchGame();
-                        setLoading(false);
+                        setRestarting(false);
                       }}
-                      className="w-full bg-common text-black font-black uppercase tracking-widest text-sm px-8 py-4 rounded-full shadow-[0_0_40px_rgba(208,255,0,0.3)] hover:shadow-[0_0_60px_rgba(208,255,0,0.5)] hover:scale-105 transition-all"
+                      disabled={restarting}
+                      className="w-full bg-common text-black font-black uppercase tracking-widest text-sm px-8 py-4 rounded-full shadow-[0_0_40px_rgba(208,255,0,0.3)] hover:shadow-[0_0_60px_rgba(208,255,0,0.5)] hover:scale-105 transition-all disabled:opacity-50"
                     >
-                      {isCounterProposing ? 'Enviar Propuesta' : 'Proponer y Comenzar'}
+                      {restarting ? '...' : isCounterProposing ? 'Enviar Propuesta' : 'Proponer y Comenzar'}
                     </button>
                     {isCounterProposing && (
                       <button 
@@ -1869,15 +1881,15 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     <div className="flex flex-col w-full gap-3 px-4 mt-4">
                       <button 
                         onClick={async () => {
-                          setLoading(true);
+                          setRestarting(true);
                           const { error } = await supabase.rpc('request_start_game', { proposed_duration_in: game.duration_days });
-                          if (error) alert(error.message);
-                          await fetchGame();
-                          setLoading(false);
+                          if (error) { alert(error.message); setRestarting(false); return; }
+                          setRestarting(false);
                         }}
-                        className="w-full bg-epic text-white font-black uppercase tracking-widest text-sm px-8 py-4 rounded-full shadow-[0_0_40px_rgba(168,85,247,0.4)] hover:shadow-[0_0_60px_rgba(168,85,247,0.6)] hover:scale-105 transition-all animate-pulse"
+                        disabled={restarting}
+                        className="w-full bg-epic text-white font-black uppercase tracking-widest text-sm px-8 py-4 rounded-full shadow-[0_0_40px_rgba(168,85,247,0.4)] hover:shadow-[0_0_60px_rgba(168,85,247,0.6)] hover:scale-105 transition-all animate-pulse disabled:opacity-50"
                       >
-                        Aceptar y Comenzar
+                        {restarting ? '...' : 'Aceptar y Comenzar'}
                       </button>
                       <button 
                         onClick={() => setIsCounterProposing(true)}

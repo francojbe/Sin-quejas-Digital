@@ -27,6 +27,7 @@ export const metadata: Metadata = {
 
 
 import { SWRegistration } from "@/components/SWRegistration";
+import { CapacitorManager } from "@/components/CapacitorManager";
 
 export default function RootLayout({
   children,
@@ -40,6 +41,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">
+        <CapacitorManager />
         <ToastProvider>
           <Script id="clear-idb" strategy="beforeInteractive">
             {`
