@@ -778,9 +778,61 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   };
 
   const handleAction = async (status: 'active' | 'discarded') => {
-    if (!displayedCard || !game) return;
-    await supabase.from("player_cards").update({ status }).eq("id", displayedCard.id);
-    // Ya no limpiamos modificadores aquí porque se limpian al jugar la carta (playCard)
+    if (!displayedCard || !game || !userId) return;
+    
+    setLoading(true);
+    try {
+      // 1. Actualizar el estado de la carta
+      const { error: updateError } = await supabase
+        .from("player_cards")
+        .update({ status })
+        .eq("id", displayedCard.id);
+      
+      if (updateError) throw updateError;
+
+      // 2. Registrar en el historial para activar Realtime y notificaciones
+      const { error: historyError } = await supabase
+        .from('game_history')
+        .insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: status === 'active' ? 'ACCEPTED' : 'BLOCKED',
+          card_id: displayedCard.card_id,
+          metadata: { 
+            card_title: displayedCard.cards_master?.title,
+            message: status === 'active' ? 'ha aceptado el desafío' : 'ha bloqueado el desafío'
+          }
+        });
+
+      if (historyError) console.error("Error logging history:", historyError);
+
+      // 3. Notificar al compañero vía Push (Edge Function)
+      if (partnerId) {
+        fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-partner`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            user_id: partnerId,
+            title: status === 'active' ? "¡Desafío Aceptado! 🔥" : "Desafío Bloqueado 🛡️",
+            body: `${profile?.display_name || 'Tu pareja'} ${status === 'active' ? 'ha aceptado' : 'ha bloqueado'} tu carta: ${displayedCard.cards_master?.title}`
+          })
+        }).catch(err => console.error("Error notifying partner:", err));
+      }
+
+      showNotification(status === 'active' ? "¡Desafío aceptado!" : "Desafío bloqueado", 'success');
+      
+      // 4. Refrescar todo
+      await fetchGame();
+      
+    } catch (err: any) {
+      console.error("Error in handleAction:", err);
+      showNotification(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRestart = async () => {
