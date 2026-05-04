@@ -1744,7 +1744,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               
               {/* Sticker de Doble Reto */}
               {/* Sticker de Doble Reto - Solo si está pendiente */}
-              {displayedCard.is_double && displayedCard.status === 'pending' && (
+              {displayedCard?.is_double && displayedCard?.status === 'pending' && (
                 <motion.div 
                   initial={{ scale: 0, rotate: -20 }} 
                   animate={{ scale: 1, rotate: 12 }}
@@ -1756,7 +1756,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               )}
 
               {/* Indicador de Ataque Imparable - Solo si está pendiente */}
-              {displayedCard.is_unblockable && displayedCard.status === 'pending' && (
+              {displayedCard?.is_unblockable && displayedCard?.status === 'pending' && (
                 <motion.div 
                   initial={{ y: -10, opacity: 0 }} 
                   animate={{ y: 0, opacity: 1 }}
