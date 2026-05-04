@@ -7,6 +7,12 @@
 4. **Optimización de Despliegue (Easypanel):** Configuración de salida dinámica (`standalone` vs `export`) para permitir despliegues en Docker sin romper la generación de la app móvil local.
 5. **Notificaciones de Aceptación:** Ahora el sistema notifica automáticamente al compañero cuando su carta ha sido aceptada o bloqueada.
 
+### 🔄 En Progreso (Tutoriales y UX)
+- [x] Tutorial de Juego (Tablero) - *Pulido v1.0.7*
+- [ ] Tutorial de Vinculación Inicial (Setup) - **MAÑANA**
+- [ ] Refactorización de estilos Mobile (evitar cortes de texto)
+- [ ] Implementar sistema de "Reanudar Tutorial" desde configuración
+
 ### ⏳ Pendientes y Próximos Pasos (Hacia la v1.0):
 
 #### Fase 5: Gamificación y Cierre

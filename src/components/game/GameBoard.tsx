@@ -92,13 +92,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    // Log persistente para depurar en Android
-    console.warn("🎯 [TUTORIAL_CHECK] v1.0.5", {
-      profile_exists: !!profile,
-      has_seen: profile?.has_seen_tutorial,
-      game_status: game?.status
-    });
-
     if (profile && !profile.has_seen_tutorial && game?.status === 'active') {
       setShowTutorial(true);
     }
@@ -2358,10 +2351,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Marca de versión para debug */}
-      <div className="fixed top-2 right-2 z-[9999] bg-red-600 text-white text-[8px] px-1 rounded opacity-50 pointer-events-none">
-        v1.0.5-TUT
-      </div>
 
       {/* Tutorial Overlay */}
       {showTutorial && (

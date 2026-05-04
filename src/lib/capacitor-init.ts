@@ -11,13 +11,8 @@ export async function initNativePlugins() {
   if (!Capacitor.isNativePlatform()) return;
 
   try {
-    console.warn('🚨 [DEBUG] APP INICIADA v1.0.6');
-    if (typeof window !== 'undefined') {
-      // window.alert('DEBUG: CODIGO ACTUALIZADO v1.0.6');
-    }
-    
     await StatusBar.setStyle({ style: Style.Dark });
-    await StatusBar.setBackgroundColor({ color: '#FF0000' }); // ROJO PARA DEBUG
+    await StatusBar.setBackgroundColor({ color: '#050505' });
     
     setTimeout(async () => {
       await SplashScreen.hide();
