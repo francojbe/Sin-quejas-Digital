@@ -1,8 +1,7 @@
-/* OneSignal Service Worker */
-importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+/* OneSignal Service Worker - Custom Focus Logic */
 
-// Lógica personalizada para evitar abrir múltiples pestañas
 self.addEventListener('notificationclick', function(event) {
+  event.stopImmediatePropagation();
   const targetUrl = event.notification.data?.url || self.location.origin + '/';
   event.notification.close();
 
@@ -22,4 +21,6 @@ self.addEventListener('notificationclick', function(event) {
       }
     })
   );
-});
+}, true);
+
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
