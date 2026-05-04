@@ -11,8 +11,8 @@ export async function initNativePlugins() {
   if (!Capacitor.isNativePlatform()) return;
 
   try {
-    // Alerta de debug para confirmar que el código arranca en el móvil
-    console.log('[Native] Iniciando initNativePlugins');
+    // ALERTA DE PRUEBA: Si no ves esto, la app tiene código viejo
+    alert("🚀 Sin Quejas Digital: Cargando plugins nativos v2...");
     
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: '#050505' });
@@ -21,11 +21,11 @@ export async function initNativePlugins() {
       await SplashScreen.hide();
     }, 1000);
 
-    // Esperar a que Cordova esté listo
     waitForCordovaReady(() => initOneSignalNative());
     
   } catch (error) {
     console.error('[Native] Error:', error);
+    alert("Error Init: " + JSON.stringify(error));
   }
 }
 
@@ -35,7 +35,6 @@ function waitForCordovaReady(callback: () => void) {
     callback();
   } else {
     document.addEventListener('deviceready', callback, { once: true });
-    // Si no dispara en 5 segundos, intentar forzar
     setTimeout(callback, 5000);
   }
 }
@@ -45,43 +44,42 @@ async function initOneSignalNative() {
   const OneSignal = win.plugins?.OneSignal;
 
   if (!OneSignal) {
-    console.error('[OneSignal] CRÍTICO: El plugin no está disponible en window.plugins.OneSignal');
+    alert("⚠️ Error: Plugin OneSignal no encontrado. ¿Hiciste cap sync?");
     return;
   }
 
   try {
-    // 1. Inicializar
-    console.log('[OneSignal] Inicializando con ID:', ONESIGNAL_APP_ID);
     OneSignal.initialize(ONESIGNAL_APP_ID);
-
-    // 2. Pedir permiso (esto debería mostrar el popup de Android)
-    console.log('[OneSignal] Solicitando permiso...');
+    
     const accepted = await OneSignal.Notifications.requestPermission(true);
-    console.log('[OneSignal] Resultado permiso:', accepted);
-
+    
     if (accepted) {
       await OneSignal.User.pushSubscription.optIn();
       
-      // Intentar capturar el ID de dispositivo y guardarlo
+      // Obtener el ID
       setTimeout(async () => {
         const nativeSubId = OneSignal.User.pushSubscription.id;
-        console.log('[OneSignal] ID de subscripción obtenido:', nativeSubId);
-
         if (nativeSubId) {
+          alert("ID Nativo detectado: " + nativeSubId.substring(0, 8) + "...");
+          
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
-            await supabase.from('push_subscriptions').upsert({
+            const { error } = await supabase.from('push_subscriptions').upsert({
               user_id: user.id,
               subscription: { onesignal_id: nativeSubId },
               updated_at: new Date().toISOString()
             }, { onConflict: 'user_id' });
-            console.log('[OneSignal] ID nativo guardado en Supabase ✅');
+
+            if (!error) alert("✅ Registro exitoso en Supabase");
+            else alert("❌ Error Supabase: " + error.message);
           }
+        } else {
+          alert("⚠️ No se pudo obtener el ID de OneSignal todavía.");
         }
-      }, 3000);
+      }, 4000);
     }
   } catch (e) {
-    console.error('[OneSignal] Error durante init:', e);
+    alert("Error OneSignal: " + e.message);
   }
 }
 
@@ -92,8 +90,6 @@ export async function loginOneSignalNative(userId: string) {
   
   try {
     await OneSignal.login(userId);
-    
-    // Forzar actualización de ID en Supabase tras login
     setTimeout(async () => {
       const nativeSubId = OneSignal.User.pushSubscription.id;
       if (nativeSubId) {
