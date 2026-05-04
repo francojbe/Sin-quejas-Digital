@@ -1724,14 +1724,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               <div className="absolute -top-7 flex flex-col items-center">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full border border-white/20 overflow-hidden bg-black/40">
-                    {displayedCard.user_id === userId ? (
+                    {displayedCard?.user_id === userId ? (
                       profile?.avatar_url ? <img src={profile.avatar_url} className="w-full h-full object-cover" /> : <User size={8} className="text-common mx-auto mt-0.5" />
                     ) : (
                       partnerAvatar ? <img src={partnerAvatar} className="w-full h-full object-cover" /> : <User size={8} className="text-white/20 mx-auto mt-0.5" />
                     )}
                   </div>
                   <span className="text-[7px] font-black text-white/40 uppercase tracking-[0.3em]">
-                    {displayedCard.user_id === userId ? 'TU JUGADA' : `JUGADA POR ${partnerName.toUpperCase()}`}
+                    {displayedCard?.user_id === userId ? 'TU JUGADA' : `JUGADA POR ${partnerName.toUpperCase()}`}
                   </span>
                 </div>
               </div>
