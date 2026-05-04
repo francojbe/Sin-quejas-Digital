@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "567360546120",
+    "project_id": "sin-quejas-digital",
+    "storage_bucket": "sin-quejas-digital.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:567360546120:android:35bff57a3285e561d37f7d",
+        "android_client_info": {
+          "package_name": "com.sinquejas.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7n-dI603qvx7oltesItcqRl41VZO2qOc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
