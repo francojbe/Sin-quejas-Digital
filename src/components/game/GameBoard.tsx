@@ -613,7 +613,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           });
         }
 
-        if (newGame.last_event_data) {
+        if (newGame.last_event_data && JSON.stringify(newGame.last_event_data) !== JSON.stringify(oldGame?.last_event_data)) {
           setActiveEvent(newGame.last_event_data);
           setTimeout(() => setActiveEvent(null), 5000);
         }
@@ -791,6 +791,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           is_unblockable: updates.is_unblockable || playerCard.is_unblockable,
           is_double: updates.is_double || playerCard.is_double
         });
+        
+        if (Object.keys(gameUpdates).length > 0) {
+          setGame((prev: any) => prev ? { ...prev, ...gameUpdates } : null);
+        }
       }
       
       setHand(hand.filter(c => c.id !== playerCard.id));
@@ -849,6 +853,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     } else {
       // Limpiar modificadores globales del juego
       if (Object.keys(gameUpdates).length > 0) {
+        setGame((prev: any) => prev ? { ...prev, ...gameUpdates } : null); // Optimistic clear
         await supabase.from("games").update(gameUpdates).eq("id", game.id);
       }
       
