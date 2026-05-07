@@ -6,10 +6,11 @@ import { CartaNaipe } from "@/components/ui/CartaNaipe";
 import { GameStatus } from "./GameStatus";
 import { PlayerCard, Card as CardType, Profile } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History } from "lucide-react";
+import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History, Sparkles, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useToast, ToastType } from "@/lib/contexts/ToastContext";
 import { requestNotificationPermission } from "@/components/SWRegistration";
+import { savePendingAction } from "@/lib/offlineSync";
 import { GameCompletion } from "./GameCompletion";
 import { TutorialOverlay } from "./TutorialOverlay";
 
@@ -139,17 +140,23 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   useEffect(() => {
     async function syncTime() {
       const start = Date.now();
-      const { data, error } = await supabase.rpc('get_server_time');
-      if (!error && data) {
-        const end = Date.now();
-        const rtt = end - start;
-        const serverTime = new Date(data).getTime();
-        const localTime = start + (rtt / 2);
-        setServerTimeOffset(serverTime - localTime);
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/`, { 
+          method: 'HEAD', 
+          headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! } 
+        });
+        const dateHeader = res.headers.get('Date');
+        if (dateHeader) {
+          const end = Date.now();
+          const rtt = end - start;
+          const serverTime = new Date(dateHeader).getTime();
+          const localTime = start + (rtt / 2);
+          setServerTimeOffset(serverTime - localTime);
+        }
+      } catch (err) {
+        console.warn("No se pudo sincronizar el tiempo usando HEAD:", err);
+      } finally {
         setTimeSynced(true);
-      } else {
-        // Fallback in case RPC fails
-        setTimeSynced(true); 
       }
     }
     syncTime();
@@ -694,6 +701,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     
     // Función para actualizar inmediatamente al montar
     const updateTime = () => {
+      // Si estamos offline y lanzamos la carta nosotros, congelar el tiempo
+      if (typeof navigator !== 'undefined' && !navigator.onLine && displayedCard?.user_id === userId) {
+        setTimeLeft(600);
+        return;
+      }
+
       const now = new Date().getTime() + serverTimeOffset;
       const diff = Math.max(0, expiryTime - now);
       let remainingSeconds = Math.floor(diff / 1000);
@@ -741,6 +754,51 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     const isDefense = playerCard.cards_master?.category === "DEFENSA";
     const serverNow = new Date(Date.now() + serverTimeOffset).toISOString();
     
+    // --- LÓGICA OFFLINE ---
+    if (!navigator.onLine) {
+      if (isPending && isReceiver && isDefense) {
+        if (displayedCard?.is_unblockable) {
+          showNotification("¡Este ataque es IMPARABLE! No puedes usar defensas.", 'error');
+          return;
+        }
+        if (playerCard.cards_master?.id === 50) {
+          await savePendingAction({ type: 'play_card_mirror', payload: { playerCardId: playerCard.id, displayedCardId: displayedCard?.id, userId, serverNow } });
+          setShowReflected(true);
+          setDisplayedCard(prev => prev ? { ...prev, user_id: userId!, played_at: serverNow } : null);
+          setTimeout(() => setShowReflected(false), 3000);
+        } else {
+          await savePendingAction({ type: 'play_card_block', payload: { playerCardId: playerCard.id, displayedCardId: displayedCard?.id, serverNow } });
+          setDisplayedCard(null);
+        }
+      } else {
+        const updates: any = { status: "pending", played_at: serverNow };
+        const gameUpdates: any = {};
+        if (game?.modifier_unblockable_by === userId && !isDefense) {
+          updates.is_unblockable = true;
+          gameUpdates.modifier_unblockable_by = null;
+        }
+        if (game?.modifier_double_by === userId && !isDefense) {
+          updates.is_double = true;
+          gameUpdates.modifier_double_by = null;
+        }
+        await savePendingAction({ type: 'play_card_normal', payload: { playerCardId: playerCard.id, updates, gameUpdates, gameId: game?.id } });
+        
+        // Optimistic update for normal play
+        setDisplayedCard({
+          ...playerCard,
+          status: 'pending',
+          played_at: serverNow,
+          is_unblockable: updates.is_unblockable || playerCard.is_unblockable,
+          is_double: updates.is_double || playerCard.is_double
+        });
+      }
+      
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      showNotification("Sin conexión. Jugada guardada localmente.", 'warning');
+      return;
+    }
+    // --- FIN LÓGICA OFFLINE ---
+
     if (isPending && isReceiver && isDefense) {
       // REFUERZO DE SEGURIDAD: Verificar si el ataque es imparable (ahora en la propia carta)
       if (displayedCard?.is_unblockable) {
@@ -803,6 +861,27 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const handleAction = async (status: 'active' | 'discarded') => {
     if (!displayedCard || !game || !userId) return;
     
+    // --- LÓGICA OFFLINE ---
+    if (!navigator.onLine) {
+       await savePendingAction({
+         type: 'handle_action',
+         payload: {
+           displayedCardId: displayedCard.id,
+           status,
+           gameId: game.id,
+           userId,
+           cardId: displayedCard.card_id,
+           cardTitle: displayedCard.cards_master?.title,
+           partnerId,
+           profileDisplayName: profile?.display_name
+         }
+       });
+       setDisplayedCard(null); // Limpieza local
+       showNotification("Sin conexión. La acción fue guardada localmente.", 'warning');
+       return;
+    }
+    // --- FIN LÓGICA OFFLINE ---
+
     setLoading(true);
     try {
       // 1. Actualizar el estado de la carta
@@ -916,9 +995,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const isReceiver = displayedCard?.user_id !== userId;
 
   return (
-    <div className="w-full h-[100dvh] flex flex-col gap-0.5 overflow-hidden px-1 pt-1">
+    <div className="w-full h-[100dvh] flex flex-col gap-0 sm:gap-0.5 overflow-hidden px-0.5 sm:px-1 pt-0.5 sm:pt-1">
       {/* HEADER con menú hamburguesa */}
-      <div className="shrink-0 flex items-center justify-between px-1">
+      <div className="shrink-0 flex items-center justify-between px-0.5 sm:px-1">
         {/* Banner de Notificaciones Rápidas */}
         <AnimatePresence>
           {!isPushEnabled && (
@@ -980,14 +1059,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           </h1>
         </div>
 
-        {/* Overlay de cierre */}
+        {/* Overlay de cierre — único overlay, con bg para que Android WebView lo detecte */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[99]"
+              className="fixed inset-0 z-[99] bg-black/40"
               onClick={() => setMenuOpen(false)}
             />
           )}
@@ -1002,7 +1081,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", damping: 22, stiffness: 320 }}
               className="fixed top-14 left-2 z-[100] w-72 rounded-[24px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-y-auto max-h-[80dvh] p-1.5 flex flex-col gap-0.5"
-              style={{ background: 'rgba(8, 8, 16, 0.97)' }}
+              style={{ background: '#080810', willChange: 'transform' }}
             >
 
               {/* Perfil Mini Preview */}
@@ -1373,8 +1452,27 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     placeholder="Escribe algo sobre ti..."
                     rows={3}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-white font-bold outline-none focus:border-common/50 transition-all resize-none placeholder:text-white/10"
-                    maxLength={150}
                   />
+                </div>
+
+                {/* Tutorial Section */}
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Ayuda y Tutoriales</label>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => {
+                        setShowProfileModal(false);
+                        setShowTutorial(true);
+                      }}
+                      className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-common/30 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Sparkles size={16} className="text-common" />
+                        <span className="text-xs font-black text-white uppercase tracking-widest">Ver Tutorial de Juego</span>
+                      </div>
+                      <ChevronRight size={14} className="text-white/20 group-hover:text-common transition-all" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1496,10 +1594,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         )}
       </AnimatePresence>
 
-      {/* Click outside para cerrar menú */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-[99]" onClick={() => setMenuOpen(false)} />
-      )}
+      {/* Overlay duplicado eliminado — ya existe en el header con AnimatePresence */}
 
       <div className="shrink-0" id="tutorial-status">
         <GameStatus 
@@ -1662,7 +1757,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               </div>
 
               <div className="relative z-10 flex flex-col items-center">
-                <span className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(168,85,247,0.8)] text-center px-6">
+                <span className="text-2xl min-[360px]:text-3xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(168,85,247,0.8)] text-center px-6">
                   ¡RESURRECCIÓN!
                 </span>
               <span className="text-epic font-black uppercase tracking-[0.3em] text-[10px] mt-6 px-8 py-2.5 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,0.4)]">
@@ -1691,7 +1786,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                   <Snowflake size={80} className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,1)]" />
                 </div>
               </motion.div>
-              <span className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] text-center px-6">
+              <span className="text-2xl min-[360px]:text-3xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] text-center px-6">
                 ¡TIEMPO CONGELADO!
               </span>
               <span className="text-blue-500 font-black uppercase tracking-[0.3em] text-[10px] mt-6 px-8 py-2.5 bg-white rounded-full">

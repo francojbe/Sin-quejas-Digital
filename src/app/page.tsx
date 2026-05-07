@@ -8,10 +8,12 @@ import { Loader2, LogOut } from "lucide-react";
 import { Profile } from "@/types";
 import { useRouter } from "next/navigation";
 import { loginOneSignalNative } from "@/lib/capacitor-init";
+import { TutorialOverlay } from "@/components/game/TutorialOverlay";
 
 export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSetupTutorial, setShowSetupTutorial] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -39,6 +41,51 @@ export default function Home() {
 
     getProfile();
   }, [router]);
+  
+  useEffect(() => {
+    if (profile && !profile.couple_id && !profile.has_seen_setup_tutorial) {
+      setShowSetupTutorial(true);
+    }
+  }, [profile]);
+
+  const completeSetupTutorial = async () => {
+    setShowSetupTutorial(false);
+    if (profile) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ has_seen_setup_tutorial: true })
+        .eq('id', profile.id);
+      
+      if (error) console.error("Error updating setup tutorial status:", error);
+    }
+  };
+
+  const setupTutorialSteps = [
+    {
+      title: "Vincular Pareja",
+      content: "¡Bienvenido/a a Sin Quejas! Antes de jugar, necesitas conectar tu cuenta con la de tu pareja.",
+      position: "center" as const,
+      targetId: "setup-container"
+    },
+    {
+      title: "Tu Código Único",
+      content: "Este es tu código de invitación. Puedes copiarlo y enviárselo a tu pareja para que lo ingrese en su app.",
+      position: "top" as const,
+      targetId: "setup-your-code"
+    },
+    {
+      title: "Código de Pareja",
+      content: "Si tu pareja ya tiene su código, pídeselo e ingrésalo en este campo.",
+      position: "bottom" as const,
+      targetId: "setup-partner-input"
+    },
+    {
+      title: "Comenzar",
+      content: "¡Una vez ingresado el código, pulsa este botón y estarán listos para la experiencia!",
+      position: "top" as const,
+      targetId: "setup-link-button"
+    }
+  ];
 
 
   useEffect(() => {
@@ -100,7 +147,10 @@ export default function Home() {
         </div>
         
         <div className="relative z-10 w-full flex flex-col items-center gap-8">
-          <CoupleLink profile={profile} />
+          <CoupleLink 
+            profile={profile} 
+            onReplayTutorial={() => setShowSetupTutorial(true)} 
+          />
           <button 
             onClick={handleLogout}
             className="text-white/20 hover:text-white/40 text-xs font-black uppercase tracking-[0.3em] flex items-center gap-2 transition-all hover:scale-105"
@@ -108,6 +158,13 @@ export default function Home() {
             <LogOut size={14} /> CERRAR SESIÓN
           </button>
         </div>
+
+        {showSetupTutorial && (
+          <TutorialOverlay 
+            steps={setupTutorialSteps} 
+            onComplete={completeSetupTutorial} 
+          />
+        )}
       </main>
     );
   }

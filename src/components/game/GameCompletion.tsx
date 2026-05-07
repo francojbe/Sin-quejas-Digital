@@ -92,7 +92,7 @@ export function GameCompletion({
       <motion.div 
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="relative w-full max-w-lg glass border border-white/10 rounded-[40px] p-8 md:p-12 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)]"
+        className="relative w-full max-w-lg glass border border-white/10 rounded-[40px] p-6 sm:p-12 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)]"
       >
         {/* Main Trophy Icon */}
         <motion.div 
@@ -110,10 +110,10 @@ export function GameCompletion({
           transition={{ delay: 0.4 }}
           className="space-y-4 mb-10"
         >
-          <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter italic">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-tighter italic px-2">
             ¡Desafío <span className="text-transparent bg-clip-text bg-gradient-to-r from-epic to-pink-500">Completado</span>!
           </h1>
-          <p className="text-white/70 font-bold text-lg leading-tight">
+          <p className="text-white/70 font-bold text-sm sm:text-lg leading-tight px-2">
             ¡Lo lograron! Han completado su aventura juntos. {partnerName} y tú tienen una conexión increíble.
           </p>
         </motion.div>

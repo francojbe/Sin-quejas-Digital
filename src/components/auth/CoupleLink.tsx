@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
-import { Users, Copy, Check, Loader2, Link2, Dice5, Spade } from "lucide-react";
+import { Users, Copy, Check, Loader2, Link2, Dice5, Spade, Sparkles } from "lucide-react";
 import { Profile } from "@/types";
 
 import { useToast } from "@/lib/contexts/ToastContext";
 
-export function CoupleLink({ profile }: { profile: Profile }) {
+export function CoupleLink({ profile, onReplayTutorial }: { profile: Profile, onReplayTutorial?: () => void }) {
   const { toast } = useToast();
   const [partnerCode, setPartnerCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -60,7 +60,8 @@ export function CoupleLink({ profile }: { profile: Profile }) {
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className="w-full max-w-[420px] p-10 rounded-[48px] bg-black/40 backdrop-blur-3xl border border-white/10 space-y-10 shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative overflow-hidden"
+      id="setup-container"
+      className="w-full max-w-[420px] p-6 sm:p-10 rounded-[32px] sm:rounded-[48px] bg-black/40 backdrop-blur-3xl border border-white/10 space-y-8 sm:space-y-10 shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative overflow-hidden"
     >
       {/* Decorative Corner Icons */}
       <Spade size={24} className="absolute top-8 left-8 text-white/5 -rotate-12" />
@@ -78,10 +79,19 @@ export function CoupleLink({ profile }: { profile: Profile }) {
         </p>
       </div>
 
+      {onReplayTutorial && (
+        <button 
+          onClick={onReplayTutorial}
+          className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-[8px] font-black text-white/20 uppercase tracking-[0.2em] hover:bg-white/10 hover:text-white/40 transition-all z-20"
+        >
+          <Sparkles size={10} className="text-common" /> ¿Necesitas ayuda?
+        </button>
+      )}
+
       <div className="space-y-6 relative z-10">
         {/* Tu Código */}
         <div className="relative group">
-          <div className="p-5 rounded-3xl bg-white/[0.03] border border-white/5 flex justify-between items-center transition-all group-hover:bg-white/[0.05] group-hover:border-white/10">
+          <div id="setup-your-code" className="p-5 rounded-3xl bg-white/[0.03] border border-white/5 flex justify-between items-center transition-all group-hover:bg-white/[0.05] group-hover:border-white/10">
             <div>
               <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-1">Tu Código</p>
               <p className="text-2xl font-black text-white tracking-[0.1em]">{profile.invite_code}</p>
@@ -114,6 +124,7 @@ export function CoupleLink({ profile }: { profile: Profile }) {
           <div className="space-y-3">
             <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Código de tu pareja</label>
             <input
+              id="setup-partner-input"
               type="text"
               maxLength={6}
               value={partnerCode}
@@ -138,7 +149,7 @@ export function CoupleLink({ profile }: { profile: Profile }) {
             className="w-full relative group"
           >
             <div className="absolute -inset-0.5 bg-gradient-to-r from-common to-epic rounded-3xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-disabled:opacity-0"></div>
-            <div className="relative w-full bg-common text-black font-black text-sm tracking-[0.1em] py-5 rounded-3xl hover:bg-white transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3">
+            <div id="setup-link-button" className="relative w-full bg-common text-black font-black text-sm tracking-[0.1em] py-5 rounded-3xl hover:bg-white transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3">
               {loading ? <Loader2 className="animate-spin" /> : "VINCULAR AHORA"}
             </div>
           </button>

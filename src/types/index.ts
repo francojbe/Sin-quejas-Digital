@@ -20,6 +20,7 @@ export interface Profile {
   bio?: string;
   birth_date?: string;
   has_seen_tutorial?: boolean;
+  has_seen_setup_tutorial?: boolean;
 }
 
 export interface Game {

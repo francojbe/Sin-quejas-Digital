@@ -64,14 +64,14 @@ export function GameHistory({ gameId }: { gameId: string }) {
             
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-start">
-                <p className="text-xs font-bold text-white/40 truncate">
-                  {item.profiles.display_name} jugó
+                <p className="text-xs font-bold text-white/40">
+                  <span className="inline-block max-w-[80px] sm:max-w-[120px] truncate align-bottom">{item.profiles.display_name}</span> jugó
                 </p>
                 <span className="text-[10px] text-white/20 font-mono">
                   {new Date(item.played_at!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <h4 className="text-sm font-bold text-white truncate">{item.cards_master.title}</h4>
+              <h4 className="text-sm font-bold text-white leading-tight mt-0.5">{item.cards_master.title}</h4>
             </div>
 
             <div className="flex items-center gap-2">

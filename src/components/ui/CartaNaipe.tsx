@@ -92,8 +92,8 @@ export function CartaNaipe({
           {title}
         </h3>
         <p className={cn(
-          "mt-0.5 font-bold text-gray-200 leading-[1.2] drop-shadow-[0_1px_2px_rgba(0,0,0,1)] max-w-[98%]",
-          compact ? "text-[8px] md:text-[10px]" : "text-xs"
+          "mt-0.5 font-bold text-gray-200 leading-[1.2] drop-shadow-[0_1px_2px_rgba(0,0,0,1)] max-w-[98%] overflow-hidden",
+          compact ? "text-[7px] min-[360px]:text-[8px] md:text-[10px]" : "text-xs"
         )}>
           {description}
         </p>

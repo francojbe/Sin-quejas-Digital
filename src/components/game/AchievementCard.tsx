@@ -89,7 +89,7 @@ export const AchievementCard = ({
             animate={{ opacity: 1, y: 0 }}
             className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-md backdrop-blur-sm"
           >
-            <p className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-widest whitespace-nowrap">
+            <p className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-widest text-center">
               {inscription}
             </p>
           </motion.div>

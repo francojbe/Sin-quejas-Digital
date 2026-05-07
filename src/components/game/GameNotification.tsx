@@ -130,29 +130,29 @@ export function GameNotification({ userId, gameId }: { userId: string, gameId: s
           <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.2em]">Atención / Reacción</h3>
         </div>
 
-        <div className="glass border-2 border-special/30 p-12 rounded-[40px] shadow-[0_0_80px_rgba(255,0,68,0.15)] relative overflow-hidden group">
+        <div className="glass border-2 border-special/30 p-6 sm:p-12 rounded-[32px] sm:rounded-[40px] shadow-[0_0_80px_rgba(255,0,68,0.15)] relative overflow-hidden group">
           <div className="absolute inset-0 bg-special/5 opacity-50 group-hover:opacity-100 transition-opacity" />
           
           <div className="relative z-10 flex flex-col items-center gap-8">
-            <h2 className="text-xl font-black text-white tracking-widest uppercase">
-              TE LANZARON {incomingCard.cards_master.rarity}: <span className="text-special">{incomingCard.cards_master.title}</span>
+            <h2 className="text-lg sm:text-xl font-black text-white tracking-widest uppercase text-center px-4">
+              TE LANZARON {incomingCard.cards_master.rarity}: <span className="text-special break-words">{incomingCard.cards_master.title}</span>
             </h2>
 
-            <div className="flex items-center justify-center gap-16 w-full flex-wrap">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-16 w-full">
               <div className="relative">
                 <div className="absolute inset-0 bg-white/10 blur-3xl rounded-full" />
-                <div className="w-32 h-32 rounded-3xl border border-white/10 glass flex items-center justify-center relative shadow-2xl">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl border border-white/10 glass flex items-center justify-center relative shadow-2xl">
                   {incomingCard.cards_master.rarity === 'special' ? (
-                    <AlertTriangle className="text-special w-16 h-16 animate-pulse" />
+                    <AlertTriangle className="text-special w-12 h-12 sm:w-16 sm:h-16 animate-pulse" />
                   ) : (
-                    <Check className="text-green-400 w-16 h-16" />
+                    <Check className="text-green-400 w-12 h-12 sm:w-16 sm:h-16" />
                   )}
                 </div>
               </div>
 
               <div className="flex flex-col items-center gap-6">
-                <div className="text-4xl font-mono font-black text-white tracking-tighter flex items-center gap-3">
-                  <Clock size={32} className={timeLeft < 60 ? "text-red-500 animate-pulse" : "text-special"} />
+                <div className="text-2xl sm:text-4xl font-mono font-black text-white tracking-tighter flex items-center gap-3">
+                  <Clock size={24} className={timeLeft < 60 ? "text-red-500 animate-pulse" : "text-special"} />
                   [{minutes}:{seconds.toString().padStart(2, '0')}]
                 </div>
 

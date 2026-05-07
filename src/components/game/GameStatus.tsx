@@ -33,7 +33,7 @@ export function GameStatus({
   const progress = (day / totalDays) * 100;
 
   return (
-    <div className="w-full max-w-6xl mx-auto flex items-center justify-between gap-4 glass border border-white/5 px-6 py-2 rounded-2xl shadow-xl overflow-hidden relative">
+    <div className="w-full max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-4 glass border border-white/5 px-3 sm:px-6 py-2 rounded-2xl shadow-xl overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-r from-common/5 to-transparent opacity-20" />
       
       {/* Jugadores - Versión Mini */}
@@ -72,21 +72,21 @@ export function GameStatus({
         <div className="flex flex-col -space-y-1">
           <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Vínculo Activo</span>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-black text-white uppercase tracking-tight">
-              {partnerName !== 'Pareja' ? partnerName : 'Cargando...'}
+            <span className="text-[10px] sm:text-xs font-black text-white uppercase tracking-tight">
+              {partnerName !== 'Pareja' ? partnerName : '...'}
             </span>
             <span className="text-[10px] font-black text-white/20">+</span>
-            <span className="text-xs font-black text-white uppercase tracking-tight">{userName}</span>
+            <span className="text-[10px] sm:text-xs font-black text-white uppercase tracking-tight">{userName}</span>
           </div>
         </div>
       </div>
 
       {/* Progreso - Versión Compacta */}
-      <div className="flex-1 flex items-center gap-4 px-4 relative z-10">
-        <div className="shrink-0 flex items-center gap-2">
-          <span className="text-[10px] font-black text-white uppercase tracking-widest">Día {day}</span>
+      <div className="flex-1 flex items-center gap-2 sm:gap-4 px-1 sm:px-4 relative z-10">
+        <div className="shrink-0 flex items-center gap-1 sm:gap-2">
+          <span className="text-[9px] sm:text-[10px] font-black text-white uppercase tracking-widest">Día {day}</span>
           <span className="text-[10px] font-black text-white/20">/</span>
-          <span className="text-[10px] font-black text-white/20">{totalDays}</span>
+          <span className="text-[9px] sm:text-[10px] font-black text-white/20">{totalDays}</span>
         </div>
         
         <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">

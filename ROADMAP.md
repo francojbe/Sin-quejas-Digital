@@ -1,21 +1,21 @@
 # Hoja de Ruta: Sin Quejas Digital (Juego para Parejas)
 
-### ✅ Logros Completados (Sesión 04 Mayo 2026 - Estabilidad Multiplataforma):
-1. **Notificaciones Nativas Android (Capacitor):** Migración total al SDK nativo OneSignal v5. Ahora las notificaciones abren directamente la aplicación nativa en lugar del navegador.
-2. **Sincronización de Acciones (Realtime):** Mejora en la lógica de aceptación de cartas. Ahora las acciones realizadas en Android se reflejan instantáneamente en la web del partner mediante el historial de juego y eventos en tiempo real.
-3. **Gestión de Ventanas Web:** Implementación de lógica "Focus Window" en el Service Worker para evitar la apertura de pestañas redundantes al cliquear notificaciones en PC.
-4. **Optimización de Despliegue (Easypanel):** Configuración de salida dinámica (`standalone` vs `export`) para permitir despliegues en Docker sin romper la generación de la app móvil local.
-5. **Notificaciones de Aceptación:** Ahora el sistema notifica automáticamente al compañero cuando su carta ha sido aceptada o bloqueada.
+### ✅ Logros Completados (Sesión 05 Mayo 2026 - UX & Tutoriales):
+1. **Tutorial de Vinculación (Setup):** Implementación de una guía de 4 pasos para conectar parejas, con persistencia en base de datos (`has_seen_setup_tutorial`).
+2. **Refactorización Mobile:** Optimización de estilos en toda la aplicación para evitar cortes de texto y mejorar la legibilidad en pantallas pequeñas (incluyendo escalado global para dispositivos de <360px).
+3. **Tutorial de Juego (Tablero):** Sistema de posicionamiento dinámico ("Clamped Fixed") que evita cortes de texto en cualquier dispositivo y orientación.
+4. **Sistema de Reanudación:** Los usuarios ahora pueden repetir el tutorial del tablero en cualquier momento desde su perfil.
+5. **Construcción y Sincronización:** El flujo de trabajo para Android se ha verificado y sincronizado con las últimas mejoras visuales.
+6. **Optimización Offline (PWA):** Service Worker con 4 estrategias de caché (App Shell, imágenes, navegación, assets). Página `/offline.html` y toasts de conexión/desconexión implementados.
 
-### 🔄 En Progreso (Tutoriales y UX)
-- [x] Tutorial de Juego (Tablero) - *Pulido v1.0.7*
-- [ ] Tutorial de Vinculación Inicial (Setup) - **MAÑANA**
-- [ ] Refactorización de estilos Mobile (evitar cortes de texto)
-- [ ] Implementar sistema de "Reanudar Tutorial" desde configuración
+### ⏳ Pendientes y Próximos Pasos (Hacia la v1.1):
 
-### ⏳ Pendientes y Próximos Pasos (Hacia la v1.0):
+#### Fase 6: Resiliencia y PWA
+- [x] **Optimización Offline:** Service Worker personalizado con caché de App Shell, imágenes de cartas (TTL 7 días), navegación offline y página de fallback.
+- [x] **Sync de Fondo:** Implementación de cola de jugadas en IndexedDB para enviar acciones automáticamente al recuperar la conexión.
 
-#### Fase 5: Gamificación y Cierre
-- [x] **Celebración de Pareja:** Crear la pantalla final de "Victoria" cuando el contador de días llegue a su fin y gestionar el reinicio o retorno a inicio.
-- [ ] **Optimización Offline:** Configurar Service Workers para que el tablero cargue incluso con mala conexión (PWA completa).
-- [ ] **Tutorial Interactivo:** Un pequeño tour guiado para nuevos usuarios al iniciar su primera partida.
+#### Fase 7: Contenido y Comunidad
+- [ ] **Expansión de Mazo:** Añadir 10 nuevas cartas de categoría "Especial" con efectos visuales únicos.
+- [ ] **Sistema de Compartir:** Permitir que las parejas compartan sus logros o el "Resumen de la Partida" en redes sociales o WhatsApp.
+- [ ] **Validación Final de Android:** Testeo en dispositivos con "Notch" agresivos y diferentes relaciones de aspecto (Tablets).
+
