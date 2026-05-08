@@ -31,7 +31,7 @@ export const AchievementCard = ({
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const shareText = `¡Mira nuestro nuevo logro en Sin Quejas Digital! 🏆 Acabamos de desbloquear: "${title}". Nuestra conexión es increíble. ❤️`;
-    const shareUrl = window.location.origin;
+    const shareUrl = "https://recuperadora-sinquejas.nojauc.easypanel.host/";
 
     if (navigator.share) {
       try {
