@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Heart, Calendar, Star, ArrowLeft, RefreshCw, Share2, Sparkles, MessageSquare } from "lucide-react";
+import { Trophy, Heart, Calendar, Star, ArrowLeft, RotateCcw, Share2, Sparkles, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
