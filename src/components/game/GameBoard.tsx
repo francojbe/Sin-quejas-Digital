@@ -147,8 +147,15 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       if (error) throw error;
       
+      // Limpieza profunda de estados para forzar selector de nueva partida
+      setGame(null);
+      setHand([]);
+      setDisplayedCard(null);
+      setHistory([]);
+      setPartnerHandCount(0);
+      
       await fetchGame();
-      showNotification("Partida guardada", 'info');
+      showNotification("Partida finalizada", 'success');
     } catch (err) {
       console.error("Error finishing game:", err);
       window.location.href = '/';
