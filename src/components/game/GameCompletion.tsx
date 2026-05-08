@@ -128,16 +128,38 @@ export function GameCompletion({
             damping: 15, 
             delay: 0.2 
           }}
-          className="relative mx-auto w-44 h-44 mb-6 flex items-center justify-center"
+          className="relative mx-auto w-48 h-48 mb-6 flex items-center justify-center"
         >
-          {/* Background Glow (Still pulsing for life) */}
+          {/* Background Glow */}
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/40 to-pink-500/40 rounded-full blur-[40px] animate-pulse" />
           
-          <img 
-            src="/copa corazon.png" 
-            alt="Trofeo de Victoria" 
-            className="relative z-10 w-full h-full object-contain drop-shadow-[0_15px_35px_rgba(0,0,0,0.6)]"
-          />
+          <div className="relative z-10 w-full h-full">
+            <img 
+              src="/copa corazon.png" 
+              alt="Trofeo de Victoria" 
+              className="w-full h-full object-contain drop-shadow-[0_15px_35px_rgba(0,0,0,0.6)]"
+            />
+            
+            {/* Grabado en la placa dorada */}
+            <div className="absolute bottom-[14%] left-1/2 -translate-x-1/2 w-[60%] text-center">
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="text-[10px] sm:text-xs font-serif font-bold text-amber-950/80 tracking-tighter leading-none drop-shadow-[0.5px_0.5px_0px_rgba(255,255,255,0.2)]"
+              >
+                {userName} & {partnerName}
+              </motion.p>
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+                className="text-[6px] uppercase font-black text-amber-900/40 tracking-[0.2em] mt-0.5"
+              >
+                Vínculo Eterno
+              </motion.p>
+            </div>
+          </div>
         </motion.div>
 
         <motion.div
