@@ -140,16 +140,24 @@ export function GameCompletion({
               className="w-full h-full object-contain drop-shadow-[0_15px_35px_rgba(0,0,0,0.6)]"
             />
             
-            {/* Grabado en la placa dorada (Ajustado) */}
-            <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 w-[55%] text-center leading-none">
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="text-[8px] sm:text-[9px] font-serif font-black text-amber-950/90 tracking-tighter uppercase drop-shadow-[0.3px_0.3px_0px_rgba(255,255,255,0.1)] truncate"
+            {/* Grabado en la placa dorada (Monograma Estilo Real) */}
+            <div className="absolute bottom-[9.5%] left-1/2 -translate-x-1/2 w-[60%] text-center leading-none">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1, type: "spring" }}
+                className="flex items-center justify-center gap-1.5"
               >
-                {userName} & {partnerName}
-              </motion.p>
+                <span className="text-xl sm:text-2xl font-serif font-black text-amber-950/90 drop-shadow-[0.5px_0.5px_0px_rgba(255,255,255,0.2)]">
+                  {userName.charAt(0).toUpperCase()}
+                </span>
+                <span className="text-[10px] sm:text-xs font-serif font-light text-amber-900/60 italic">
+                  &
+                </span>
+                <span className="text-xl sm:text-2xl font-serif font-black text-amber-950/90 drop-shadow-[0.5px_0.5px_0px_rgba(255,255,255,0.2)]">
+                  {partnerName.charAt(0).toUpperCase()}
+                </span>
+              </motion.div>
             </div>
           </div>
         </motion.div>
