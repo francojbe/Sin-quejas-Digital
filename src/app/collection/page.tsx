@@ -205,8 +205,8 @@ export default function CollectionPage() {
           <AnimatePresence mode="popLayout">
             {filteredCards.map((card) => {
               const displayCard = getDisplayCard(card);
-              // Allow customizing all cards
-              const canCustomize = true;
+              // Allow customizing all EXCEPT special cards (mechanics)
+              const canCustomize = card.rarity !== "special";
 
               return (
                 <motion.div
