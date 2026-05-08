@@ -1,35 +1,36 @@
 # Contexto y Estado Actual: Sin Quejas Digital
 
-## ✅ Fase 8: Monetización Premium (Completada)
-Hemos finalizado con éxito la implementación técnica de la monetización. Los hitos alcanzados son:
-1.  **Base de Datos Segura:** 
-    - Columna `is_premium` (BOOLEAN) añadida a `profiles`.
-    - Tabla `custom_card_overrides` (UUIDs) creada con políticas de RLS para que solo los miembros de la pareja puedan ver/editar sus propias reglas.
-2.  **Mazo Maestro (Colección):**
-    - **Visual Paywall:** Implementado con candados dinámicos y un banner elegante estilo "glassmorphism".
-    - **Editor Premium:** Funcionalidad para personalizar Títulos y Retos de cartas comunes (sin dependencia de hover para Android).
-3.  **Motor de Juego (GameBoard):**
-    - Sincronización en tiempo real: Las cartas jugadas en el tablero ahora muestran los textos personalizados si existen overrides.
-    - Sincronización completa con Android vía Capacitor (`npx cap sync android`).
+## ✅ Fase 7 & 8: Finalización y Monetización (Completadas)
+Hemos finalizado con éxito la implementación de la experiencia de cierre y la base de la monetización:
+
+1.  **Experiencia de Finalización (GameCompletion):**
+    *   Pantalla de victoria premium con trofeo dinámico.
+    *   **Monograma:** Grabado de iniciales en la placa del trofeo basado en los perfiles de la pareja.
+    *   **Estadísticas:** Resumen de días jugados, logros y cartas totales.
+2.  **Sistema de Compartir Visual (Nativo):**
+    *   **Renderizado Manual:** Motor de dibujo en Canvas para generar el trofeo personalizado con fondo sólido (máxima compatibilidad).
+    *   **Integración Nativa:** Uso de `@capacitor/share` y `@capacitor/filesystem` para enviar el archivo real a WhatsApp/Instagram.
+    *   **Resiliencia:** Fallback inteligente a Web Share o Link de WhatsApp si el modo nativo falla.
+3.  **Monetización Premium:**
+    *   Columna `is_premium` en `profiles`.
+    *   Tabla `custom_card_overrides` para personalización de cartas.
+    *   Paywall visual en la sección de Colección ("¿Quieren más?").
 
 ---
 
 ## ⏳ Pendientes y Roadmap (Hacia v1.1)
 
-### 1. Fase 7: Contenido y Comunidad (Prioridad Media)
-- [ ] **Compartir Logros:** Integrar `navigator.share` en `AchievementCard.tsx` para enviar victorias por WhatsApp.
-- [ ] **Resumen Final:** Crear una vista de "Fin de Partida" con el balance de retos completados.
+### 1. Fase 8+: Lógica de Pago y Fondos (Prioridad Alta)
+- [ ] **Pasarela de Pago:** Integrar Stripe o similar para activar el flag `is_premium`.
+- [ ] **Fondos Personalizados:** Implementar selector de fondos exclusivos (texturas/gradientes) para el tablero Premium.
 
-### 2. Fase 8+: Lógica de Suscripción (Prioridad Alta)
-- [ ] **Pasarela de Pago:** El botón "Conseguir Premium" es visual. Se requiere integrar Stripe o simular el webhook de activación.
-- [ ] **Fondos Personalizados:** Implementar selector de fondos exclusivos para el tablero (Solo Premium).
-
-### 3. Fase 9: Pulido Final (Prioridad Media)
-- [ ] **Safe Areas (Notch):** Ajustes de CSS para asegurar que los elementos del header no se solapen con notches en dispositivos móviles modernos.
-- [ ] **Tablet Support:** Optimizar el grid de la galería para pantallas grandes.
+### 2. Fase 9: Pulido Final (Prioridad Media)
+- [ ] **Safe Areas (Notch):** Ajustes de CSS en el header para evitar solapamiento con notches en móviles.
+- [ ] **Historial Detallado:** Convertir el "Connection Report" en una bitácora más descriptiva de la relación.
 
 ---
 
 ## 🛠️ Notas de Desarrollo
-- Se eliminó el archivo `run_sql.mjs` para proteger los tokens de Supabase (bloqueo de Github superado).
-- Las builds ahora se ejecutan con `NEXT_PUBLIC_IS_CAPACITOR=true` para garantizar que la App Android esté sincronizada con la versión web.
+- **Plugins Nuevos:** Se añadieron `@capacitor/share` y `@capacitor/filesystem` para el compartir nativo.
+- **Renderizado:** Se utiliza Canvas puro en lugar de `html2canvas` para el trofeo por temas de fiabilidad en Android WebView.
+- **Android:** Build optimizada con `NEXT_PUBLIC_IS_CAPACITOR=true` y sincronización completa de assets.

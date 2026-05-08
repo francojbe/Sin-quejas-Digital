@@ -7,6 +7,8 @@
 4. **Sistema de Reanudación:** Los usuarios ahora pueden repetir el tutorial del tablero en cualquier momento desde su perfil.
 5. **Construcción y Sincronización:** El flujo de trabajo para Android se ha verificado y sincronizado con las últimas mejoras visuales.
 6. **Optimización Offline (PWA):** Service Worker con 4 estrategias de caché (App Shell, imágenes, navegación, assets). Página `/offline.html` y toasts de conexión/desconexión implementados.
+7. **Experiencia de Finalización (Connection Report):** Pantalla de victoria con trofeo personalizado, monograma de iniciales y estadísticas de sesión.
+8. **Sistema de Compartir Nativo:** Integración de Capacitor Share y Filesystem con renderizado manual en Canvas para compartir imágenes del trofeo personalizadas.
 
 ### ⏳ Pendientes y Próximos Pasos (Hacia la v1.1):
 
@@ -15,7 +17,7 @@
 - [x] **Sync de Fondo:** Implementación de cola de jugadas en IndexedDB para enviar acciones automáticamente al recuperar la conexión.
 
 #### Fase 7: Contenido y Comunidad
-- [ ] **Sistema de Compartir:** Permitir que las parejas compartan sus logros o el "Resumen de la Partida" en redes sociales o WhatsApp.
+- [x] **Sistema de Compartir:** Implementación de compartir imagen personalizada (Trofeo + Iniciales) y estadísticas mediante Capacitor Share (Nativo) y Canvas (Renderizado).
 
 #### Fase 8: Monetización (Premium SaaS)
 - [x] **Suscripción Premium:** Añadir flag `is_premium` a los perfiles.
