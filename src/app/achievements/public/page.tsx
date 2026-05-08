@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 import { Trophy, Star, Award, ExternalLink, Heart, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AchievementCard } from "@/components/game/AchievementCard";
+import { Suspense } from "react";
 
 interface PublicAchievement {
   id: string;
@@ -19,8 +20,16 @@ interface PublicAchievement {
 }
 
 export default function PublicAchievementsPage() {
-  const params = useParams();
-  const coupleId = params?.coupleId as string;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <PublicAchievementsContent />
+    </Suspense>
+  );
+}
+
+function PublicAchievementsContent() {
+  const searchParams = useSearchParams();
+  const coupleId = searchParams?.get('id');
   
   const [achievements, setAchievements] = useState<PublicAchievement[]>([]);
   const [loading, setLoading] = useState(true);
