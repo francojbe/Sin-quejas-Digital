@@ -115,25 +115,22 @@ export function GameCompletion({
         animate={{ scale: 1, y: 0 }}
         className="relative w-full max-w-lg glass border border-white/10 rounded-[40px] p-6 sm:p-10 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)] my-8"
       >
-        {/* Main Trophy Image (Upgraded from Icon) */}
+        {/* Main Trophy Image (Static Premium) */}
         <motion.div 
           initial={{ rotate: -10, scale: 0, y: 20 }}
           animate={{ 
             rotate: 0, 
             scale: 1, 
-            y: [0, -10, 0], // Floating effect
-            rotateY: [0, 360] // Continuous 3D rotation
+            y: 0
           }}
           transition={{ 
-            rotate: { type: "spring", damping: 15, delay: 0.2 },
-            scale: { type: "spring", damping: 15, delay: 0.2 },
-            y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-            rotateY: { duration: 8, repeat: Infinity, ease: "linear" }
+            type: "spring", 
+            damping: 15, 
+            delay: 0.2 
           }}
-          style={{ perspective: 1000 }} // For 3D depth
           className="relative mx-auto w-44 h-44 mb-6 flex items-center justify-center"
         >
-          {/* Background Glow */}
+          {/* Background Glow (Still pulsing for life) */}
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/40 to-pink-500/40 rounded-full blur-[40px] animate-pulse" />
           
           <img 
