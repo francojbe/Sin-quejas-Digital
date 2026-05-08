@@ -88,74 +88,87 @@ export function GameCompletion({
     const shareUrl = "https://recuperadora-sinquejas.nojauc.easypanel.host/";
 
     try {
-      let shareFiles: string[] = [];
+      let imageUri: string | null = null;
       
-      // 1. Capturar imagen
+      // 1. Renderizado MANUAL en Canvas (Mucho más fiable que capturar pantalla)
       try {
-        if (trophyRef.current) {
-          const html2canvas = (await import('html2canvas')).default;
-          const canvas = await html2canvas(trophyRef.current, {
-            useCORS: true,
-            backgroundColor: '#000000', // Fondo negro sólido para evitar problemas de transparencia
-            scale: 2,
-            logging: false,
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 600;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          // Fondo Sólido Elegante
+          ctx.fillStyle = '#0a0a0a';
+          ctx.fillRect(0, 0, 600, 600);
+          
+          // Cargar imagen del trofeo
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = '/copa corazon.png';
+          
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
           });
           
-          // Obtener base64 completo con prefijo
+          // Dibujar trofeo centrado
+          ctx.drawImage(img, 50, 50, 500, 500);
+          
+          // Dibujar Iniciales Grabadas
+          ctx.fillStyle = 'rgba(45, 20, 5, 0.9)'; // Color ámbar oscuro/grabado
+          ctx.font = 'bold 60px serif';
+          ctx.textAlign = 'center';
+          const monogram = `${userName.charAt(0).toUpperCase()} & ${partnerName.charAt(0).toUpperCase()}`;
+          ctx.fillText(monogram, 300, 535); // Posición aproximada de la placa
+          
           const base64Image = canvas.toDataURL('image/png');
-          shareFiles = [base64Image];
-        }
-      } catch (imgErr) {
-        console.warn('Fallo al capturar imagen:', imgErr);
-      }
-
-      // 2. Intentar Share Nativo de Capacitor
-      try {
-        const { Share } = await import('@capacitor/share');
-        const isNative = typeof window !== 'undefined' && (window as any).Capacitor;
-
-        if (isNative) {
-          await Share.share({
-            title: '¡Desafío Completado!',
-            text: shareText,
-            url: shareUrl,
-            files: shareFiles,
-            dialogTitle: 'Compartir Victoria',
-          });
-          return; // Éxito nativo
-        }
-      } catch (nativeErr) {
-        console.warn('Fallo share nativo, intentando Web Share:', nativeErr);
-      }
-
-      // 3. Web Share API (Navegador Móvil)
-      if (navigator.share) {
-        const shareData: any = {
-          title: 'Aventura Completada',
-          text: shareText,
-          url: shareUrl,
-        };
-
-        // Convertir base64 a File para Web Share si es posible
-        if (shareFiles.length > 0) {
-          try {
-            const res = await fetch(shareFiles[0]);
+          
+          // 2. Guardado y Share Nativo
+          const isNative = typeof window !== 'undefined' && (window as any).Capacitor;
+          if (isNative) {
+            const { Filesystem, Directory } = await import('@capacitor/filesystem');
+            const { Share } = await import('@capacitor/share');
+            
+            const fileName = `victoria_${Date.now()}.png`;
+            const savedFile = await Filesystem.writeFile({
+              path: fileName,
+              data: base64Image.split(',')[1],
+              directory: Directory.Cache
+            });
+            
+            await Share.share({
+              title: '¡Victoria en Sin Quejas Digital!',
+              text: `${shareText}\n\nJuega aquí: ${shareUrl}`,
+              files: [savedFile.uri],
+              dialogTitle: 'Compartir Victoria',
+            });
+            return;
+          }
+          
+          // 3. Fallback Web Share (con archivo real)
+          if (navigator.share) {
+            const res = await fetch(base64Image);
             const blob = await res.blob();
             const file = new File([blob], 'victoria.png', { type: 'image/png' });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              shareData.files = [file];
-            }
-          } catch (e) { console.warn('No se pudo adjuntar archivo a Web Share'); }
+            await navigator.share({
+              title: '¡Desafío Completado!',
+              text: shareText,
+              url: shareUrl,
+              files: [file]
+            });
+            return;
+          }
         }
-
-        await navigator.share(shareData);
-      } else {
-        // Fallback final: WhatsApp Web/App Link (Solo texto)
-        window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
+      } catch (renderErr) {
+        console.error('Error en renderizado manual:', renderErr);
       }
 
+      // 4. Fallback final (WhatsApp solo texto)
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
+
     } catch (err) {
-      console.error('Error total en share:', err);
+      console.error('Error crítico en share:', err);
       window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
     } finally {
       setIsSharing(false);
