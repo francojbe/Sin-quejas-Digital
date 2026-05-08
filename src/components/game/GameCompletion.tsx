@@ -88,57 +88,75 @@ export function GameCompletion({
     const shareUrl = "https://recuperadora-sinquejas.nojauc.easypanel.host/";
 
     try {
-      let imageUri: string | null = null;
+      let shareFiles: string[] = [];
       
-      // 1. Capturar imagen con html2canvas
+      // 1. Capturar imagen
       try {
         if (trophyRef.current) {
           const html2canvas = (await import('html2canvas')).default;
           const canvas = await html2canvas(trophyRef.current, {
             useCORS: true,
-            backgroundColor: null,
+            backgroundColor: '#000000', // Fondo negro sólido para evitar problemas de transparencia
             scale: 2,
             logging: false,
           });
           
-          const base64Data = canvas.toDataURL('image/png').split(',')[1];
-          
-          // 2. Guardar temporalmente con Filesystem (Nativo Capacitor)
-          const { Filesystem, Directory } = await import('@capacitor/filesystem');
-          
-          const fileName = `trofeo_${Date.now()}.png`;
-          const savedFile = await Filesystem.writeFile({
-            path: fileName,
-            data: base64Data,
-            directory: Directory.Cache
-          });
-          
-          imageUri = savedFile.uri;
+          // Obtener base64 completo con prefijo
+          const base64Image = canvas.toDataURL('image/png');
+          shareFiles = [base64Image];
         }
       } catch (imgErr) {
-        console.warn('Fallo al generar imagen nativa:', imgErr);
+        console.warn('Fallo al capturar imagen:', imgErr);
       }
 
-      // 3. Compartir con el Plugin de Share de Capacitor (Nativo)
-      const { Share } = await import('@capacitor/share');
-      
-      const shareOptions: any = {
-        title: '¡Desafío Completado!',
-        text: shareText,
-        url: shareUrl,
-        dialogTitle: 'Compartir mi Victoria',
-      };
+      // 2. Intentar Share Nativo de Capacitor
+      try {
+        const { Share } = await import('@capacitor/share');
+        const isNative = typeof window !== 'undefined' && (window as any).Capacitor;
 
-      if (imageUri) {
-        shareOptions.files = [imageUri];
+        if (isNative) {
+          await Share.share({
+            title: '¡Desafío Completado!',
+            text: shareText,
+            url: shareUrl,
+            files: shareFiles,
+            dialogTitle: 'Compartir Victoria',
+          });
+          return; // Éxito nativo
+        }
+      } catch (nativeErr) {
+        console.warn('Fallo share nativo, intentando Web Share:', nativeErr);
       }
 
-      await Share.share(shareOptions);
+      // 3. Web Share API (Navegador Móvil)
+      if (navigator.share) {
+        const shareData: any = {
+          title: 'Aventura Completada',
+          text: shareText,
+          url: shareUrl,
+        };
+
+        // Convertir base64 a File para Web Share si es posible
+        if (shareFiles.length > 0) {
+          try {
+            const res = await fetch(shareFiles[0]);
+            const blob = await res.blob();
+            const file = new File([blob], 'victoria.png', { type: 'image/png' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              shareData.files = [file];
+            }
+          } catch (e) { console.warn('No se pudo adjuntar archivo a Web Share'); }
+        }
+
+        await navigator.share(shareData);
+      } else {
+        // Fallback final: WhatsApp Web/App Link (Solo texto)
+        window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
+      }
 
     } catch (err) {
-      console.error('Error sharing nativo:', err);
-      // Fallback final por si acaso
-      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
+      console.error('Error total en share:', err);
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
     } finally {
       setIsSharing(false);
     }
