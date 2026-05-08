@@ -62,7 +62,7 @@ export const AchievementCard = ({
       className="flex flex-col items-center gap-4 w-full"
     >
       {/* Medal Container */}
-      <div className="relative group w-full aspect-square max-w-[240px]">
+      <div className="relative group w-full aspect-square max-w-[180px] md:max-w-[240px]">
         {/* Shadow/Glow Effect */}
         {isUnlocked && (
           <div className="absolute inset-0 bg-cyan-400/25 blur-[40px] rounded-full animate-pulse pointer-events-none" />
@@ -103,7 +103,7 @@ export const AchievementCard = ({
       </div>
 
       {/* Title & Info */}
-      <div className="text-center space-y-2 max-w-[180px]">
+      <div className="text-center space-y-2 max-w-[160px] md:max-w-[180px]">
         <h3 className={`
           text-xs font-black uppercase tracking-[0.2em] transition-colors duration-500
           ${isUnlocked ? "text-white" : "text-white/20"}

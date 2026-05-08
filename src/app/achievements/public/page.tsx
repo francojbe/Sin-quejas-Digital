@@ -99,28 +99,29 @@ function PublicAchievementsContent() {
         </div>
 
         {/* Achievements Carousel Container */}
-        <div className="relative w-full max-w-6xl mt-8 mb-20">
-          <div className="flex gap-12 overflow-x-auto pb-12 pt-4 px-4 scrollbar-hide snap-x snap-mandatory justify-center">
+        <div className="relative w-full mt-4 mb-16 overflow-visible">
+          <div className="flex gap-6 md:gap-12 overflow-x-auto pb-20 pt-4 px-8 scrollbar-hide snap-x snap-mandatory justify-start md:justify-center">
             {achievements.length > 0 ? (
               achievements.map((a) => (
-                <div key={a.id} className="snap-center min-w-[280px]">
+                <div key={a.id} className="snap-center min-w-[200px] md:min-w-[280px] flex justify-center">
                   <AchievementCard
                     achievementCode={a.achievement_code}
                     title={a.title}
                     isUnlocked={true}
                     inscription={`${a.display_name} - ${new Date(a.earned_at).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`}
+                    coupleId={coupleId || undefined}
                   />
                 </div>
               ))
             ) : (
-              <div className="py-12 text-center opacity-30 italic">
+              <div className="w-full py-12 text-center opacity-30 italic">
                 Aún no hay logros públicos para mostrar.
               </div>
             )}
           </div>
           
           {/* Carousel Indicators (Visual Only) */}
-          <div className="flex justify-center gap-2 mt-4">
+          <div className="flex justify-center gap-2 -mt-10">
             <div className="w-12 h-1 bg-cyan-500/50 rounded-full" />
             <div className="w-2 h-1 bg-white/10 rounded-full" />
             <div className="w-2 h-1 bg-white/10 rounded-full" />
