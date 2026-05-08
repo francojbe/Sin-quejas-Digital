@@ -78,42 +78,57 @@ export function GameCompletion({
   const router = useRouter();
 
   const trophyRef = useRef<HTMLDivElement>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   const handleShare = async () => {
+    if (isSharing) return;
+    setIsSharing(true);
+    
     const shareText = `¡Desafío Completado en Sin Quejas Digital! 🏆 Completamos ${cardsPlayedCount} cartas de conexión en ${day} días. Mi vínculo con ${partnerName} es más fuerte que nunca. ❤️`;
     const shareUrl = "https://recuperadora-sinquejas.nojauc.easypanel.host/";
 
     try {
       let files: File[] = [];
       
-      // Capturar imagen del trofeo si la ref existe
-      if (trophyRef.current) {
-        const html2canvas = (await import('html2canvas')).default;
-        const canvas = await html2canvas(trophyRef.current, {
-          useCORS: true,
-          backgroundColor: null,
-          scale: 2, // Mayor calidad
-        });
-        
-        const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
-        if (blob) {
-          files = [new File([blob], 'trofeo-victoria.png', { type: 'image/png' })];
+      // Intentar capturar imagen del trofeo
+      try {
+        if (trophyRef.current) {
+          const html2canvas = (await import('html2canvas')).default;
+          const canvas = await html2canvas(trophyRef.current, {
+            useCORS: true,
+            backgroundColor: null,
+            scale: 2,
+            logging: false,
+          });
+          
+          const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 0.8));
+          if (blob) {
+            files = [new File([blob], 'trofeo-victoria.png', { type: 'image/png' })];
+          }
         }
+      } catch (imgErr) {
+        console.warn('No se pudo generar la imagen, compartiendo solo texto:', imgErr);
       }
 
-      if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
+      // Verificar soporte de compartir
+      const canShareFiles = navigator.canShare && files.length > 0 && navigator.canShare({ files });
+
+      if (navigator.share) {
         await navigator.share({
           title: 'Aventura de Pareja Completada',
           text: shareText,
           url: shareUrl,
-          files: files
+          ...(canShareFiles ? { files } : {})
         });
       } else {
-        // Fallback si no soporta archivos
         window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
       }
     } catch (err) {
       console.error('Error sharing:', err);
+      // Fallback final
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -194,10 +209,11 @@ export function GameCompletion({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleShare}
-          className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-black uppercase tracking-widest text-xs py-4 rounded-2xl shadow-xl shadow-pink-500/20 flex items-center justify-center gap-3 mb-8"
+          className={`w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-black uppercase tracking-widest text-xs py-4 rounded-2xl shadow-xl shadow-pink-500/20 flex items-center justify-center gap-3 mb-8 transition-all ${isSharing ? 'opacity-70 scale-95' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
+          disabled={isSharing}
         >
-          <Share2 size={16} />
-          Compartir Victoria
+          {isSharing ? <RotateCcw size={16} className="animate-spin" /> : <Share2 size={16} />}
+          {isSharing ? 'Generando...' : 'Compartir Victoria'}
         </motion.button>
 
         {/* Premium Banner (LatAm Spanish) */}
