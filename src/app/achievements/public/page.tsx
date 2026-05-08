@@ -10,13 +10,16 @@ import { AchievementCard } from "@/components/game/AchievementCard";
 import { Suspense } from "react";
 
 interface PublicAchievement {
-  id: string;
+  achievement_code: string;
   title: string;
   description: string;
   rarity: string;
   earned_at: string;
-  achievement_code: string;
+}
+
+interface PublicProfile {
   display_name: string;
+  avatar_url: string;
 }
 
 export default function PublicAchievementsPage() {
@@ -32,20 +35,25 @@ function PublicAchievementsContent() {
   const coupleId = searchParams?.get('id');
   
   const [achievements, setAchievements] = useState<PublicAchievement[]>([]);
+  const [profiles, setProfiles] = useState<PublicProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchPublicAchievements() {
+    async function fetchPublicData() {
       if (!coupleId) return;
       
-      const { data, error } = await supabase.rpc('get_public_achievements', { 
-        target_couple_id: coupleId 
-      });
+      // Fetch both achievements and profiles
+      const [achvResponse, profResponse] = await Promise.all([
+        supabase.rpc('get_public_achievements', { target_couple_id: coupleId }),
+        supabase.rpc('get_public_couple_profiles', { target_couple_id: coupleId })
+      ]);
 
-      if (data) setAchievements(data);
+      if (achvResponse.data) setAchievements(achvResponse.data);
+      if (profResponse.data) setProfiles(profResponse.data);
+      
       setLoading(false);
     }
-    fetchPublicAchievements();
+    fetchPublicData();
   }, [coupleId]);
 
   if (loading) {
@@ -57,10 +65,12 @@ function PublicAchievementsContent() {
         >
           <Trophy className="text-yellow-500" size={48} />
         </motion.div>
-        <p className="text-white/30 font-black uppercase tracking-[0.3em] text-[10px]">Cargando Vitrina...</p>
+        <p className="text-white/30 font-black uppercase tracking-[0.3em] text-[10px]">Sincronizando Vitrina...</p>
       </div>
     );
   }
+
+  const coupleNames = profiles.map(p => p.display_name).join(' & ');
 
   return (
     <div className="min-h-[100dvh] bg-[#050505] text-white selection:bg-cyan-500/30 overflow-x-hidden flex flex-col items-center">
@@ -71,17 +81,43 @@ function PublicAchievementsContent() {
       </div>
 
       <main className="w-full max-w-6xl relative z-10 flex flex-col items-center p-6 md:p-12">
-        {/* Header Branding */}
-        <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 mb-4">
+        {/* Header Branding with Avatars */}
+        <div className="mb-12 text-center flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 mb-8">
             <Heart size={16} className="text-cyan-400 fill-cyan-400/20" />
             <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">Sin Quejas Digital</span>
           </div>
+
+          {/* Couple Avatars */}
+          <div className="flex items-center justify-center mb-6 relative">
+            <div className="flex -space-x-4">
+              {profiles.map((p, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.5, x: i === 0 ? -20 : 20 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  transition={{ delay: 0.2 + (i * 0.1) }}
+                  className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-[#050505] overflow-hidden bg-white/5 relative z-10 shadow-2xl"
+                >
+                  {p.avatar_url ? (
+                    <img src={p.avatar_url} alt={p.display_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/10 to-white/5">
+                      <span className="text-2xl font-black text-white/20">{p.display_name?.charAt(0)}</span>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+            {/* Connection Line/Effect */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-cyan-500/20 blur-2xl rounded-full -z-0" />
+          </div>
+
           <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-none mb-4">
-            Muro de<br />Prestigio
+            {coupleNames || 'Pareja Inmortal'}
           </h1>
           <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] max-w-xs mx-auto">
-            Logros alcanzados por esta pareja en su viaje de conexión.
+            Hitos compartidos en su camino hacia una conexión inquebrantable.
           </p>
         </div>
 
@@ -91,7 +127,7 @@ function PublicAchievementsContent() {
             <Award className="text-black" size={28} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-1">Total Desbloqueado</p>
+            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-1">Puntos de Prestigio</p>
             <p className="text-4xl font-black text-white leading-none">
               {achievements.length} <span className="text-cyan-500/30">/ 4</span>
             </p>
@@ -103,12 +139,12 @@ function PublicAchievementsContent() {
           <div className="flex gap-6 md:gap-12 overflow-x-auto pb-20 pt-4 px-8 scrollbar-hide snap-x snap-mandatory justify-start md:justify-center">
             {achievements.length > 0 ? (
               achievements.map((a) => (
-                <div key={a.id} className="snap-center min-w-[200px] md:min-w-[280px] flex justify-center">
+                <div key={a.achievement_code} className="snap-center min-w-[200px] md:min-w-[280px] flex justify-center">
                   <AchievementCard
                     achievementCode={a.achievement_code}
                     title={a.title}
                     isUnlocked={true}
-                    inscription={`${a.display_name} - ${new Date(a.earned_at).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`}
+                    inscription={`Pareja - ${new Date(a.earned_at).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`}
                     coupleId={coupleId || undefined}
                   />
                 </div>
