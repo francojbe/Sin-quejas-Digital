@@ -98,24 +98,33 @@ function PublicAchievementsContent() {
           </div>
         </div>
 
-        {/* Achievements Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-20 w-full max-w-4xl justify-items-center">
-          {achievements.length > 0 ? (
-            achievements.map((a) => (
-              <div key={a.id} className="w-full">
-                <AchievementCard
-                  achievementCode={a.achievement_code}
-                  title={a.title}
-                  isUnlocked={true}
-                  inscription={`${a.display_name} - ${new Date(a.earned_at).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`}
-                />
+        {/* Achievements Carousel Container */}
+        <div className="relative w-full max-w-6xl mt-8 mb-20">
+          <div className="flex gap-12 overflow-x-auto pb-12 pt-4 px-4 scrollbar-hide snap-x snap-mandatory justify-center">
+            {achievements.length > 0 ? (
+              achievements.map((a) => (
+                <div key={a.id} className="snap-center min-w-[280px]">
+                  <AchievementCard
+                    achievementCode={a.achievement_code}
+                    title={a.title}
+                    isUnlocked={true}
+                    inscription={`${a.display_name} - ${new Date(a.earned_at).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}`}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="py-12 text-center opacity-30 italic">
+                Aún no hay logros públicos para mostrar.
               </div>
-            ))
-          ) : (
-            <div className="col-span-full py-12 text-center opacity-30 italic">
-              Aún no hay logros públicos para mostrar.
-            </div>
-          )}
+            )}
+          </div>
+          
+          {/* Carousel Indicators (Visual Only) */}
+          <div className="flex justify-center gap-2 mt-4">
+            <div className="w-12 h-1 bg-cyan-500/50 rounded-full" />
+            <div className="w-2 h-1 bg-white/10 rounded-full" />
+            <div className="w-2 h-1 bg-white/10 rounded-full" />
+          </div>
         </div>
 
         {/* Growth CTA Banner */}
