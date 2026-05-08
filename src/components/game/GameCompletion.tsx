@@ -246,27 +246,16 @@ export function GameCompletion({
         </motion.div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm mx-auto">
           <motion.button
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.2 }}
-            onClick={onRestart}
-            className="flex-1 bg-white text-black font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
-          >
-            <RefreshCw size={14} />
-            Reiniciar
-          </motion.button>
-          
-          <motion.button
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 1.3 }}
-            onClick={onGoHome}
-            className="flex-1 bg-white/5 text-white/40 font-black uppercase tracking-widest text-[10px] py-4 rounded-xl hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2"
+            onClick={onRestart}
+            className="flex-1 bg-epic text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:shadow-[0_0_50px_rgba(168,85,247,0.5)] hover:scale-105 transition-all flex items-center justify-center gap-2"
           >
-            <ArrowLeft size={14} />
-            Nueva Partida
+            <RotateCcw size={16} />
+            Reiniciar Partida
           </motion.button>
         </div>
       </motion.div>

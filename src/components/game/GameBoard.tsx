@@ -1671,7 +1671,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             achievementsCount={achievementsCount}
             cardsPlayedCount={totalCardsPlayed}
             onRestart={handleRestart}
-            onGoHome={handleFinishGame}
           />
         )}
 
