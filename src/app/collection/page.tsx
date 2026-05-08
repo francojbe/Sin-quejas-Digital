@@ -178,6 +178,24 @@ export default function CollectionPage() {
         </div>
       </div>
 
+      {/* Banner Premium */}
+      {!isPremium && (
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="glass rounded-xl border-2 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.15)] p-4 flex gap-4 items-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 to-transparent pointer-events-none" />
+            <div className="shrink-0 p-2 bg-yellow-500/10 rounded-full border border-yellow-500/20">
+              <Crown className="w-5 h-5 text-yellow-500" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-sm tracking-wide text-white uppercase">¿Quieres reescribir las reglas?</h4>
+              <p className="text-xs text-white/60 mt-0.5 leading-relaxed">
+                Toca cualquier carta con candado para crear castigos personalizados subiendo a Premium.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Grid */}
       <div className="max-w-7xl mx-auto">
         <motion.div 
