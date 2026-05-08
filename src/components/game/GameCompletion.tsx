@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Heart, Calendar, Star, ArrowLeft, RotateCcw, Share2, Sparkles, MessageSquare } from "lucide-react";
+import { Trophy, Heart, Calendar, Star, RotateCcw, Share2, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -64,7 +64,6 @@ interface GameCompletionProps {
   achievementsCount: number;
   cardsPlayedCount?: number;
   onRestart?: () => void;
-  onGoHome?: () => void;
 }
 
 export function GameCompletion({ 
@@ -73,9 +72,8 @@ export function GameCompletion({
   partnerName, 
   userName, 
   achievementsCount,
-  cardsPlayedCount = 64,
-  onRestart,
-  onGoHome 
+  cardsPlayedCount = 0,
+  onRestart
 }: GameCompletionProps) {
   const router = useRouter();
 
@@ -115,149 +113,93 @@ export function GameCompletion({
         animate={{ scale: 1, y: 0 }}
         className="relative w-full max-w-lg glass border border-white/10 rounded-[40px] p-6 sm:p-10 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)] my-8"
       >
-        {/* Main Trophy Image (Static Premium) */}
+        {/* Main Trophy Image */}
         <motion.div 
           initial={{ rotate: -10, scale: 0, y: 20 }}
-          animate={{ 
-            rotate: 0, 
-            scale: 1, 
-            y: 0
-          }}
-          transition={{ 
-            type: "spring", 
-            damping: 15, 
-            delay: 0.2 
-          }}
+          animate={{ rotate: 0, scale: 1, y: 0 }}
+          transition={{ type: "spring", damping: 15, delay: 0.2 }}
           className="relative mx-auto w-48 h-48 mb-6 flex items-center justify-center"
         >
-          {/* Background Glow */}
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/40 to-pink-500/40 rounded-full blur-[40px] animate-pulse" />
-          
           <div className="relative z-10 w-full h-full">
-            <img 
-              src="/copa corazon.png" 
-              alt="Trofeo de Victoria" 
-              className="w-full h-full object-contain drop-shadow-[0_15px_35px_rgba(0,0,0,0.6)]"
-            />
+            <img src="/copa corazon.png" alt="Trofeo" className="w-full h-full object-contain drop-shadow-[0_15px_35px_rgba(0,0,0,0.6)]" />
             
-            {/* Grabado en la placa dorada (Monograma Estilo Real) */}
-            <div className="absolute bottom-[9.5%] left-1/2 -translate-x-1/2 w-[60%] text-center leading-none">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1, type: "spring" }}
-                className="flex items-center justify-center gap-1.5"
-              >
+            {/* Monograma de Iniciales */}
+            <div className="absolute bottom-[9.5%] left-1/2 -translate-x-1/2 w-[60%] text-center">
+              <div className="flex items-center justify-center gap-1.5">
                 <span className="text-xl sm:text-2xl font-serif font-black text-amber-950/90 drop-shadow-[0.5px_0.5px_0px_rgba(255,255,255,0.2)]">
                   {userName.charAt(0).toUpperCase()}
                 </span>
-                <span className="text-[10px] sm:text-xs font-serif font-light text-amber-900/60 italic">
-                  &
-                </span>
+                <span className="text-[10px] sm:text-xs font-serif font-light text-amber-900/60 italic">&</span>
                 <span className="text-xl sm:text-2xl font-serif font-black text-amber-950/90 drop-shadow-[0.5px_0.5px_0px_rgba(255,255,255,0.2)]">
                   {partnerName.charAt(0).toUpperCase()}
                 </span>
-              </motion.div>
+              </div>
             </div>
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="space-y-3 mb-8"
-        >
-          <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter italic px-2 leading-none">
+        <div className="space-y-3 mb-8">
+          <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter italic leading-none">
             ¡Desafío <span className="text-transparent bg-clip-text bg-gradient-to-r from-epic to-pink-500 animate-shimmer bg-[length:200%_auto]">Completado</span>!
           </h1>
-          <p className="text-white/70 font-bold text-sm sm:text-base leading-tight px-2 max-w-sm mx-auto">
+          <p className="text-white/70 font-bold text-sm sm:text-base leading-tight max-w-sm mx-auto">
             ¡Lo lograron! Han completado su aventura juntos. {partnerName} y tú tienen una conexión increíble.
           </p>
-        </motion.div>
+        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3 mb-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="bg-white/5 border border-white/10 rounded-2xl p-4"
-          >
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <Calendar className="text-epic/60 mb-1 mx-auto" size={16} />
             <div className="text-xl font-black text-white">{day}</div>
             <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Días</div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="bg-white/5 border border-white/10 rounded-2xl p-4"
-          >
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <Star className="text-yellow-400/60 mb-1 mx-auto" size={16} />
             <div className="text-xl font-black text-white">{achievementsCount}</div>
             <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Logros</div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="bg-white/5 border border-white/10 rounded-2xl p-4"
-          >
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <Sparkles className="text-cyan-400/60 mb-1 mx-auto" size={16} />
             <div className="text-xl font-black text-white">{cardsPlayedCount}</div>
             <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Cartas</div>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Share Button (New) */}
+        {/* Share Button */}
         <motion.button
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.9 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleShare}
-          className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-black uppercase tracking-widest text-xs py-4 rounded-2xl shadow-xl shadow-pink-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 mb-8"
+          className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-black uppercase tracking-widest text-xs py-4 rounded-2xl shadow-xl shadow-pink-500/20 flex items-center justify-center gap-3 mb-8"
         >
           <Share2 size={16} />
           Compartir Victoria
         </motion.button>
 
-        {/* Premium Teaser (New) */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.1 }}
-          className="mb-8"
+        {/* Premium Banner (LatAm Spanish) */}
+        <button 
+          onClick={() => router.push('/collection')}
+          className="group flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-gradient-to-br from-yellow-400/10 to-orange-500/10 border border-yellow-400/20 hover:border-yellow-400/40 transition-all w-full mb-8 shadow-[0_0_20px_rgba(251,191,36,0.05)]"
         >
-          <button 
-            onClick={() => router.push('/collection')}
-            className="group flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all w-full"
-          >
-            <div className="flex items-center gap-2">
-              <Star size={12} className="text-yellow-400 fill-yellow-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-white/60">¿Queréis más?</span>
-            </div>
-            <p className="text-[10px] text-white/40 group-hover:text-white transition-colors">
-              Personalizad vuestro próximo mazo con reglas propias
-            </p>
-          </button>
-        </motion.div>
+          <div className="flex items-center gap-2">
+            <Star size={12} className="text-yellow-400 fill-yellow-400 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-400">¿Quieren más?</span>
+          </div>
+          <p className="text-[11px] text-white/60 group-hover:text-white transition-colors font-bold uppercase tracking-tight">
+            Únanse al Premium y personalicen su próximo mazo
+          </p>
+        </button>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm mx-auto">
-          <motion.button
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.3 }}
-            onClick={onRestart}
-            className="flex-1 bg-epic text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:shadow-[0_0_50px_rgba(168,85,247,0.5)] hover:scale-105 transition-all flex items-center justify-center gap-2"
-          >
-            <RotateCcw size={16} />
-            Reiniciar Partida
-          </motion.button>
-        </div>
+        {/* Action Button */}
+        <button
+          onClick={onRestart}
+          className="w-full bg-epic text-white font-black uppercase tracking-widest text-xs py-5 rounded-xl shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:shadow-[0_0_50px_rgba(168,85,247,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+        >
+          <RotateCcw size={16} />
+          Reiniciar Partida
+        </button>
       </motion.div>
     </motion.div>
   );
