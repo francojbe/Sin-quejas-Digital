@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Lock } from "lucide-react";
+import { Lock, Share2 } from "lucide-react";
+import { useToast } from "@/lib/contexts/ToastContext";
 
 interface AchievementCardProps {
   achievementCode: string;
@@ -24,7 +25,31 @@ export const AchievementCard = ({
   isUnlocked,
   inscription,
 }: AchievementCardProps) => {
+  const { toast } = useToast();
   const imageUrl = ACHIEVEMENT_IMAGES[achievementCode] || "/logros/corazon.jpeg";
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const shareText = `¡Mira nuestro nuevo logro en Sin Quejas Digital! 🏆 Acabamos de desbloquear: "${title}". Nuestra conexión es increíble. ❤️`;
+    const shareUrl = window.location.origin;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Logro Desbloqueado - Sin Quejas Digital',
+          text: shareText,
+          url: shareUrl
+        });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
+      }
+    } else {
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
+      window.open(waUrl, '_blank');
+    }
+  };
 
   return (
     <motion.div
@@ -82,17 +107,29 @@ export const AchievementCard = ({
           {title}
         </h3>
 
-        {/* Inscription Plate */}
-        {isUnlocked && inscription && (
-          <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-md backdrop-blur-sm"
-          >
-            <p className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-widest text-center">
-              {inscription}
-            </p>
-          </motion.div>
+        {isUnlocked && (
+          <div className="flex flex-col items-center gap-2">
+            {inscription && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-md backdrop-blur-sm"
+              >
+                <p className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-widest text-center">
+                  {inscription}
+                </p>
+              </motion.div>
+            )}
+
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group"
+            >
+              <Share2 size={10} className="text-white/40 group-hover:text-cyan-400 transition-colors" />
+              <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors">Compartir</span>
+            </motion.button>
+          </div>
         )}
       </div>
     </motion.div>
