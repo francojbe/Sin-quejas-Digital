@@ -189,7 +189,7 @@ export default function CollectionPage() {
             <div className="flex-1">
               <h4 className="font-bold text-sm tracking-wide text-white uppercase">¿Quieres reescribir las reglas?</h4>
               <p className="text-xs text-white/60 mt-0.5 leading-relaxed">
-                Toca cualquier carta con candado para crear castigos personalizados subiendo a Premium.
+                Toca cualquier carta con candado para crear reglas y retos exclusivos subiendo a Premium.
               </p>
             </div>
           </div>
@@ -305,7 +305,7 @@ export default function CollectionPage() {
                     </div>
                     <h2 className="text-2xl font-black uppercase tracking-tight mb-3">Sube a Premium</h2>
                     <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-                      Desbloquea la capacidad de reescribir las reglas. Personaliza el texto de las cartas comunes para crear castigos o retos exclusivos para tu vínculo.
+                      Desbloquea la capacidad de reescribir las reglas. Personaliza el texto de las cartas comunes para crear reglas, retos y experiencias únicas para tu vínculo.
                     </p>
                     <button className="w-full py-3 px-4 bg-white text-black font-bold uppercase tracking-wider text-sm rounded-xl hover:bg-gray-200 transition-colors">
                       Conseguir Premium
@@ -337,7 +337,7 @@ export default function CollectionPage() {
                       </div>
                       <div>
                         <label className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1.5">
-                          Castigo / Reto
+                          Regla / Reto
                         </label>
                         <textarea
                           value={editDesc}
