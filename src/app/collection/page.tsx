@@ -218,7 +218,7 @@ export default function CollectionPage() {
                   
                   {/* Indicator overlay */}
                   {canCustomize && (
-                    <div className="absolute top-2 right-2 bg-black/60 p-1.5 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-2 right-2 bg-black/60 p-1.5 rounded-full backdrop-blur-md transition-opacity shadow-lg">
                       {isPremium ? (
                         <Edit3 size={14} className={displayCard.isCustomized ? "text-yellow-400" : "text-white"} />
                       ) : (
