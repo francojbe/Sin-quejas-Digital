@@ -115,14 +115,21 @@ export function GameCompletion({
         animate={{ scale: 1, y: 0 }}
         className="relative w-full max-w-lg glass border border-white/10 rounded-[40px] p-6 sm:p-10 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)] my-8"
       >
-        {/* Main Trophy Icon */}
+        {/* Main Trophy Image (Upgraded from Icon) */}
         <motion.div 
-          initial={{ rotate: -20, scale: 0 }}
-          animate={{ rotate: 0, scale: 1 }}
-          transition={{ type: "spring", damping: 12, delay: 0.2 }}
-          className="mx-auto w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(251,191,36,0.4)] mb-6"
+          initial={{ rotate: -10, scale: 0, y: 20 }}
+          animate={{ rotate: 0, scale: 1, y: 0 }}
+          transition={{ type: "spring", damping: 15, delay: 0.2 }}
+          className="relative mx-auto w-40 h-40 mb-6"
         >
-          <Trophy size={40} className="text-white drop-shadow-lg" />
+          {/* Background Glow */}
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/40 to-pink-500/40 rounded-full blur-[40px] animate-pulse" />
+          
+          <img 
+            src="/copa corazon.png" 
+            alt="Trofeo de Victoria" 
+            className="relative z-10 w-full h-full object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+          />
         </motion.div>
 
         <motion.div
