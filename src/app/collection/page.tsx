@@ -205,8 +205,8 @@ export default function CollectionPage() {
           <AnimatePresence mode="popLayout">
             {filteredCards.map((card) => {
               const displayCard = getDisplayCard(card);
-              // Only allow customizing 'common' cards
-              const canCustomize = card.rarity === "common";
+              // Allow customizing all cards
+              const canCustomize = true;
 
               return (
                 <motion.div
@@ -305,7 +305,7 @@ export default function CollectionPage() {
                     </div>
                     <h2 className="text-2xl font-black uppercase tracking-tight mb-3">Sube a Premium</h2>
                     <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-                      Desbloquea la capacidad de reescribir las reglas. Personaliza el texto de las cartas comunes para crear reglas, retos y experiencias únicas para tu vínculo.
+                      Desbloquea la capacidad de reescribir las reglas del juego. Personaliza el texto de todas las cartas, desde retos comunes hasta desafíos legendarios, para crear una experiencia única para tu vínculo.
                     </p>
                     <button className="w-full py-3 px-4 bg-white text-black font-bold uppercase tracking-wider text-sm rounded-xl hover:bg-gray-200 transition-colors">
                       Conseguir Premium
