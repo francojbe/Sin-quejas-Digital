@@ -22,6 +22,7 @@ Hemos finalizado con éxito la implementación técnica de la monetización. Los
 
 ### 2. Fase 8+: Lógica de Suscripción (Prioridad Alta)
 - [ ] **Pasarela de Pago:** El botón "Conseguir Premium" es visual. Se requiere integrar Stripe o simular el webhook de activación.
+- [ ] **Fondos Personalizados:** Implementar selector de fondos exclusivos para el tablero (Solo Premium).
 
 ### 3. Fase 9: Pulido Final (Prioridad Media)
 - [ ] **Safe Areas (Notch):** Ajustes de CSS para asegurar que los elementos del header no se solapen con notches en dispositivos móviles modernos.

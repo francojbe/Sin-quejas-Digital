@@ -49,12 +49,17 @@ const ICON_MAP: Record<string, any> = {
 
 export default function AchievementsPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [coupleId, setCoupleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchAchievements() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return setLoading(false);
+
+      // Fetch profile for couple_id
+      const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single();
+      if (profile) setCoupleId(profile.couple_id);
 
       const { data, error } = await supabase
         .from("achievements")
@@ -150,6 +155,7 @@ export default function AchievementsPage() {
                     title={def.title}
                     isUnlocked={!!earned}
                     inscription={earned ? `${earned.metadata?.partner || 'Pareja'} - ${new Date(earned.earned_at).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}` : undefined}
+                    coupleId={coupleId || undefined}
                   />
                 </div>
               );

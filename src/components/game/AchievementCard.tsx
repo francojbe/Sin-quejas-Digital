@@ -10,6 +10,7 @@ interface AchievementCardProps {
   title: string;
   isUnlocked: boolean;
   inscription?: string;
+  coupleId?: string;
 }
 
 const ACHIEVEMENT_IMAGES: Record<string, string> = {
@@ -24,6 +25,7 @@ export const AchievementCard = ({
   title,
   isUnlocked,
   inscription,
+  coupleId,
 }: AchievementCardProps) => {
   const { toast } = useToast();
   const imageUrl = ACHIEVEMENT_IMAGES[achievementCode] || "/logros/corazon.jpeg";
@@ -31,7 +33,9 @@ export const AchievementCard = ({
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const shareText = `¡Mira nuestro nuevo logro en Sin Quejas Digital! 🏆 Acabamos de desbloquear: "${title}". Nuestra conexión es increíble. ❤️`;
-    const shareUrl = "https://recuperadora-sinquejas.nojauc.easypanel.host/";
+    const shareUrl = coupleId 
+      ? `https://recuperadora-sinquejas.nojauc.easypanel.host/achievements/public/${coupleId}` 
+      : "https://recuperadora-sinquejas.nojauc.easypanel.host/";
 
     if (navigator.share) {
       try {
