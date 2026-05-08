@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Heart, Calendar, Star, RotateCcw, Share2, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 interface HeartParticle {
@@ -77,22 +77,43 @@ export function GameCompletion({
 }: GameCompletionProps) {
   const router = useRouter();
 
+  const trophyRef = useRef<HTMLDivElement>(null);
+
   const handleShare = async () => {
     const shareText = `¡Desafío Completado en Sin Quejas Digital! 🏆 Completamos ${cardsPlayedCount} cartas de conexión en ${day} días. Mi vínculo con ${partnerName} es más fuerte que nunca. ❤️`;
     const shareUrl = "https://recuperadora-sinquejas.nojauc.easypanel.host/";
 
-    if (navigator.share) {
-      try {
+    try {
+      let files: File[] = [];
+      
+      // Capturar imagen del trofeo si la ref existe
+      if (trophyRef.current) {
+        const html2canvas = (await import('html2canvas')).default;
+        const canvas = await html2canvas(trophyRef.current, {
+          useCORS: true,
+          backgroundColor: null,
+          scale: 2, // Mayor calidad
+        });
+        
+        const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (blob) {
+          files = [new File([blob], 'trofeo-victoria.png', { type: 'image/png' })];
+        }
+      }
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
         await navigator.share({
           title: 'Aventura de Pareja Completada',
           text: shareText,
-          url: shareUrl
+          url: shareUrl,
+          files: files
         });
-      } catch (err) {
-        console.error('Error sharing:', err);
+      } else {
+        // Fallback si no soporta archivos
+        window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
       }
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
+    } catch (err) {
+      console.error('Error sharing:', err);
     }
   };
 
@@ -119,6 +140,7 @@ export function GameCompletion({
           animate={{ rotate: 0, scale: 1, y: 0 }}
           transition={{ type: "spring", damping: 15, delay: 0.2 }}
           className="relative mx-auto w-48 h-48 mb-6 flex items-center justify-center"
+          ref={trophyRef}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/40 to-pink-500/40 rounded-full blur-[40px] animate-pulse" />
           <div className="relative z-10 w-full h-full">
