@@ -181,18 +181,34 @@ export default function CollectionPage() {
       {/* Banner Premium */}
       {!isPremium && (
         <div className="max-w-7xl mx-auto mb-6">
-          <div className="glass rounded-xl border-2 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.15)] p-4 flex gap-4 items-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 to-transparent pointer-events-none" />
-            <div className="shrink-0 p-2 bg-yellow-500/10 rounded-full border border-yellow-500/20">
-              <Crown className="w-5 h-5 text-yellow-500" />
+          <motion.div 
+            whileHover={{ scale: 1.01, borderColor: "rgba(234, 179, 8, 0.6)" }}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => {
+              // Trigger paywall using the first available card as preview
+              if (cards.length > 0) {
+                const firstCard = getDisplayCard(cards[0]);
+                setSelectedCard(firstCard);
+                setEditTitle(firstCard.displayTitle);
+                setEditDesc(firstCard.displayDesc);
+              }
+            }}
+            className="glass rounded-xl border-2 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.15)] p-4 flex gap-4 items-center relative overflow-hidden cursor-pointer group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            <div className="shrink-0 p-2 bg-yellow-500/10 rounded-full border border-yellow-500/20 group-hover:bg-yellow-500/20 transition-colors">
+              <Crown className="w-5 h-5 text-yellow-500 animate-pulse" />
             </div>
             <div className="flex-1">
-              <h4 className="font-bold text-sm tracking-wide text-white uppercase">¿Quieres reescribir las reglas?</h4>
+              <h4 className="font-bold text-sm tracking-wide text-white uppercase flex items-center gap-2">
+                ¿Quieres reescribir las reglas? 
+                <span className="text-[10px] bg-yellow-500 text-black px-1.5 py-0.5 rounded font-black">PRO</span>
+              </h4>
               <p className="text-xs text-white/60 mt-0.5 leading-relaxed">
-                Toca cualquier carta con candado para crear reglas y retos exclusivos subiendo a Premium.
+                Toca aquí para desbloquear la personalización total de tu mazo y crear retos exclusivos.
               </p>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 
