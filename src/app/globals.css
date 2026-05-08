@@ -29,8 +29,14 @@
   --font-mono: var(--font-geist-mono);
   
   --animate-shine: shine 3s infinite;
+  --animate-shimmer: shimmer 2.5s linear infinite;
   
   @keyframes shine {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  @keyframes shimmer {
     0% { background-position: -200% center; }
     100% { background-position: 200% center; }
   }

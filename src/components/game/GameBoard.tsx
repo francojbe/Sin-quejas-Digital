@@ -88,6 +88,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [history, setHistory] = useState<any[]>([]);
   const [hasNewHistory, setHasNewHistory] = useState(false);
   const [achievementsCount, setAchievementsCount] = useState(0);
+  const [totalCardsPlayed, setTotalCardsPlayed] = useState(0);
 
   const [overrides, setOverrides] = useState<Record<number, any>>({});
 
@@ -479,6 +480,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           ]);
         
         setAchievementsCount(aCount || 0);
+
+        // Contar todas las cartas de la sesión para el resumen final
+        const { count: totalCardsInGame } = await supabase
+          .from("player_cards")
+          .select("*", { count: 'exact', head: true })
+          .eq("game_id", gameData.id);
+        
+        setTotalCardsPlayed(totalCardsInGame || 0);
 
         const { data: partnerProfiles, error: partnerError } = await supabase
           .from("profiles")
@@ -1651,6 +1660,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             partnerName={partnerName}
             userName={profile?.display_name || 'Tú'}
             achievementsCount={achievementsCount}
+            cardsPlayedCount={totalCardsPlayed}
             onRestart={handleRestart}
             onGoHome={handleFinishGame}
           />

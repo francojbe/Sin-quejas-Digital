@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Heart, Calendar, Star, ArrowLeft, RefreshCw } from "lucide-react";
+import { Trophy, Heart, Calendar, Star, ArrowLeft, RefreshCw, Share2, Sparkles, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -62,6 +62,7 @@ interface GameCompletionProps {
   partnerName: string;
   userName: string;
   achievementsCount: number;
+  cardsPlayedCount?: number;
   onRestart?: () => void;
   onGoHome?: () => void;
 }
@@ -72,10 +73,30 @@ export function GameCompletion({
   partnerName, 
   userName, 
   achievementsCount,
+  cardsPlayedCount = 64,
   onRestart,
   onGoHome 
 }: GameCompletionProps) {
   const router = useRouter();
+
+  const handleShare = async () => {
+    const shareText = `¡Desafío Completado en Sin Quejas Digital! 🏆 Completamos ${cardsPlayedCount} cartas de conexión en ${day} días. Mi vínculo con ${partnerName} es más fuerte que nunca. ❤️`;
+    const shareUrl = "https://recuperadora-sinquejas.nojauc.easypanel.host/";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Aventura de Pareja Completada',
+          text: shareText,
+          url: shareUrl
+        });
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
+    }
+  };
 
   return (
     <motion.div 
@@ -92,80 +113,123 @@ export function GameCompletion({
       <motion.div 
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="relative w-full max-w-lg glass border border-white/10 rounded-[40px] p-6 sm:p-12 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)]"
+        className="relative w-full max-w-lg glass border border-white/10 rounded-[40px] p-6 sm:p-10 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)] my-8"
       >
         {/* Main Trophy Icon */}
         <motion.div 
           initial={{ rotate: -20, scale: 0 }}
           animate={{ rotate: 0, scale: 1 }}
           transition={{ type: "spring", damping: 12, delay: 0.2 }}
-          className="mx-auto w-24 h-24 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(251,191,36,0.4)] mb-8"
+          className="mx-auto w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(251,191,36,0.4)] mb-6"
         >
-          <Trophy size={48} className="text-white drop-shadow-lg" />
+          <Trophy size={40} className="text-white drop-shadow-lg" />
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="space-y-4 mb-10"
+          className="space-y-3 mb-8"
         >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-tighter italic px-2">
-            ¡Desafío <span className="text-transparent bg-clip-text bg-gradient-to-r from-epic to-pink-500">Completado</span>!
+          <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter italic px-2 leading-none">
+            ¡Desafío <span className="text-transparent bg-clip-text bg-gradient-to-r from-epic to-pink-500 animate-shimmer bg-[length:200%_auto]">Completado</span>!
           </h1>
-          <p className="text-white/70 font-bold text-sm sm:text-lg leading-tight px-2">
+          <p className="text-white/70 font-bold text-sm sm:text-base leading-tight px-2 max-w-sm mx-auto">
             ¡Lo lograron! Han completado su aventura juntos. {partnerName} y tú tienen una conexión increíble.
           </p>
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-10">
+        <div className="grid grid-cols-3 gap-3 mb-8">
           <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="bg-white/5 border border-white/10 rounded-3xl p-5"
+            className="bg-white/5 border border-white/10 rounded-2xl p-4"
           >
-            <Calendar className="text-epic mb-2 mx-auto" size={24} />
-            <div className="text-2xl font-black text-white">{day}</div>
-            <div className="text-[10px] text-white/40 uppercase font-black tracking-widest">Días de juego</div>
+            <Calendar className="text-epic/60 mb-1 mx-auto" size={16} />
+            <div className="text-xl font-black text-white">{day}</div>
+            <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Días</div>
           </motion.div>
 
-          <motion.button 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            onClick={() => router.push('/achievements')}
-            className="bg-white/5 border border-white/10 rounded-3xl p-5 hover:bg-white/10 hover:border-yellow-400/30 transition-all group"
+            className="bg-white/5 border border-white/10 rounded-2xl p-4"
           >
-            <Star className="text-yellow-400 mb-2 mx-auto group-hover:scale-125 transition-transform" size={24} />
-            <div className="text-2xl font-black text-white">{achievementsCount}</div>
-            <div className="text-[10px] text-white/40 uppercase font-black tracking-widest">Logros Ganados</div>
-          </motion.button>
+            <Star className="text-yellow-400/60 mb-1 mx-auto" size={16} />
+            <div className="text-xl font-black text-white">{achievementsCount}</div>
+            <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Logros</div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="bg-white/5 border border-white/10 rounded-2xl p-4"
+          >
+            <Sparkles className="text-cyan-400/60 mb-1 mx-auto" size={16} />
+            <div className="text-xl font-black text-white">{cardsPlayedCount}</div>
+            <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Cartas</div>
+          </motion.div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-4">
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
-            onClick={onRestart}
-            className="w-full bg-white text-black font-black uppercase tracking-widest text-xs py-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+        {/* Share Button (New) */}
+        <motion.button
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.9 }}
+          onClick={handleShare}
+          className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-black uppercase tracking-widest text-xs py-4 rounded-2xl shadow-xl shadow-pink-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 mb-8"
+        >
+          <Share2 size={16} />
+          Compartir Victoria
+        </motion.button>
+
+        {/* Premium Teaser (New) */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.1 }}
+          className="mb-8"
+        >
+          <button 
+            onClick={() => router.push('/collection')}
+            className="group flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all w-full"
           >
-            <RefreshCw size={18} />
-            Empezar otra vez
+            <div className="flex items-center gap-2">
+              <Star size={12} className="text-yellow-400 fill-yellow-400" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-white/60">¿Queréis más?</span>
+            </div>
+            <p className="text-[10px] text-white/40 group-hover:text-white transition-colors">
+              Personalizad vuestro próximo mazo con reglas propias
+            </p>
+          </button>
+        </motion.div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.2 }}
+            onClick={onRestart}
+            className="flex-1 bg-white text-black font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+          >
+            <RefreshCw size={14} />
+            Reiniciar
           </motion.button>
           
           <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1 }}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.3 }}
             onClick={onGoHome}
-            className="w-full bg-white/5 text-white/40 font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2"
+            className="flex-1 bg-white/5 text-white/40 font-black uppercase tracking-widest text-[10px] py-4 rounded-xl hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2"
           >
             <ArrowLeft size={14} />
-            Volver al inicio
+            Inicio
           </motion.button>
         </div>
       </motion.div>
