@@ -140,6 +140,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     if (!game) return;
     setLoading(true);
     try {
+      // 1. Limpieza inmediata del estado local para "romper" el bucle visual
+      setGame(null);
+      setHand([]);
+      setDisplayedCard(null);
+
+      // 2. Actualizar en la base de datos
       const { error } = await supabase
         .from('games')
         .update({ status: 'finished' })
@@ -147,18 +153,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       if (error) throw error;
       
-      // Limpieza profunda de estados para forzar selector de nueva partida
-      setGame(null);
-      setHand([]);
-      setDisplayedCard(null);
-      setHistory([]);
-      setPartnerHandCount(0);
+      // 3. Pequeño retraso de seguridad para que Supabase procese el cambio
+      await new Promise(resolve => setTimeout(resolve, 600));
       
       await fetchGame();
-      showNotification("Partida finalizada", 'success');
+      showNotification("¡Partida finalizada! Preparando la siguiente...", 'success');
     } catch (err) {
       console.error("Error finishing game:", err);
-      window.location.href = '/';
+      window.location.reload(); // Fallback drástico si falla
     } finally {
       setLoading(false);
     }
