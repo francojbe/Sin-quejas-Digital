@@ -15,7 +15,13 @@
 - [x] **Sync de Fondo:** Implementación de cola de jugadas en IndexedDB para enviar acciones automáticamente al recuperar la conexión.
 
 #### Fase 7: Contenido y Comunidad
-- [ ] **Expansión de Mazo:** Añadir 10 nuevas cartas de categoría "Especial" con efectos visuales únicos.
 - [ ] **Sistema de Compartir:** Permitir que las parejas compartan sus logros o el "Resumen de la Partida" en redes sociales o WhatsApp.
+
+#### Fase 8: Monetización (Premium SaaS)
+- [ ] **Suscripción Premium:** Añadir flag `is_premium` a los perfiles.
+- [ ] **Customización de Cartas:** Crear tabla `custom_card_overrides` para que las parejas Premium editen el título y descripción de las cartas "sencillas" (exclusivo para su vínculo).
+- [ ] **Paywall Visual:** Interfaz en la "Colección" que muestra candados en las cartas y un popup de venta atractivo para convertirse en Premium.
+
+#### Fase 9: Pulido Final
 - [ ] **Validación Final de Android:** Testeo en dispositivos con "Notch" agresivos y diferentes relaciones de aspecto (Tablets).
 

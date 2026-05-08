@@ -89,6 +89,30 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [hasNewHistory, setHasNewHistory] = useState(false);
   const [achievementsCount, setAchievementsCount] = useState(0);
 
+  const [overrides, setOverrides] = useState<Record<number, any>>({});
+
+  useEffect(() => {
+    async function loadOverrides() {
+      if (!coupleId) return;
+      const { data } = await supabase.from('custom_card_overrides').select('*').eq('couple_id', coupleId);
+      if (data) {
+        const map: Record<number, any> = {};
+        data.forEach(d => map[d.card_id] = d);
+        setOverrides(map);
+      }
+    }
+    loadOverrides();
+  }, [coupleId]);
+
+  const getCardTitle = (card: any) => {
+    if (!card?.cards_master) return 'Carta';
+    return overrides[card.cards_master.id]?.custom_title || card.cards_master.title;
+  };
+  const getCardDesc = (card: any) => {
+    if (!card?.cards_master) return '...';
+    return overrides[card.cards_master.id]?.custom_description || card.cards_master.description;
+  };
+
   // Tutorial State
   const [showTutorial, setShowTutorial] = useState(false);
 
@@ -876,7 +900,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
            gameId: game.id,
            userId,
            cardId: displayedCard.card_id,
-           cardTitle: displayedCard.cards_master?.title,
+           cardTitle: getCardTitle(displayedCard),
            partnerId,
            profileDisplayName: profile?.display_name
          }
@@ -906,7 +930,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           action_type: status === 'active' ? 'ACCEPTED' : 'BLOCKED',
           card_id: displayedCard?.card_id,
           metadata: { 
-            card_title: displayedCard?.cards_master?.title,
+            card_title: getCardTitle(displayedCard),
             message: status === 'active' ? 'ha aceptado el desafío' : 'ha bloqueado el desafío'
           }
         });
@@ -924,7 +948,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           body: JSON.stringify({
             user_id: partnerId,
             title: status === 'active' ? "¡Desafío Aceptado! 🔥" : "Desafío Bloqueado 🛡️",
-            body: `${profile?.display_name || 'Tu pareja'} ${status === 'active' ? 'ha aceptado' : 'ha bloqueado'} tu carta: ${displayedCard?.cards_master?.title}`
+            body: `${profile?.display_name || 'Tu pareja'} ${status === 'active' ? 'ha aceptado' : 'ha bloqueado'} tu carta: ${getCardTitle(displayedCard)}`
           })
         }).catch(err => console.error("Error notifying partner:", err));
       }
@@ -1611,7 +1635,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           userAvatar={profile?.avatar_url}
           partnerOnline={partnerId ? onlineUsers.includes(partnerId) : false}
           userOnline={userId ? onlineUsers.includes(userId) : false}
-          activitySummary={displayedCard ? (isPending ? `REACCIÓN A: ${displayedCard.cards_master?.title || 'CARTA'}` : `ÚLTIMA JUGADA: ${displayedCard.cards_master?.title || 'CARTA'}`) : "Esperando primera jugada..."}
+          activitySummary={displayedCard ? (isPending ? `REACCIÓN A: ${getCardTitle(displayedCard)}` : `ÚLTIMA JUGADA: ${getCardTitle(displayedCard)}`) : "Esperando primera jugada..."}
           onUserClick={() => setShowProfileModal(true)}
           onPartnerClick={() => setShowPartnerModal(true)}
         />
@@ -1830,8 +1854,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               </div>
 
               <CartaNaipe 
-                title={showTutorial ? "Cena Romántica" : (displayedCard?.cards_master?.title || 'Carta')} 
-                description={showTutorial ? "Una noche especial para reconectar y disfrutar juntos." : (displayedCard?.cards_master?.description || '...')} 
+                title={showTutorial ? "Cena Romántica" : getCardTitle(displayedCard)} 
+                description={showTutorial ? "Una noche especial para reconectar y disfrutar juntos." : getCardDesc(displayedCard)} 
                 rarity={showTutorial ? 'rare' : ((displayedCard?.cards_master?.rarity as any) || 'common')} 
               />
               
@@ -2113,8 +2137,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                 <motion.div key={item.id} whileHover={cardDisabled ? {} : { scale: 1.05, y: -4 }} className="shrink-0 snap-start relative">
                   <CartaNaipe 
                     compact 
-                    title={item.cards_master?.title || 'Carta'} 
-                    description={item.cards_master?.description || '...'} 
+                    title={getCardTitle(item)} 
+                    description={getCardDesc(item)} 
                     rarity={(item.cards_master?.rarity as any) || 'common'} 
                     onClick={() => playCard(item)}
                     disabled={cardDisabled}
@@ -2207,8 +2231,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                   <div key={card.id} className="shrink-0 snap-start">
                     <CartaNaipe 
                       compact 
-                      title={card.cards_master?.title || 'Carta'} 
-                      description={card.cards_master?.description || '...'} 
+                      title={getCardTitle(card)} 
+                      description={getCardDesc(card)} 
                       rarity={(card.cards_master?.rarity as any) || 'common'} 
                     />
                   </div>
