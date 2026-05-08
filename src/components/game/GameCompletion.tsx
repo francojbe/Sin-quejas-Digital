@@ -140,23 +140,15 @@ export function GameCompletion({
               className="w-full h-full object-contain drop-shadow-[0_15px_35px_rgba(0,0,0,0.6)]"
             />
             
-            {/* Grabado en la placa dorada */}
-            <div className="absolute bottom-[14%] left-1/2 -translate-x-1/2 w-[60%] text-center">
+            {/* Grabado en la placa dorada (Ajustado) */}
+            <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 w-[55%] text-center leading-none">
               <motion.p 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
-                className="text-[10px] sm:text-xs font-serif font-bold text-amber-950/80 tracking-tighter leading-none drop-shadow-[0.5px_0.5px_0px_rgba(255,255,255,0.2)]"
+                className="text-[8px] sm:text-[9px] font-serif font-black text-amber-950/90 tracking-tighter uppercase drop-shadow-[0.3px_0.3px_0px_rgba(255,255,255,0.1)] truncate"
               >
                 {userName} & {partnerName}
-              </motion.p>
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.2 }}
-                className="text-[6px] uppercase font-black text-amber-900/40 tracking-[0.2em] mt-0.5"
-              >
-                Vínculo Eterno
               </motion.p>
             </div>
           </div>
