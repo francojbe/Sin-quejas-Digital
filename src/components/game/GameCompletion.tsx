@@ -88,9 +88,9 @@ export function GameCompletion({
     const shareUrl = "https://recuperadora-sinquejas.nojauc.easypanel.host/";
 
     try {
-      let files: File[] = [];
+      let imageUri: string | null = null;
       
-      // Intentar capturar imagen del trofeo
+      // 1. Capturar imagen con html2canvas
       try {
         if (trophyRef.current) {
           const html2canvas = (await import('html2canvas')).default;
@@ -101,32 +101,44 @@ export function GameCompletion({
             logging: false,
           });
           
-          const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 0.8));
-          if (blob) {
-            files = [new File([blob], 'trofeo-victoria.png', { type: 'image/png' })];
-          }
+          const base64Data = canvas.toDataURL('image/png').split(',')[1];
+          
+          // 2. Guardar temporalmente con Filesystem (Nativo Capacitor)
+          const { Filesystem, Directory } = await import('@capacitor/filesystem');
+          
+          const fileName = `trofeo_${Date.now()}.png`;
+          const savedFile = await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache
+          });
+          
+          imageUri = savedFile.uri;
         }
       } catch (imgErr) {
-        console.warn('No se pudo generar la imagen, compartiendo solo texto:', imgErr);
+        console.warn('Fallo al generar imagen nativa:', imgErr);
       }
 
-      // Verificar soporte de compartir
-      const canShareFiles = navigator.canShare && files.length > 0 && navigator.canShare({ files });
+      // 3. Compartir con el Plugin de Share de Capacitor (Nativo)
+      const { Share } = await import('@capacitor/share');
+      
+      const shareOptions: any = {
+        title: '¡Desafío Completado!',
+        text: shareText,
+        url: shareUrl,
+        dialogTitle: 'Compartir mi Victoria',
+      };
 
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Aventura de Pareja Completada',
-          text: shareText,
-          url: shareUrl,
-          ...(canShareFiles ? { files } : {})
-        });
-      } else {
-        window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
+      if (imageUri) {
+        shareOptions.files = [imageUri];
       }
+
+      await Share.share(shareOptions);
+
     } catch (err) {
-      console.error('Error sharing:', err);
-      // Fallback final
-      window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+      console.error('Error sharing nativo:', err);
+      // Fallback final por si acaso
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
     } finally {
       setIsSharing(false);
     }
