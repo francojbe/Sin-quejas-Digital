@@ -115,12 +115,25 @@ export function GameCompletion({
           // Dibujar trofeo centrado
           ctx.drawImage(img, 50, 50, 500, 500);
           
-          // Dibujar Iniciales Grabadas
-          ctx.fillStyle = 'rgba(45, 20, 5, 0.9)'; // Color ámbar oscuro/grabado
-          ctx.font = 'bold 60px serif';
+          // Dibujar Iniciales Grabadas (Ajuste de posición y estilo)
+          ctx.fillStyle = 'rgba(45, 20, 5, 0.85)'; // Color ámbar oscuro/grabado
+          ctx.font = 'bold 55px serif';
           ctx.textAlign = 'center';
+          
+          // Sombra suave para efecto de grabado
+          ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
+          ctx.shadowBlur = 1;
+          ctx.shadowOffsetX = 1;
+          ctx.shadowOffsetY = 1;
+          
           const monogram = `${userName.charAt(0).toUpperCase()} & ${partnerName.charAt(0).toUpperCase()}`;
-          ctx.fillText(monogram, 300, 535); // Posición aproximada de la placa
+          ctx.fillText(monogram, 300, 505); // Subido de 535 a 505 para centrar en la placa
+          
+          // Limpiar sombras para futuros dibujos
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
           
           const base64Image = canvas.toDataURL('image/png');
           
