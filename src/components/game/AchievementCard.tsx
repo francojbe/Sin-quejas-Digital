@@ -34,7 +34,7 @@ export const AchievementCard = ({
     e.stopPropagation();
     const shareText = `¡Mira nuestro nuevo logro en Sin Quejas Digital! 🏆 Acabamos de desbloquear: "${title}". Nuestra conexión es increíble. ❤️`;
     const shareUrl = coupleId 
-      ? `https://recuperadora-sinquejas.nojauc.easypanel.host/achievements/public?id=${coupleId}` 
+      ? `https://recuperadora-sinquejas.nojauc.easypanel.host/achievements/public/?id=${coupleId}` 
       : "https://recuperadora-sinquejas.nojauc.easypanel.host/";
 
     if (navigator.share) {
