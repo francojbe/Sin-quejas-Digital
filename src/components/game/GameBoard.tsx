@@ -926,7 +926,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         setShowPartnerHand(true);
       }
       
-      await fetchGame();
+      // 6. Refrescar solo lo necesario para evitar sobreescribir displayedCard
+      await fetchHandOnly();
+      await fetchPartnerHandCount();
+      
+      // Refrescar el estado del juego (para modificadores) sin tocar displayedCard
+      const { data: gData } = await supabase.from('games').select('*').eq('id', game.id).single();
+      if (gData) setGame(gData as any);
+      
       setLoading(false);
       return;
     }
