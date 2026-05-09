@@ -113,6 +113,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   };
   const [achievementsCount, setAchievementsCount] = useState(0);
   const [totalCardsPlayed, setTotalCardsPlayed] = useState(0);
+  const [partnerHand, setPartnerHand] = useState<any[]>([]);
+  const [showPartnerHand, setShowPartnerHand] = useState(false);
 
   const [overrides, setOverrides] = useState<Record<number, any>>({});
 
@@ -962,207 +964,63 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       return;
     }
 
-    // --- CARTAS ESPECIALES DE USO INMEDIATO (MODIFICADORES) ---
-    if (playerCard.cards_master?.id === 58) { // Ataque Imparable
+    // --- CARTAS ESPECIALES (MODIFICADORES Y ACCIONES) ---
+    const specialIds = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60];
+    if (specialIds.includes(playerCard.cards_master?.id)) {
       setLoading(true);
       
-      if (!navigator.onLine) {
-        await savePendingAction({ type: 'play_card_modifier', payload: { playerCardId: playerCard.id, gameId: game?.id, modifierType: 'unblockable', userId, cardId: playerCard.cards_master.id } });
-        setGame((prev: any) => prev ? { ...prev, modifier_unblockable_by: userId } : null);
-        showNotification("¡Tu siguiente ataque será IMPARABLE! (Guardado localmente)", 'warning');
-      } else {
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-        await supabase.from("games").update({ modifier_unblockable_by: userId }).eq("id", game.id);
-        await supabase.from('game_history').insert({
-          game_id: game.id,
-          user_id: userId,
-          action_type: 'MODIFIER_ACTIVATED',
-          card_id: playerCard.cards_master.id,
-          metadata: { card_title: "Ataque Imparable", message: 'ha activado un Ataque Imparable' }
-        });
-        showNotification("¡Tu siguiente ataque será IMPARABLE!", 'success');
-        await fetchGame();
-      }
-      setHand(hand.filter(c => c.id !== playerCard.id));
-      setLoading(false);
-      return;
-    }
+      // 1. Poner la carta en el centro (active) para que sea visible
+      await supabase.from("player_cards").update({ status: 'active', played_at: serverNow }).eq("id", playerCard.id);
+      
+      // 2. Registrar en el historial
+      await supabase.from('game_history').insert({
+        game_id: game.id,
+        user_id: userId,
+        action_type: 'SPECIAL_USED',
+        card_id: playerCard.cards_master.id,
+        metadata: { card_title: getCardTitle(playerCard), message: `ha activado ${getCardTitle(playerCard)}` }
+      });
 
-    if (playerCard.cards_master?.id === 56) { // Doble Reto
-      setLoading(true);
-      if (!navigator.onLine) {
-        await savePendingAction({ type: 'play_card_modifier', payload: { playerCardId: playerCard.id, gameId: game?.id, modifierType: 'double', userId, cardId: playerCard.cards_master.id } });
-        setGame((prev: any) => prev ? { ...prev, modifier_double_by: userId } : null);
-        showNotification("¡Tu siguiente ataque valdrá DOBLE! (Guardado localmente)", 'warning');
-      } else {
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+      // 3. Efectos inmediatos (silencio, pausa, etc.)
+      if (playerCard.cards_master?.id === 52) { // Pausa
+        const frozenUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        await supabase.from("games").update({ frozen_until: frozenUntil }).eq("id", game.id);
+        setActiveEffect('freeze');
+      }
+      
+      if (playerCard.cards_master?.id === 56) { // Doble Reto
         await supabase.from("games").update({ modifier_double_by: userId }).eq("id", game.id);
-        await supabase.from('game_history').insert({
-          game_id: game.id,
-          user_id: userId,
-          action_type: 'MODIFIER_ACTIVATED',
-          card_id: playerCard.cards_master.id,
-          metadata: { card_title: "Doble Reto", message: 'ha activado un Doble Reto' }
-        });
-        showNotification("¡Tu siguiente ataque valdrá DOBLE!", 'success');
-        await fetchGame();
       }
-      setHand(hand.filter(c => c.id !== playerCard.id));
-      setLoading(false);
-      return;
-    }
 
-    if (playerCard.cards_master?.id === 51) { // Robo de Suerte
-      setLoading(true);
-      // 1. Obtener cartas de la pareja
-      const { data: partnerCards } = await supabase
-        .from("player_cards")
-        .select("id")
-        .eq("game_id", game.id)
-        .neq("user_id", userId)
-        .eq("status", "in_hand");
-
-      if (partnerCards && partnerCards.length > 0) {
-        // 2. Elegir una al azar
-        const randomCard = partnerCards[Math.floor(Math.random() * partnerCards.length)];
-        // 3. Transferir al usuario actual
-        await supabase.from("player_cards").update({ user_id: userId }).eq("id", randomCard.id);
-        // 4. Descartar el modificador
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-        
-        await supabase.from('game_history').insert({
-          game_id: game.id,
-          user_id: userId,
-          action_type: 'SPECIAL_USED',
-          card_id: playerCard.cards_master.id,
-          metadata: { card_title: "Robo de Suerte", message: 'ha robado una carta de tu mazo' }
-        });
-        showNotification("¡Has robado una carta de tu pareja!", 'success');
-      } else {
-        showNotification("Tu pareja no tiene cartas para robar.", 'warning');
+      if (playerCard.cards_master?.id === 58) { // Imparable
+        await supabase.from("games").update({ modifier_unblockable_by: userId }).eq("id", game.id);
       }
-      setHand(hand.filter(c => c.id !== playerCard.id));
-      setLoading(false);
-      return;
-    }
 
-    if (playerCard.cards_master?.id === 52) { // Pausa Temporal
-      setLoading(true);
-      const frozenUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      await supabase.from("games").update({ frozen_until: frozenUntil }).eq("id", game.id);
-      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+      if (playerCard.cards_master?.id === 57) { // Anular Defensa
+        const noDefenseUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+        await supabase.from("games").update({ modifier_no_defense_until: noDefenseUntil }).eq("id", game.id);
+      }
+
+      if (playerCard.cards_master?.id === 60) { // Silencio
+        const silenceUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        await supabase.from("games").update({ modifier_silence_until: silenceUntil }).eq("id", game.id);
+      }
+
+      if (playerCard.cards_master?.id === 53) { // Bloqueo Rareza (Ahora Temporal)
+        const noRaresUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        await supabase.from("games").update({ modifier_no_rares_until: noRaresUntil }).eq("id", game.id);
+      }
+
+      showNotification(`¡Has activado ${getCardTitle(playerCard)}!`, 'success');
       
-      await supabase.from('game_history').insert({
-        game_id: game.id,
-        user_id: userId,
-        action_type: 'SPECIAL_USED',
-        card_id: playerCard.cards_master.id,
-        metadata: { card_title: "Pausa Temporal", message: 'ha congelado el juego por 24h' }
+      // 4. Optimistic update and refresh
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setDisplayedCard({
+        ...playerCard,
+        status: 'active',
+        played_at: serverNow
       });
-      showNotification("¡Has congelado el juego por 24 horas!", 'success');
-      setHand(hand.filter(c => c.id !== playerCard.id));
-      setLoading(false);
-      return;
-    }
-
-    if (playerCard.cards_master?.id === 53) { // Bloqueo Rareza
-      setLoading(true);
-      const { data: partnerRares } = await supabase
-        .from("player_cards")
-        .select("id, cards_master!inner(rarity)")
-        .eq("game_id", game.id)
-        .neq("user_id", userId)
-        .eq("status", "in_hand")
-        .neq("cards_master.rarity", "common");
-
-      if (partnerRares && partnerRares.length > 0) {
-        const idsToDiscard = partnerRares.map(c => c.id);
-        await supabase.from("player_cards").update({ status: 'discarded' }).in("id", idsToDiscard);
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-        
-        await supabase.from('game_history').insert({
-          game_id: game.id,
-          user_id: userId,
-          action_type: 'SPECIAL_USED',
-          card_id: playerCard.cards_master.id,
-          metadata: { card_title: "Bloqueo Rareza", message: 'ha anulado tus cartas especiales' }
-        });
-        showNotification(`¡Has destruido ${partnerRares.length} cartas raras de tu pareja!`, 'success');
-      } else {
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-        showNotification("Tu pareja no tenía cartas raras para destruir.", 'warning');
-      }
-      setHand(hand.filter(c => c.id !== playerCard.id));
-      setLoading(false);
-      return;
-    }
-
-    if (playerCard.cards_master?.id === 55) { // Cambiar Mazo
-      setLoading(true);
-      // 1. Descartar primero esta carta para que no se intercambie
-      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-      
-      const { data: allCards } = await supabase
-        .from("player_cards")
-        .select("id, user_id")
-        .eq("game_id", game.id)
-        .eq("status", "in_hand");
-
-      if (allCards && allCards.length > 0) {
-        // Swap user_id for all cards
-        for (const c of allCards) {
-          const newOwnerId = c.user_id === userId ? partnerId : userId;
-          await supabase.from("player_cards").update({ user_id: newOwnerId }).eq("id", c.id);
-        }
-
-        await supabase.from('game_history').insert({
-          game_id: game.id,
-          user_id: userId,
-          action_type: 'SPECIAL_USED',
-          card_id: playerCard.cards_master.id,
-          metadata: { card_title: "Cambiar Mazo", message: 'ha intercambiado los mazos' }
-        });
-        showNotification("¡Has intercambiado los mazos con tu pareja!", 'success');
-      }
-      setHand(hand.filter(c => c.id !== playerCard.id));
-      setLoading(false);
-      return;
-    }
-
-    if (playerCard.cards_master?.id === 57) { // Anular Defensa
-      setLoading(true);
-      const noDefenseUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-      await supabase.from("games").update({ modifier_no_defense_until: noDefenseUntil }).eq("id", game.id);
-      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-      
-      await supabase.from('game_history').insert({
-        game_id: game.id,
-        user_id: userId,
-        action_type: 'SPECIAL_USED',
-        card_id: playerCard.cards_master.id,
-        metadata: { card_title: "Anular Defensa", message: 'ha anulado tus defensas por 1 hora' }
-      });
-      showNotification("¡Has anulado las defensas de tu pareja por 1 hora!", 'success');
-      setHand(hand.filter(c => c.id !== playerCard.id));
-      setLoading(false);
-      return;
-    }
-
-    if (playerCard.cards_master?.id === 60) { // Silencio Total
-      setLoading(true);
-      const silenceUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-      await supabase.from("games").update({ modifier_silence_until: silenceUntil }).eq("id", game.id);
-      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-      
-      await supabase.from('game_history').insert({
-        game_id: game.id,
-        user_id: userId,
-        action_type: 'SPECIAL_USED',
-        card_id: playerCard.cards_master.id,
-        metadata: { card_title: "Silencio Total", message: 'ha activado Silencio Total (15 min)' }
-      });
-      showNotification("¡Silencio Total activado por 15 minutos!", 'success');
-      setHand(hand.filter(c => c.id !== playerCard.id));
+      await fetchGame();
       setLoading(false);
       return;
     }
@@ -1383,6 +1241,101 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     setShowBreakLinkConfirm(false);
   };
 
+  const fetchPartnerHand = async () => {
+    if (!game || !userId || !partnerId) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from("player_cards")
+      .select("*, cards_master(*)")
+      .eq("game_id", game.id)
+      .eq("user_id", partnerId)
+      .eq("status", "in_hand");
+    if (data) {
+      setPartnerHand(data as any);
+      setShowPartnerHand(true);
+    }
+    setLoading(false);
+  };
+
+  const handleStealCard = async () => {
+    if (!game || !userId || !partnerId || !displayedCard) return;
+    setLoading(true);
+    const { data: partnerCards } = await supabase
+      .from("player_cards")
+      .select("id")
+      .eq("game_id", game.id)
+      .eq("user_id", partnerId)
+      .eq("status", "in_hand");
+
+    if (partnerCards && partnerCards.length > 0) {
+      const randomCard = partnerCards[Math.floor(Math.random() * partnerCards.length)];
+      await supabase.from("player_cards").update({ user_id: userId }).eq("id", randomCard.id);
+      await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
+      showNotification("¡Has robado una carta!", 'success');
+      setDisplayedCard(null);
+    } else {
+      showNotification("Tu pareja no tiene cartas para robar.", 'warning');
+      await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
+      setDisplayedCard(null);
+    }
+    setLoading(false);
+  };
+
+  const handleSwapHands = async () => {
+    if (!game || !userId || !partnerId || !displayedCard) return;
+    setLoading(true);
+    await supabase.rpc('swap_hands', { game_id_in: game.id, user_a: userId, user_b: partnerId });
+    await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
+    showNotification("¡Manos intercambiadas!", 'success');
+    setDisplayedCard(null);
+    setLoading(false);
+  };
+
+  const handleResurrection = async () => {
+    if (!game || !userId || !displayedCard) return;
+    setLoading(true);
+    const { data: discards } = await supabase
+      .from("player_cards")
+      .select("id")
+      .eq("game_id", game.id)
+      .eq("user_id", userId)
+      .eq("status", "discarded")
+      .limit(3);
+
+    if (discards && discards.length > 0) {
+      const ids = discards.map(d => d.id);
+      await supabase.from("player_cards").update({ status: 'in_hand' }).in("id", ids);
+      await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
+      showNotification("¡Cartas resucitadas!", 'success');
+      setDisplayedCard(null);
+    } else {
+      showNotification("No hay cartas para resucitar.", 'warning');
+      await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
+      setDisplayedCard(null);
+    }
+    setLoading(false);
+  };
+
+  const handleActivateModifier = async (type: 'double' | 'unblockable') => {
+    if (!game || !userId || !displayedCard) return;
+    setLoading(true);
+    // Estos ya se activaron en el playCard, el botón solo los descarta para limpiar tablero
+    await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
+    showNotification(`¡Modificador ${type === 'double' ? 'Doble' : 'Imparable'} listo!`, 'success');
+    setDisplayedCard(null);
+    setLoading(false);
+  };
+
+  const handleFreezeGame = async () => {
+    if (!game || !userId || !displayedCard) return;
+    setLoading(true);
+    // Ya se activó en playCard
+    await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
+    showNotification("¡Juego congelado!", 'success');
+    setDisplayedCard(null);
+    setLoading(false);
+  };
+
   if (loading) return <div className="h-screen flex flex-col items-center justify-center gap-4 bg-background"><HeartsSpinner /><p className="text-white/50 text-xs font-bold uppercase tracking-widest">Cargando...</p></div>;
 
   const minutes = Math.floor(timeLeft / 60);
@@ -1512,6 +1465,32 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center gap-2">
               <VolumeX size={12} className="text-cyan-400" />
               <span className="text-[10px] font-black text-cyan-200 uppercase tracking-widest">Silencio Total Activo</span>
+            </div>
+          </motion.div>
+        )}
+        {game?.modifier_no_rares_until && new Date(game.modifier_no_rares_until) > new Date() && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            className="flex justify-center px-4 mt-1 shrink-0"
+          >
+            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-rare/10 border border-rare/30 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+              <Sparkles size={12} className="text-rare" />
+              <span className="text-[10px] font-black text-rare uppercase tracking-widest">Bloqueo de Rareza Activo</span>
+            </div>
+          </motion.div>
+        )}
+        {game?.modifier_unblockable_by === userId && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            className="flex justify-center px-4 mt-1 shrink-0"
+          >
+            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center gap-2">
+              <Zap size={12} className="text-red-400" />
+              <span className="text-[10px] font-black text-red-200 uppercase tracking-widest">Próximo Ataque Imparable</span>
             </div>
           </motion.div>
         )}
@@ -2555,8 +2534,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                 const isUnblockable = displayedCard?.is_unblockable;
                 const isSpecial = item.cards_master?.category === "ESPECIAL";
                 const isNoDefenseActive = game?.modifier_no_defense_until && new Date(game.modifier_no_defense_until) > new Date();
-                
-                if (isReceiver && isDefenseCard) {
+                const isNoRaresActive = game?.modifier_no_rares_until && new Date(game.modifier_no_rares_until) > new Date();
+                const isRareOrHigher = item.cards_master?.rarity !== "common";
+
+                if (isNoRaresActive && isRareOrHigher) {
+                  cardDisabled = true;
+                } else if (isReceiver && isDefenseCard) {
                   if (isUnblockable || isNoDefenseActive) {
                     cardDisabled = true;
                     cardHighlight = false;
@@ -2568,6 +2551,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                   cardDisabled = false; // Permitir cartas especiales (modificadores, robos, etc) siempre
                 } else {
                   cardDisabled = true; // Bloquea todo lo demás (Retos normales)
+                }
+              } else {
+                // Si no hay carta pendiente, verificar si hay bloqueo de raras global
+                const isNoRaresActive = game?.modifier_no_rares_until && new Date(game.modifier_no_rares_until) > new Date();
+                const isRareOrHigher = item.cards_master?.rarity !== "common";
+                if (isNoRaresActive && isRareOrHigher) {
+                  cardDisabled = true;
                 }
               }
 
