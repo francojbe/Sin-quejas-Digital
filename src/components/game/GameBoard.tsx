@@ -1379,20 +1379,22 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         )}
         {game?.modifier_silence_until && (new Date(game.modifier_silence_until).getTime() > (Date.now() + serverTimeOffset)) && (
           <motion.div 
-            initial={{ opacity: 0, height: 0 }} 
-            animate={{ opacity: 1, height: 'auto' }} 
-            exit={{ opacity: 0, height: 0 }}
-            className="flex justify-center px-4 mt-1 shrink-0"
+            initial={{ y: -20, opacity: 0 }} 
+            animate={{ y: 0, opacity: 1 }} 
+            exit={{ y: -20, opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-[100] flex justify-center pointer-events-none"
           >
-            <div className="w-full max-w-sm py-2 px-4 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center gap-4 backdrop-blur-xl shadow-[0_0_20px_rgba(6,182,212,0.2)]">
-              <div className="flex items-center gap-2">
-                <VolumeX size={14} className="text-cyan-400 animate-pulse" />
-                <span className="text-[10px] font-black text-cyan-100 uppercase tracking-widest">Silencio Total Activo</span>
+            <div className="bg-cyan-950/40 backdrop-blur-md border-x border-b border-cyan-500/20 px-4 py-1 rounded-b-2xl flex items-center gap-3 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                <span className="text-[8px] font-black text-cyan-400/80 uppercase tracking-[0.2em]">Silencio</span>
               </div>
               
-              <div className="flex items-center gap-2 pl-4 border-l border-cyan-500/30">
-                <Clock size={12} className="text-cyan-400" />
-                <span className="text-xs font-mono font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+              <div className="w-px h-3 bg-cyan-500/20" />
+              
+              <div className="flex items-center gap-1">
+                <Clock size={10} className="text-cyan-400/60" />
+                <span className="text-[11px] font-mono font-black text-white drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">
                   {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) / 60))}:
                   {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) % 60)).toString().padStart(2, '0')}
                 </span>
