@@ -1212,8 +1212,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           </h1>
         </div>
 
-      </div>
-
       {/* Indicador de Modificador Global Activo */}
       <AnimatePresence>
         {game?.modifier_unblockable_by === userId && (
