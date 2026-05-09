@@ -24,9 +24,20 @@ Hemos finalizado con éxito la implementación de la experiencia de cierre y la 
 - [ ] **Pasarela de Pago:** Integrar Stripe o similar para activar el flag `is_premium`.
 - [ ] **Fondos Personalizados:** Implementar selector de fondos exclusivos (texturas/gradientes) para el tablero Premium.
 
-### ✅ Fase 9: Pulido Final (Completada)
+### ✅ Fase 9: Pulido Final y Mecánicas Especiales (Completada)
 - [x] **Safe Areas (Notch):** Ajustes de CSS en el header (`env(safe-area-inset-top)`) y `viewportFit` para evitar solapamiento con notches en móviles modernos.
 - [x] **Historial Detallado:** Convertida la "Memoria de Pareja" en una bitácora inmersiva con colores de acción y narrativa descriptiva.
+- [x] **Mecánicas Especiales:** Implementación total de las 10 cartas de categoría ESPECIAL:
+  - [x] ID 51 (Robo de Suerte): Robo instantáneo de carta.
+  - [x] ID 52 (Pausa Temporal): Congelamiento global por 24h.
+  - [x] ID 53 (Bloqueo Rareza): Destrucción de cartas raras del oponente.
+  - [x] ID 54 (Ver Mano): Revelación temporal del mazo ajeno.
+  - [x] ID 55 (Cambiar Mazo): Intercambio atómico de manos.
+  - [x] ID 56 (Doble Reto): Modificador x2 para el siguiente ataque.
+  - [x] ID 57 (Anular Defensa): Bloqueo de escudos por 1 hora.
+  - [x] ID 58 (Ataque Imparable): Modificador de invulnerabilidad.
+  - [x] ID 59 (Resurrección): Recuperación de 3 cartas del descarte.
+  - [x] ID 60 (Silencio Total): Reto social con indicador de 15 min.
 
 ---
 

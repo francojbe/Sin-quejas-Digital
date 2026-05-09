@@ -912,67 +912,11 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           metadata: { card_title: getCardTitle(displayedCard), message: 'ha usado un Espejo Místico para devolver el desafío' }
         });
 
-        // 4. Notificar al atacante
         if (partnerId) {
           fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-partner`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
             body: JSON.stringify({ user_id: partnerId, title: "¡Ataque Reflejado! 🪞", body: `${profile?.display_name || 'Tu pareja'} usó un Espejo Místico. ¡Ahora el reto es tuyo!` })
-          }).catch(err => console.error(err));
-        }
-      } else if (playerCard.cards_master?.id === 65) {
-        // ABSORCIÓN KÁRMICA: Bloquea y recupera 1 carta
-        await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard?.id);
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-        
-        // Recuperar 1 carta del descarte
-        const { data: discards } = await supabase.from("player_cards").select("id").eq("game_id", game.id).eq("user_id", userId).eq("status", "discarded");
-        if (discards && discards.length > 0) {
-          const randomId = discards[Math.floor(Math.random() * discards.length)].id;
-          await supabase.from("player_cards").update({ status: 'in_hand', played_at: null }).eq("id", randomId);
-        }
-
-        await supabase.from('game_history').insert({
-          game_id: game.id,
-          user_id: userId,
-          action_type: 'BLOCKED',
-          card_id: displayedCard?.card_id,
-          metadata: { card_title: getCardTitle(displayedCard), message: 'ha bloqueado el desafío con Absorción Kármica y recuperó una carta' }
-        });
-
-        setActiveEffect('shield');
-        if (typeof window !== 'undefined' && window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
-        setTimeout(() => setActiveEffect(null), 3500);
-
-        if (partnerId) {
-          fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-partner`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
-            body: JSON.stringify({ user_id: partnerId, title: "Desafío Absorbido 🌌", body: `${profile?.display_name || 'Tu pareja'} absorbió tu carta: ${getCardTitle(displayedCard)}` })
-          }).catch(err => console.error(err));
-        }
-      } else if (playerCard.cards_master?.id === 66) {
-        // RECHAZO PACÍFICO: Devuelve la carta a la mano de la pareja
-        await supabase.from("player_cards").update({ status: 'in_hand', played_at: null }).eq("id", displayedCard?.id);
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-        
-        await supabase.from('game_history').insert({
-          game_id: game.id,
-          user_id: userId,
-          action_type: 'BLOCKED',
-          card_id: displayedCard?.card_id,
-          metadata: { card_title: getCardTitle(displayedCard), message: 'ha devuelto el desafío a tu mano (Rechazo Pacífico)' }
-        });
-
-        setActiveEffect('shield');
-        if (typeof window !== 'undefined' && window.navigator?.vibrate) window.navigator.vibrate([50, 50, 50]);
-        setTimeout(() => setActiveEffect(null), 3500);
-
-        if (partnerId) {
-          fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-partner`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
-            body: JSON.stringify({ user_id: partnerId, title: "Rechazo Pacífico 🕊️", body: `${profile?.display_name || 'Tu pareja'} devolvió tu carta: ${getCardTitle(displayedCard)}` })
           }).catch(err => console.error(err));
         }
       } else {
@@ -1148,6 +1092,76 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
         showNotification("Tu pareja no tenía cartas raras para destruir.", 'warning');
       }
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setLoading(false);
+      return;
+    }
+
+    if (playerCard.cards_master?.id === 55) { // Cambiar Mazo
+      setLoading(true);
+      // 1. Descartar primero esta carta para que no se intercambie
+      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+      
+      const { data: allCards } = await supabase
+        .from("player_cards")
+        .select("id, user_id")
+        .eq("game_id", game.id)
+        .eq("status", "in_hand");
+
+      if (allCards && allCards.length > 0) {
+        // Swap user_id for all cards
+        for (const c of allCards) {
+          const newOwnerId = c.user_id === userId ? partnerId : userId;
+          await supabase.from("player_cards").update({ user_id: newOwnerId }).eq("id", c.id);
+        }
+
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'SPECIAL_USED',
+          card_id: playerCard.cards_master.id,
+          metadata: { card_title: "Cambiar Mazo", message: 'ha intercambiado los mazos' }
+        });
+        showNotification("¡Has intercambiado los mazos con tu pareja!", 'success');
+      }
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setLoading(false);
+      return;
+    }
+
+    if (playerCard.cards_master?.id === 57) { // Anular Defensa
+      setLoading(true);
+      const noDefenseUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      await supabase.from("games").update({ modifier_no_defense_until: noDefenseUntil }).eq("id", game.id);
+      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+      
+      await supabase.from('game_history').insert({
+        game_id: game.id,
+        user_id: userId,
+        action_type: 'SPECIAL_USED',
+        card_id: playerCard.cards_master.id,
+        metadata: { card_title: "Anular Defensa", message: 'ha anulado tus defensas por 1 hora' }
+      });
+      showNotification("¡Has anulado las defensas de tu pareja por 1 hora!", 'success');
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setLoading(false);
+      return;
+    }
+
+    if (playerCard.cards_master?.id === 60) { // Silencio Total
+      setLoading(true);
+      const silenceUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      await supabase.from("games").update({ modifier_silence_until: silenceUntil }).eq("id", game.id);
+      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+      
+      await supabase.from('game_history').insert({
+        game_id: game.id,
+        user_id: userId,
+        action_type: 'SPECIAL_USED',
+        card_id: playerCard.cards_master.id,
+        metadata: { card_title: "Silencio Total", message: 'ha activado Silencio Total (15 min)' }
+      });
+      showNotification("¡Silencio Total activado por 15 minutos!", 'success');
       setHand(hand.filter(c => c.id !== playerCard.id));
       setLoading(false);
       return;
@@ -1472,6 +1486,32 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center gap-2">
               <Layers size={12} className="text-yellow-400" />
               <span className="text-[10px] font-black text-yellow-200 uppercase tracking-widest">¡Tu próximo ataque valdrá DOBLE!</span>
+            </div>
+          </motion.div>
+        )}
+        {game?.modifier_no_defense_until && new Date(game.modifier_no_defense_until) > new Date() && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            className="flex justify-center px-4 mt-1 shrink-0"
+          >
+            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center gap-2">
+              <ShieldOff size={12} className="text-orange-400" />
+              <span className="text-[10px] font-black text-orange-200 uppercase tracking-widest">Defensas Anuladas</span>
+            </div>
+          </motion.div>
+        )}
+        {game?.modifier_silence_until && new Date(game.modifier_silence_until) > new Date() && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            className="flex justify-center px-4 mt-1 shrink-0"
+          >
+            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center gap-2">
+              <VolumeX size={12} className="text-cyan-400" />
+              <span className="text-[10px] font-black text-cyan-200 uppercase tracking-widest">Silencio Total Activo</span>
             </div>
           </motion.div>
         )}
@@ -2514,10 +2554,16 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               if (isPending) {
                 const isUnblockable = displayedCard?.is_unblockable;
                 const isSpecial = item.cards_master?.category === "ESPECIAL";
+                const isNoDefenseActive = game?.modifier_no_defense_until && new Date(game.modifier_no_defense_until) > new Date();
                 
-                if (isReceiver && isDefenseCard && !isUnblockable) {
-                  cardDisabled = false;
-                  cardHighlight = true; // Parpadeo rojo para defensa permitida
+                if (isReceiver && isDefenseCard) {
+                  if (isUnblockable || isNoDefenseActive) {
+                    cardDisabled = true;
+                    cardHighlight = false;
+                  } else {
+                    cardDisabled = false;
+                    cardHighlight = true; // Parpadeo rojo para defensa permitida
+                  }
                 } else if (isSpecial) {
                   cardDisabled = false; // Permitir cartas especiales (modificadores, robos, etc) siempre
                 } else {
