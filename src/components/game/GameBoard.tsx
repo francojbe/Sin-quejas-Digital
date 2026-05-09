@@ -87,6 +87,28 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [hasNewHistory, setHasNewHistory] = useState(false);
+  
+  // Lógica de Zoom / Long Press
+  const [zoomedCard, setZoomedCard] = useState<any | null>(null);
+  const longPressTimer = useRef<any>(null);
+
+  const startLongPress = (card: any) => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => {
+      setZoomedCard(card);
+      // Vibración háptica suave si está disponible
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+      }
+    }, 600); // 600ms para activar el zoom
+  };
+
+  const stopLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
   const [achievementsCount, setAchievementsCount] = useState(0);
   const [totalCardsPlayed, setTotalCardsPlayed] = useState(0);
 
@@ -2158,13 +2180,24 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               }
 
               return (
-                <motion.div key={item.id} whileHover={cardDisabled ? {} : { scale: 1.05, y: -4 }} className="shrink-0 snap-start relative">
+                <motion.div 
+                  key={item.id} 
+                  whileHover={cardDisabled ? {} : { scale: 1.05, y: -4 }} 
+                  className="shrink-0 snap-start relative"
+                  onPointerDown={() => !cardDisabled && startLongPress(item)}
+                  onPointerUp={stopLongPress}
+                  onPointerLeave={stopLongPress}
+                  onTouchStart={() => !cardDisabled && startLongPress(item)}
+                  onTouchEnd={stopLongPress}
+                >
                   <CartaNaipe 
                     compact 
                     title={getCardTitle(item)} 
                     description={getCardDesc(item)} 
                     rarity={(item.cards_master?.rarity as any) || 'common'} 
-                    onClick={() => playCard(item)}
+                    onClick={() => {
+                      if (!zoomedCard) playCard(item);
+                    }}
                     disabled={cardDisabled}
                     highlight={cardHighlight}
                   />
@@ -2558,6 +2591,47 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           onComplete={completeTutorial}
         />
       )}
+      {/* OVERLAY DE ZOOM / PREVIEW */}
+      <AnimatePresence>
+        {zoomedCard && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-md flex items-center justify-center p-6"
+            onPointerUp={() => setZoomedCard(null)}
+            onTouchEnd={() => setZoomedCard(null)}
+            onClick={() => setZoomedCard(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.5, rotateY: 90, y: 50 }}
+              animate={{ scale: 1, rotateY: 0, y: 0 }}
+              exit={{ scale: 0.5, rotateY: -90, opacity: 0 }}
+              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+              className="w-full max-w-[320px]"
+            >
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+                <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full p-2 animate-bounce">
+                  <Sparkles size={20} className="text-cyan-400" />
+                </div>
+                <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] whitespace-nowrap">Vista Previa</span>
+              </div>
+              
+              <CartaNaipe 
+                title={getCardTitle(zoomedCard)} 
+                description={getCardDesc(zoomedCard)} 
+                rarity={(zoomedCard.cards_master?.rarity as any) || 'common'} 
+                is_unblockable={zoomedCard.cards_master?.is_unblockable}
+                category={zoomedCard.cards_master?.category}
+              />
+
+              <p className="text-center text-white/40 text-[10px] font-bold uppercase tracking-widest mt-8 animate-pulse">
+                Suelte para cerrar
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
