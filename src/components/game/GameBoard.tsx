@@ -1366,7 +1366,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           )}
 
           {/* 3. Silencio */}
-          {game?.modifier_silence_until && (new Date(game.modifier_silence_until).getTime() > (Date.now() + serverTimeOffset)) && (
+          {game?.modifier_silence_until && silenceTimeLeft > 0 && (
             <motion.div 
               initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
               className="mt-0"
@@ -1380,8 +1380,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                 <div className="flex items-center gap-1">
                   <Clock size={10} className="text-cyan-400/60" />
                   <span className="text-[11px] font-mono font-black text-white drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">
-                    {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) / 60))}:
-                    {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) % 60)).toString().padStart(2, '0')}
+                    {Math.max(0, Math.floor(silenceTimeLeft / 60))}:
+                    {Math.max(0, silenceTimeLeft % 60).toString().padStart(2, '0')}
                   </span>
                 </div>
               </div>
