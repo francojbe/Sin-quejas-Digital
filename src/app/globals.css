@@ -72,15 +72,15 @@ body {
 
 /* 
  * Android Native Scaling
- * Aumenta la fuente 2 puntos base (18px) solo cuando se detecta el build de Capacitor (Android).
+ * Aumenta la fuente 4 puntos base (20px) solo cuando se detecta el build de Capacitor (Android).
  */
 html.is-native-android {
-  font-size: 18px; /* +2 puntos respecto al default de 16px */
+  font-size: 20px; /* +4 puntos respecto al default de 16px */
 }
 
 @media (max-width: 360px) {
   html.is-native-android {
-    font-size: 16px; /* Para pantallas diminutas, 16px es lo ideal en Android */
+    font-size: 18px; /* Para pantallas diminutas en Android */
   }
 }
 
