@@ -1030,17 +1030,19 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     // CONSUMIR MODIFICADORES GLOBALES Y ASIGNARLOS A LA CARTA
     const updates: any = { status: "pending", played_at: serverNow };
     
-    // Si hay defensa anulada, la aplicamos a ESTA carta y la limpiamos del juego
-    if (game.no_defense_active) {
+    // Si hay defensa anulada (vía tiempo o flag), la aplicamos a ESTA carta y la limpiamos del juego
+    const isNoDefenseActive = game?.modifier_no_defense_until && (new Date(game.modifier_no_defense_until).getTime() > (Date.now() + serverTimeOffset));
+    
+    if (isNoDefenseActive) {
       updates.is_unblockable = true; // Hacemos esta carta imparable
       
-      // Limpiar el modificador global de la DB
+      // Limpiar el modificador global de la DB (seteando a null para que el banner desaparezca)
       await supabase
         .from('games')
-        .update({ no_defense_active: false })
+        .update({ modifier_no_defense_until: null })
         .eq('id', game.id);
         
-      console.log("Modificador 'Defensa Anulada' consumido y desactivado.");
+      console.log("Modificador 'Defensa Anulada' consumido y banner eliminado.");
     }
     const gameUpdates: any = {};
     
