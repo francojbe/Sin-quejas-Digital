@@ -987,7 +987,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       });
 
       if (playerCard.cards_master?.id === 54) {
-        setShowPartnerHand(true);
+        await fetchPartnerHand();
       }
       
       setLoading(false);
@@ -1161,17 +1161,28 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const fetchPartnerHand = async () => {
     if (!game || !userId || !partnerId) return;
     setLoading(true);
-    const { data } = await supabase
-      .from("player_cards")
-      .select("*, cards_master(*)")
-      .eq("game_id", game.id)
-      .eq("user_id", partnerId)
-      .eq("status", "in_hand");
-    if (data) {
-      setPartnerHand(data as any);
-      setShowPartnerHand(true);
+    try {
+      const { data, error } = await supabase
+        .from("player_cards")
+        .select("*, cards_master(*)")
+        .eq("game_id", game.id)
+        .eq("user_id", partnerId)
+        .eq("status", "in_hand")
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        setPartnerHand(data as any);
+        setShowPartnerHand(true);
+        console.log("Mano de la pareja cargada:", data.length, "cartas");
+      }
+    } catch (error: any) {
+      console.error("Error al cargar mano de pareja:", error);
+      showNotification("No se pudo leer la mente de tu pareja", "error");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleStealCard = async () => {
