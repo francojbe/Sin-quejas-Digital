@@ -6,7 +6,7 @@ import { CartaNaipe } from "@/components/ui/CartaNaipe";
 import { GameStatus } from "./GameStatus";
 import { PlayerCard, Card as CardType, Profile } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History, Sparkles, ChevronRight, ShieldOff, VolumeX, Zap } from "lucide-react";
+import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Eye, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History, Sparkles, ChevronRight, ShieldOff, VolumeX, Zap } from "lucide-react";
 import Link from "next/link";
 import { useToast, ToastType } from "@/lib/contexts/ToastContext";
 import { requestNotificationPermission } from "@/components/SWRegistration";
