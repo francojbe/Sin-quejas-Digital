@@ -900,6 +900,38 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         // Bloqueo normal: Consumir defensa y bloquear ataque
         await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard?.id);
         await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        
+        // Registrar bloqueo en el historial
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'BLOCKED',
+          card_id: displayedCard?.card_id,
+          metadata: { 
+            card_title: getCardTitle(displayedCard),
+            message: 'ha bloqueado el desafío'
+          }
+        });
+        
+        // Efecto visual inmediato para el bloqueador (no espera al realtime para evitar delay)
+        setActiveEffect('shield');
+        if (typeof window !== 'undefined' && window.navigator?.vibrate) {
+          window.navigator.vibrate([100, 50, 100]);
+        }
+        setTimeout(() => setActiveEffect(null), 3500);
+
+        // Notificar al atacante
+        if (partnerId) {
+          fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-partner`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({
+              user_id: partnerId,
+              title: "Desafío Bloqueado 🛡️",
+              body: `${profile?.display_name || 'Tu pareja'} ha bloqueado tu carta: ${getCardTitle(displayedCard)}`
+            })
+          }).catch(err => console.error(err));
+        }
       }
       
       setHand(hand.filter(c => c.id !== playerCard.id));

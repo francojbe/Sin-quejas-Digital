@@ -98,10 +98,26 @@ export async function processPendingActions() {
         await supabase.from("player_cards").update({ user_id: userId, played_at: freshServerNow }).eq("id", displayedCardId);
       } 
       else if (action.type === 'play_card_block') {
-        const { playerCardId, displayedCardId } = action.payload;
+        const { playerCardId, displayedCardId, serverNow } = action.payload;
+        // In offline mode, the blocker user ID isn't directly in the payload, but we can assume
+        // the current session user since offline actions are executed in their session.
+        const currentUser = (await supabase.auth.getUser()).data.user;
         const freshServerNow = new Date(Date.now() + serverTimeOffset).toISOString();
+        
         await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCardId);
         await supabase.from("player_cards").update({ status: 'discarded', played_at: freshServerNow }).eq("id", playerCardId);
+        
+        if (currentUser) {
+          await supabase.from('game_history').insert({
+            game_id: (await supabase.from('player_cards').select('game_id').eq('id', displayedCardId).single()).data?.game_id,
+            user_id: currentUser.id,
+            action_type: 'BLOCKED',
+            card_id: (await supabase.from('player_cards').select('card_id').eq('id', displayedCardId).single()).data?.card_id,
+            metadata: { 
+              message: 'ha bloqueado el desafío (sincronizado)'
+            }
+          });
+        }
       }
       else if (action.type === 'play_card_normal') {
         const { playerCardId, updates, gameUpdates, gameId } = action.payload;
