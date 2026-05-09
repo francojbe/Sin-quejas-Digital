@@ -2609,24 +2609,23 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               animate={{ scale: 1, rotateY: 0, y: 0 }}
               exit={{ scale: 0.5, rotateY: -90, opacity: 0 }}
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
-              className="w-full max-w-[320px]"
+              className="relative flex flex-col items-center"
             >
-              <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+              <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
                 <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full p-2 animate-bounce">
-                  <Sparkles size={20} className="text-cyan-400" />
+                  <Sparkles size={24} className="text-cyan-400" />
                 </div>
-                <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] whitespace-nowrap">Vista Previa</span>
+                <span className="text-[12px] font-black text-white/60 uppercase tracking-[0.3em] whitespace-nowrap">Vista Previa</span>
               </div>
               
               <CartaNaipe 
+                className="w-64 h-[22rem] sm:w-72 sm:h-[26rem] shadow-[0_0_50px_rgba(0,0,0,0.8)] border-white/20"
                 title={getCardTitle(zoomedCard)} 
                 description={getCardDesc(zoomedCard)} 
                 rarity={(zoomedCard.cards_master?.rarity as any) || 'common'} 
-                is_unblockable={zoomedCard.cards_master?.is_unblockable}
-                category={zoomedCard.cards_master?.category}
               />
 
-              <p className="text-center text-white/40 text-[10px] font-bold uppercase tracking-widest mt-8 animate-pulse">
+              <p className="text-center text-white/60 text-[11px] font-black uppercase tracking-[0.2em] mt-10 animate-pulse bg-black/40 px-4 py-2 rounded-full border border-white/5 backdrop-blur-sm">
                 Suelte para cerrar
               </p>
             </motion.div>
