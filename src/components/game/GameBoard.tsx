@@ -902,6 +902,79 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
         // 2. Cambiar dueño del ataque y resetear tiempo (el atacante ahora es el receptor)
         await supabase.from("player_cards").update({ user_id: userId, played_at: serverNow }).eq("id", displayedCard?.id);
+
+        // 3. Registrar reflejo en el historial
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'REFLECTED',
+          card_id: displayedCard?.card_id,
+          metadata: { card_title: getCardTitle(displayedCard), message: 'ha usado un Espejo Místico para devolver el desafío' }
+        });
+
+        // 4. Notificar al atacante
+        if (partnerId) {
+          fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-partner`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({ user_id: partnerId, title: "¡Ataque Reflejado! 🪞", body: `${profile?.display_name || 'Tu pareja'} usó un Espejo Místico. ¡Ahora el reto es tuyo!` })
+          }).catch(err => console.error(err));
+        }
+      } else if (playerCard.cards_master?.id === 65) {
+        // ABSORCIÓN KÁRMICA: Bloquea y recupera 1 carta
+        await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard?.id);
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        
+        // Recuperar 1 carta del descarte
+        const { data: discards } = await supabase.from("player_cards").select("id").eq("game_id", game.id).eq("user_id", userId).eq("status", "discarded");
+        if (discards && discards.length > 0) {
+          const randomId = discards[Math.floor(Math.random() * discards.length)].id;
+          await supabase.from("player_cards").update({ status: 'in_hand', played_at: null }).eq("id", randomId);
+        }
+
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'BLOCKED',
+          card_id: displayedCard?.card_id,
+          metadata: { card_title: getCardTitle(displayedCard), message: 'ha bloqueado el desafío con Absorción Kármica y recuperó una carta' }
+        });
+
+        setActiveEffect('shield');
+        if (typeof window !== 'undefined' && window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
+        setTimeout(() => setActiveEffect(null), 3500);
+
+        if (partnerId) {
+          fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-partner`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({ user_id: partnerId, title: "Desafío Absorbido 🌌", body: `${profile?.display_name || 'Tu pareja'} absorbió tu carta: ${getCardTitle(displayedCard)}` })
+          }).catch(err => console.error(err));
+        }
+      } else if (playerCard.cards_master?.id === 66) {
+        // RECHAZO PACÍFICO: Devuelve la carta a la mano de la pareja
+        await supabase.from("player_cards").update({ status: 'in_hand', played_at: null }).eq("id", displayedCard?.id);
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'BLOCKED',
+          card_id: displayedCard?.card_id,
+          metadata: { card_title: getCardTitle(displayedCard), message: 'ha devuelto el desafío a tu mano (Rechazo Pacífico)' }
+        });
+
+        setActiveEffect('shield');
+        if (typeof window !== 'undefined' && window.navigator?.vibrate) window.navigator.vibrate([50, 50, 50]);
+        setTimeout(() => setActiveEffect(null), 3500);
+
+        if (partnerId) {
+          fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-partner`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({ user_id: partnerId, title: "Rechazo Pacífico 🕊️", body: `${profile?.display_name || 'Tu pareja'} devolvió tu carta: ${getCardTitle(displayedCard)}` })
+          }).catch(err => console.error(err));
+        }
       } else {
         // Bloqueo normal: Consumir defensa y bloquear ataque
         await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard?.id);
