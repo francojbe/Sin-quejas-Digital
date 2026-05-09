@@ -2285,16 +2285,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         ¡Activar Doble Reto!
                       </button>
                     )}
-                    
-                    {/* Botón genérico para cerrar efectos pasivos que ya se aplicaron */}
-                    {displayedCard?.status === 'active' && [53, 57, 60].includes(displayedCard?.cards_master?.id) && (
-                      <button 
-                        onClick={() => handleAction('discarded')}
-                        className="bg-white/10 text-white font-black uppercase tracking-widest text-[10px] px-8 py-2.5 rounded-full border border-white/20 hover:bg-white/20 transition-all"
-                      >
-                        Entendido
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
