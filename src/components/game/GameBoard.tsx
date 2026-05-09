@@ -933,7 +933,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       }
 
       if (playerCard.cards_master?.id === 60) { // Silencio
-        const silenceUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+        const silenceUntil = new Date(Date.now() + serverTimeOffset + 60 * 60 * 1000).toISOString();
         await supabase.from("games").update({ 
           modifier_silence_until: silenceUntil,
           last_event_data: { 
@@ -1367,22 +1367,24 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             </div>
           </motion.div>
         )}
-        {game?.modifier_silence_until && silenceTimeLeft > 0 && (
+        {game?.modifier_silence_until && (new Date(game.modifier_silence_until).getTime() > (Date.now() + serverTimeOffset)) && (
           <motion.div 
             initial={{ opacity: 0, height: 0 }} 
             animate={{ opacity: 1, height: 'auto' }} 
             exit={{ opacity: 0, height: 0 }}
             className="flex justify-center px-4 mt-1 shrink-0"
           >
-            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between gap-2 backdrop-blur-md">
+            <div className="w-full max-w-sm py-2 px-4 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center gap-4 backdrop-blur-xl shadow-[0_0_20px_rgba(6,182,212,0.2)]">
               <div className="flex items-center gap-2">
-                <VolumeX size={12} className="text-cyan-400" />
-                <span className="text-[10px] font-black text-cyan-200 uppercase tracking-widest">Silencio Total Activo</span>
+                <VolumeX size={14} className="text-cyan-400 animate-pulse" />
+                <span className="text-[10px] font-black text-cyan-100 uppercase tracking-widest">Silencio Total Activo</span>
               </div>
-              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-cyan-500/20 rounded-md border border-cyan-500/30">
-                <Clock size={10} className="text-cyan-400" />
-                <span className="text-[10px] font-mono font-black text-white">
-                  {Math.floor(silenceTimeLeft / 60)}:{(silenceTimeLeft % 60).toString().padStart(2, '0')}
+              
+              <div className="flex items-center gap-2 pl-4 border-l border-cyan-500/30">
+                <Clock size={12} className="text-cyan-400" />
+                <span className="text-xs font-mono font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+                  {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) / 60))}:
+                  {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) % 60)).toString().padStart(2, '0')}
                 </span>
               </div>
             </div>
