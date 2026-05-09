@@ -276,8 +276,17 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
           // Si es un efecto especial visual (Ojo Místico, etc)
           if (payload.new.action_type === 'SPECIAL_EFFECT' && payload.new.metadata?.type) {
+            console.log("[Realtime] Efecto especial recibido:", payload.new.metadata.type);
             setActiveEvent(payload.new.metadata);
-            setTimeout(() => setActiveEvent(null), 5000); // 5 segundos de animación
+            
+            // Vibración para alertar al oponente (si es Android/Móvil)
+            if (typeof window !== 'undefined' && window.navigator?.vibrate) {
+              window.navigator.vibrate([50, 100, 50]);
+            }
+
+            setTimeout(() => {
+              setActiveEvent(null);
+            }, 5000); 
           }
         }
       })
