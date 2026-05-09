@@ -594,8 +594,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         }
 
         if (newGame.last_event_data && JSON.stringify(newGame.last_event_data) !== JSON.stringify(oldGame?.last_event_data)) {
-          setActiveEvent(newGame.last_event_data);
-          setTimeout(() => setActiveEvent(null), 5000);
+          // Solo disparar si el evento es reciente (menos de 10 segundos) para evitar repeticiones en refresh
+          const eventTime = newGame.last_event_data.timestamp || 0;
+          const now = Date.now();
+          if (now - eventTime < 10000) {
+            setActiveEvent(newGame.last_event_data);
+            setTimeout(() => setActiveEvent(null), 5000);
+          }
         }
       })
       .subscribe();
@@ -906,13 +911,25 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         const silenceUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         await supabase.from("games").update({ 
           modifier_silence_until: silenceUntil,
-          last_event_data: { type: 'silence', user_id: userId, user_name: profile?.display_name || 'Tu pareja' }
+          last_event_data: { 
+            type: 'silence', 
+            user_id: userId, 
+            user_name: profile?.display_name || 'Tu pareja',
+            timestamp: Date.now() 
+          }
         }).eq("id", game.id);
       }
 
       if (playerCard.cards_master?.id === 53) { // Bloqueo Rareza (Ahora Temporal)
         const noRaresUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        await supabase.from("games").update({ modifier_no_rares_until: noRaresUntil }).eq("id", game.id);
+        await supabase.from("games").update({ 
+          modifier_no_rares_until: noRaresUntil,
+          last_event_data: { 
+            type: 'global_modifier', 
+            message: '¡Cartas Raras Bloqueadas!',
+            timestamp: Date.now() 
+          }
+        }).eq("id", game.id);
       }
 
       showNotification(`¡Has activado ${getCardTitle(playerCard)}!`, 'success');
@@ -2266,6 +2283,16 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                         className="bg-common text-black font-black uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(208,255,0,0.4)] hover:shadow-[0_0_30px_rgba(208,255,0,0.6)] hover:scale-105 transition-all animate-pulse"
                       >
                         ¡Activar Doble Reto!
+                      </button>
+                    )}
+                    
+                    {/* Botón genérico para cerrar efectos pasivos que ya se aplicaron */}
+                    {displayedCard?.status === 'active' && [53, 57, 60].includes(displayedCard?.cards_master?.id) && (
+                      <button 
+                        onClick={() => handleAction('discarded')}
+                        className="bg-white/10 text-white font-black uppercase tracking-widest text-[10px] px-8 py-2.5 rounded-full border border-white/20 hover:bg-white/20 transition-all"
+                      >
+                        Entendido
                       </button>
                     )}
                   </div>
