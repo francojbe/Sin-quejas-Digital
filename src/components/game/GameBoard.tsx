@@ -942,25 +942,32 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     // --- CARTAS ESPECIALES DE USO INMEDIATO (MODIFICADORES) ---
     if (playerCard.cards_master?.id === 58) { // Ataque Imparable
       setLoading(true);
-      // 1. Descartar la carta usada
-      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-      // 2. Activar modificador en el juego
-      await supabase.from("games").update({ modifier_unblockable_by: userId }).eq("id", game.id);
-      // 3. Registrar en historial
-      await supabase.from('game_history').insert({
-        game_id: game.id,
-        user_id: userId,
-        action_type: 'MODIFIER_ACTIVATED',
-        card_id: playerCard.cards_master.id,
-        metadata: { 
-          card_title: "Ataque Imparable",
-          message: 'ha activado un Ataque Imparable'
-        }
-      });
       
-      showNotification("¡Tu siguiente ataque será IMPARABLE!", 'success');
+      if (!navigator.onLine) {
+        await savePendingAction({ type: 'play_card_modifier', payload: { playerCardId: playerCard.id, gameId: game?.id, modifierType: 'unblockable', userId, cardId: playerCard.cards_master.id } });
+        setGame((prev: any) => prev ? { ...prev, modifier_unblockable_by: userId } : null);
+        showNotification("¡Tu siguiente ataque será IMPARABLE! (Guardado localmente)", 'warning');
+      } else {
+        // 1. Descartar la carta usada
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        // 2. Activar modificador en el juego
+        await supabase.from("games").update({ modifier_unblockable_by: userId }).eq("id", game.id);
+        // 3. Registrar en historial
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'MODIFIER_ACTIVATED',
+          card_id: playerCard.cards_master.id,
+          metadata: { 
+            card_title: "Ataque Imparable",
+            message: 'ha activado un Ataque Imparable'
+          }
+        });
+        showNotification("¡Tu siguiente ataque será IMPARABLE!", 'success');
+        await fetchGame();
+      }
+      
       setHand(hand.filter(c => c.id !== playerCard.id));
-      await fetchGame();
       setLoading(false);
       return;
     }
@@ -1205,7 +1212,25 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           </h1>
         </div>
 
-        {/* Overlay de cierre — único overlay, con bg para que Android WebView lo detecte */}
+      </div>
+
+      {/* Indicador de Modificador Global Activo */}
+      <AnimatePresence>
+        {game?.modifier_unblockable_by === userId && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            className="flex justify-center px-4 mt-1 shrink-0"
+          >
+            <div className="bg-red-600/90 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(220,38,38,0.6)] border border-red-400 flex items-center gap-2">
+              <Lock size={12} fill="white" /> ¡Tu próximo ataque es imparable!
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Overlay de cierre — único overlay, con bg para que Android WebView lo detecte */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div

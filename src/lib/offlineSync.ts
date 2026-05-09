@@ -127,6 +127,26 @@ export async function processPendingActions() {
           await supabase.from("games").update(gameUpdates).eq("id", gameId);
         }
       }
+      else if (action.type === 'play_card_modifier') {
+        const { playerCardId, gameId, modifierType, userId, cardId } = action.payload;
+        const freshServerNow = new Date(Date.now() + serverTimeOffset).toISOString();
+        
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: freshServerNow }).eq("id", playerCardId);
+        
+        if (modifierType === 'unblockable') {
+          await supabase.from("games").update({ modifier_unblockable_by: userId }).eq("id", gameId);
+          await supabase.from('game_history').insert({
+            game_id: gameId,
+            user_id: userId,
+            action_type: 'MODIFIER_ACTIVATED',
+            card_id: cardId,
+            metadata: { 
+              card_title: "Ataque Imparable",
+              message: 'ha activado un Ataque Imparable (sincronizado)'
+            }
+          });
+        }
+      }
       else if (action.type === 'handle_action') {
         const { displayedCardId, status, gameId, userId, cardId, cardTitle, partnerId, profileDisplayName } = action.payload;
         await supabase.from("player_cards").update({ status }).eq("id", displayedCardId);
