@@ -903,6 +903,16 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       // 1. Poner la carta en el centro (active) para que sea visible
       await supabase.from("player_cards").update({ status: 'active', played_at: serverNow }).eq("id", playerCard.id);
       
+      // 1.1 Limpiar modificadores si se juega una especial que deba consumirlos (opcional, por ahora solo aseguramos que no se dupliquen)
+      const gameUpdates: any = {};
+      if (game?.modifier_unblockable_by === userId) gameUpdates.modifier_unblockable_by = null;
+      if (game?.modifier_double_by === userId) gameUpdates.modifier_double_by = null;
+      
+      if (Object.keys(gameUpdates).length > 0) {
+        await supabase.from("games").update(gameUpdates).eq("id", game.id);
+        setGame((prev: any) => prev ? { ...prev, ...gameUpdates } : null);
+      }
+      
       // 2. Registrar en el historial
       await supabase.from('game_history').insert({
         game_id: game.id,
