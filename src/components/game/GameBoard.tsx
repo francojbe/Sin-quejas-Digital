@@ -473,8 +473,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       .eq('game_id', gameId)
       .neq('status', 'in_hand')
       .order('played_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
     
     setDisplayedCard(data ? (data as any) : null);
   }
@@ -915,6 +916,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             type: 'silence', 
             user_id: userId, 
             user_name: profile?.display_name || 'Tu pareja',
+            card_title: getCardTitle(playerCard),
             timestamp: Date.now() 
           }
         }).eq("id", game.id);
@@ -1973,7 +1975,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none bg-black/60 backdrop-blur-xl"
+              className="absolute inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none bg-black/40 backdrop-blur-sm"
             >
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
