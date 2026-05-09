@@ -913,71 +913,25 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       showNotification(`¡Has activado ${getCardTitle(playerCard)}!`, 'success');
       
-      // 4. Optimistic update and refresh
+      // 4. Optimistic update
       setHand(hand.filter(c => c.id !== playerCard.id));
       setDisplayedCard({
         ...playerCard,
         status: 'active',
         played_at: serverNow
       });
+
+      // 5. Casos especiales que requieren lógica adicional inmediata
+      if (playerCard.cards_master?.id === 54) { // Ver Mano
+        setShowPartnerHand(true);
+      }
+      
       await fetchGame();
       setLoading(false);
       return;
     }
 
-    if (playerCard.cards_master?.id === 59) { // Resurrección
-      setLoading(true);
-      const { data: discards } = await supabase
-        .from("player_cards")
-        .select("id")
-        .eq("game_id", game.id)
-        .eq("user_id", userId)
-        .eq("status", "discarded");
-
-      if (discards && discards.length > 0) {
-        const shuffled = [...discards].sort(() => 0.5 - Math.random());
-        const selectedIds = shuffled.slice(0, 3).map(c => c.id);
-        
-        await supabase.from("player_cards").update({ status: 'in_hand', played_at: null }).in("id", selectedIds);
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-        
-        await supabase.from('game_history').insert({
-          game_id: game.id,
-          user_id: userId,
-          action_type: 'SPECIAL_USED',
-          card_id: playerCard.cards_master.id,
-          metadata: { card_title: "Resurrección", message: 'ha recuperado cartas del descarte' }
-        });
-        showNotification("¡Has recuperado 3 cartas del descarte!", 'success');
-      } else {
-        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-        showNotification("No tienes cartas en el descarte para recuperar.", 'warning');
-      }
-      setHand(hand.filter(c => c.id !== playerCard.id));
-      setLoading(false);
-      return;
-    }
-
-    if (playerCard.cards_master?.id === 54) { // Ver Mano
-      setLoading(true);
-      // Discard the card
-      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-      await supabase.from('game_history').insert({
-        game_id: game.id,
-        user_id: userId,
-        action_type: 'SPECIAL_USED',
-        card_id: playerCard.cards_master.id,
-        metadata: { card_title: "Ver Mano", message: 'ha usado Ver Mano' }
-      });
-      
-      // Activar efecto local
-      setShowPartnerHand(true);
-      showNotification("¡Ahora puedes ver el mazo de tu pareja!", 'success');
-      
-      setHand(hand.filter(c => c.id !== playerCard.id));
-      setLoading(false);
-      return;
-    }
+    // Shadowed blocks removed because they are now handled above or by action buttons
 
     // CONSUMIR MODIFICADORES GLOBALES Y ASIGNARLOS A LA CARTA
     const updates: any = { status: "pending", played_at: serverNow };
@@ -1178,6 +1132,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
       setDisplayedCard(null);
     }
+    await fetchGame();
     setLoading(false);
   };
 
@@ -1187,6 +1142,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     await supabase.rpc('swap_hands', { game_id_in: game.id, user_a: userId, user_b: partnerId });
     await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
     showNotification("¡Manos intercambiadas!", 'success');
+    await fetchGame();
     setDisplayedCard(null);
     setLoading(false);
   };
@@ -1213,6 +1169,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
       setDisplayedCard(null);
     }
+    await fetchGame();
     setLoading(false);
   };
 
@@ -1222,6 +1179,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     // Estos ya se activaron en el playCard, el botón solo los descarta para limpiar tablero
     await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
     showNotification(`¡Modificador ${type === 'double' ? 'Doble' : 'Imparable'} listo!`, 'success');
+    await fetchGame();
     setDisplayedCard(null);
     setLoading(false);
   };
@@ -1232,6 +1190,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     // Ya se activó en playCard
     await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
     showNotification("¡Juego congelado!", 'success');
+    await fetchGame();
     setDisplayedCard(null);
     setLoading(false);
   };
