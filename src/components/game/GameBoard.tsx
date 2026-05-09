@@ -1029,6 +1029,19 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
     // CONSUMIR MODIFICADORES GLOBALES Y ASIGNARLOS A LA CARTA
     const updates: any = { status: "pending", played_at: serverNow };
+    
+    // Si hay defensa anulada, la aplicamos a ESTA carta y la limpiamos del juego
+    if (game.no_defense_active) {
+      updates.is_unblockable = true; // Hacemos esta carta imparable
+      
+      // Limpiar el modificador global de la DB
+      await supabase
+        .from('games')
+        .update({ no_defense_active: false })
+        .eq('id', game.id);
+        
+      console.log("Modificador 'Defensa Anulada' consumido y desactivado.");
+    }
     const gameUpdates: any = {};
     
     if (game?.modifier_unblockable_by === userId && !isDefense) {
