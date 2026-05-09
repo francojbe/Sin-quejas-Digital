@@ -939,6 +939,32 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       return;
     }
 
+    // --- CARTAS ESPECIALES DE USO INMEDIATO (MODIFICADORES) ---
+    if (playerCard.cards_master?.id === 58) { // Ataque Imparable
+      setLoading(true);
+      // 1. Descartar la carta usada
+      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+      // 2. Activar modificador en el juego
+      await supabase.from("games").update({ modifier_unblockable_by: userId }).eq("id", game.id);
+      // 3. Registrar en historial
+      await supabase.from('game_history').insert({
+        game_id: game.id,
+        user_id: userId,
+        action_type: 'MODIFIER_ACTIVATED',
+        card_id: playerCard.cards_master.id,
+        metadata: { 
+          card_title: "Ataque Imparable",
+          message: 'ha activado un Ataque Imparable'
+        }
+      });
+      
+      showNotification("¡Tu siguiente ataque será IMPARABLE!", 'success');
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      await fetchGame();
+      setLoading(false);
+      return;
+    }
+
     // CONSUMIR MODIFICADORES GLOBALES Y ASIGNARLOS A LA CARTA
     const updates: any = { status: "pending", played_at: serverNow };
     const gameUpdates: any = {};
