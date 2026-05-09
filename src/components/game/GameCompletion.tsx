@@ -150,13 +150,18 @@ export function GameCompletion({
               directory: Directory.Cache
             });
             
-            await Share.share({
-              title: '¡Victoria en Sin Quejas Digital!',
-              text: `${shareText}\n\nJuega aquí: ${shareUrl}`,
-              files: [savedFile.uri],
-              dialogTitle: 'Compartir Victoria',
-            });
-            return;
+            try {
+              await Share.share({
+                title: '¡Victoria en Sin Quejas Digital!',
+                text: `${shareText}\n\nJuega aquí: ${shareUrl}`,
+                files: [savedFile.uri],
+                dialogTitle: 'Compartir Victoria',
+              });
+              return;
+            } catch (e: any) {
+              if (e.message?.toLowerCase().includes('cancel')) return; // Usuario canceló el modal nativo
+              throw e; // Falla real
+            }
           }
           
           // 3. Fallback Web Share (con archivo real)
@@ -164,13 +169,23 @@ export function GameCompletion({
             const res = await fetch(base64Image);
             const blob = await res.blob();
             const file = new File([blob], 'victoria.png', { type: 'image/png' });
-            await navigator.share({
+            const shareData: any = {
               title: '¡Desafío Completado!',
               text: shareText,
               url: shareUrl,
-              files: [file]
-            });
-            return;
+            };
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              shareData.files = [file];
+            }
+
+            try {
+              await navigator.share(shareData);
+              return;
+            } catch (e: any) {
+              if (e.name === 'AbortError') return; // Usuario cerró el modal de Web Share
+              throw e; // Falla real, saltar al fallback final
+            }
           }
         }
       } catch (renderErr) {
