@@ -1042,7 +1042,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const isReceiver = displayedCard?.user_id !== userId;
 
   return (
-    <div className="w-full h-[100dvh] flex flex-col gap-0 sm:gap-0.5 overflow-hidden px-0.5 sm:px-1 pt-0.5 sm:pt-1">
+    <div 
+      className="w-full h-[100dvh] flex flex-col gap-0 sm:gap-0.5 overflow-hidden px-0.5 sm:px-1"
+      style={{
+        paddingTop: 'max(0.125rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(0.125rem, env(safe-area-inset-bottom))'
+      }}
+    >
       {/* HEADER con menú hamburguesa */}
       <div className="shrink-0 flex items-center justify-between px-0.5 sm:px-1">
         {/* Banner de Notificaciones Rápidas */}
@@ -2348,25 +2354,40 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                       </div>
 
                       <div className="bg-white/5 border border-white/5 p-4 rounded-2xl group-hover:bg-white/[0.07] transition-all">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">
+                        <div className="flex justify-between items-start mb-3">
+                          <span className="text-[9px] font-black text-white/40 uppercase tracking-widest flex items-center gap-1">
+                            <Clock size={10} />
                             {new Date(event.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} • {new Date(event.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                           </span>
-                          <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                            event.action_type === 'LAUNCHED' ? 'bg-epic/20 text-epic' : 
-                            event.action_type === 'ACCEPTED' ? 'bg-common/20 text-common' : 'bg-white/10 text-white/40'
+                          <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                            event.action_type === 'LAUNCHED' ? 'bg-epic/10 text-epic border-epic/20' : 
+                            event.action_type === 'ACCEPTED' ? 'bg-common/10 text-common border-common/20' : 
+                            event.action_type === 'BLOCKED' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 
+                            event.action_type === 'REQUEST_RESTART' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
+                            'bg-white/5 text-white/40 border-white/10'
                           }`}>
-                            {event.action_type === 'LAUNCHED' ? 'Lanzada' : 
-                             event.action_type === 'ACCEPTED' ? 'Aceptada' : 
-                             event.action_type === 'BLOCKED' ? 'Bloqueada' : event.action_type}
+                            {event.action_type === 'LAUNCHED' ? 'Desafío Lanzado' : 
+                             event.action_type === 'ACCEPTED' ? 'Reto Aceptado' : 
+                             event.action_type === 'BLOCKED' ? 'Defensa Activa' : 
+                             event.action_type === 'REQUEST_RESTART' ? 'Petición' : event.action_type}
                           </span>
                         </div>
-                        <p className="text-[11px] font-bold text-white leading-relaxed">
-                          <span className="text-cyan-400">{event.profiles?.display_name || 'Alguien'}</span>
-                          {event.action_type === 'LAUNCHED' && ' lanzó '}
-                          {event.action_type === 'ACCEPTED' && ' aceptó '}
-                          {event.action_type === 'BLOCKED' && ' bloqueó '}
-                          <span className="text-white"> "{event.metadata?.card_title || 'una carta'}"</span>
+                        <p className="text-[12px] font-medium text-white/80 leading-relaxed">
+                          {event.action_type === 'LAUNCHED' && (
+                            <>La chispa se enciende: <span className="text-epic font-black">{event.profiles?.display_name || 'Alguien'}</span> ha propuesto el desafío <span className="text-white font-black italic">"{event.metadata?.card_title || 'una carta'}"</span>.</>
+                          )}
+                          {event.action_type === 'ACCEPTED' && (
+                            <>Con valentía, <span className="text-common font-black">{event.profiles?.display_name || 'Alguien'}</span> ha aceptado cumplir <span className="text-white font-black italic">"{event.metadata?.card_title || 'una carta'}"</span>. ¡Que empiece la acción!</>
+                          )}
+                          {event.action_type === 'BLOCKED' && (
+                            <><span className="text-red-400 font-black">{event.profiles?.display_name || 'Alguien'}</span> ha usado sus escudos para bloquear <span className="text-white font-black italic">"{event.metadata?.card_title || 'una carta'}"</span>. Tensión en el tablero.</>
+                          )}
+                          {event.action_type === 'REQUEST_RESTART' && (
+                            <><span className="text-cyan-400 font-black">{event.profiles?.display_name || 'Alguien'}</span> ha propuesto empezar de cero con un nuevo ciclo de juego.</>
+                          )}
+                          {!['LAUNCHED', 'ACCEPTED', 'BLOCKED', 'REQUEST_RESTART'].includes(event.action_type) && (
+                            <><span className="text-cyan-400 font-black">{event.profiles?.display_name || 'Alguien'}</span> {event.metadata?.message || 'realizó una acción en el tablero'}</>
+                          )}
                         </p>
                       </div>
                     </div>

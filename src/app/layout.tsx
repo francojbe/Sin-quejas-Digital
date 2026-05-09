@@ -12,6 +12,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: 0,
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
