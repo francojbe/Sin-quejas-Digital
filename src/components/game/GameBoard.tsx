@@ -1336,86 +1336,85 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           </h1>
         </div>
 
-      {/* Indicadores de Modificadores Globales Activos */}
-      <AnimatePresence>
-        {game?.modifier_unblockable_by === userId && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }} 
-            animate={{ opacity: 1, height: 'auto' }} 
-            exit={{ opacity: 0, height: 0 }}
-            className="flex justify-center px-4 mt-1 shrink-0"
-          >
-            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center gap-2">
-              <Zap size={12} className="text-red-400" />
-              <span className="text-[10px] font-black text-red-200 uppercase tracking-widest">¡Tu próximo ataque es imparable!</span>
-            </div>
-          </motion.div>
-        )}
-        {game?.modifier_double_by === userId && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }} 
-            animate={{ opacity: 1, height: 'auto' }} 
-            exit={{ opacity: 0, height: 0 }}
-            className="flex justify-center px-4 mt-1 shrink-0"
-          >
-            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center gap-2">
-              <Layers size={12} className="text-yellow-400" />
-              <span className="text-[10px] font-black text-yellow-200 uppercase tracking-widest">¡Tu próximo ataque valdrá DOBLE!</span>
-            </div>
-          </motion.div>
-        )}
-        {game?.modifier_no_defense_until && new Date(game.modifier_no_defense_until) > new Date() && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }} 
-            animate={{ opacity: 1, height: 'auto' }} 
-            exit={{ opacity: 0, height: 0 }}
-            className="flex justify-center px-4 mt-1 shrink-0"
-          >
-            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center gap-2">
-              <ShieldOff size={12} className="text-orange-400" />
-              <span className="text-[10px] font-black text-orange-200 uppercase tracking-widest">Defensas Anuladas</span>
-            </div>
-          </motion.div>
-        )}
-        {game?.modifier_silence_until && (new Date(game.modifier_silence_until).getTime() > (Date.now() + serverTimeOffset)) && (
-          <motion.div 
-            initial={{ y: -20, opacity: 0 }} 
-            animate={{ y: 0, opacity: 1 }} 
-            exit={{ y: -20, opacity: 0 }}
-            className="fixed top-0 left-0 right-0 z-[100] flex justify-center pointer-events-none"
-          >
-            <div className="bg-cyan-950/40 backdrop-blur-md border-x border-b border-cyan-500/20 px-4 py-1 rounded-b-2xl flex items-center gap-3 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                <span className="text-[8px] font-black text-cyan-400/80 uppercase tracking-[0.2em]">Silencio</span>
+      {/* Indicadores de Modificadores Globales Activos (Píldoras Premium) */}
+      <div className="fixed top-0 left-0 right-0 z-[100] flex flex-col items-center pointer-events-none">
+        <AnimatePresence>
+          {/* 1. Imparable */}
+          {game?.modifier_unblockable_by === userId && (
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
+              className="mt-0"
+            >
+              <div className="bg-red-950/40 backdrop-blur-md border-x border-b border-red-500/20 px-4 py-1 rounded-b-2xl flex items-center gap-2 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+                <Zap size={10} className="text-red-400 animate-pulse" />
+                <span className="text-[8px] font-black text-red-200 uppercase tracking-[0.2em]">Ataque Imparable</span>
               </div>
-              
-              <div className="w-px h-3 bg-cyan-500/20" />
-              
-              <div className="flex items-center gap-1">
-                <Clock size={10} className="text-cyan-400/60" />
-                <span className="text-[11px] font-mono font-black text-white drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">
-                  {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) / 60))}:
-                  {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) % 60)).toString().padStart(2, '0')}
-                </span>
+            </motion.div>
+          )}
+
+          {/* 2. Doble */}
+          {game?.modifier_double_by === userId && (
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
+              className="mt-0"
+            >
+              <div className="bg-yellow-950/40 backdrop-blur-md border-x border-b border-yellow-500/20 px-4 py-1 rounded-b-2xl flex items-center gap-2 shadow-[0_0_20px_rgba(234,179,8,0.15)]">
+                <Layers size={10} className="text-yellow-400 animate-pulse" />
+                <span className="text-[8px] font-black text-yellow-200 uppercase tracking-[0.2em]">Reto Doble</span>
               </div>
-            </div>
-          </motion.div>
-        )}
-        {game?.modifier_no_rares_until && new Date(game.modifier_no_rares_until) > new Date() && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }} 
-            animate={{ opacity: 1, height: 'auto' }} 
-            exit={{ opacity: 0, height: 0 }}
-            className="flex justify-center px-4 mt-1 shrink-0"
-          >
-            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-rare/10 border border-rare/30 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
-              <Sparkles size={12} className="text-rare" />
-              <span className="text-[10px] font-black text-rare uppercase tracking-widest">Bloqueo de Rareza Activo</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+
+          {/* 3. Silencio */}
+          {game?.modifier_silence_until && (new Date(game.modifier_silence_until).getTime() > (Date.now() + serverTimeOffset)) && (
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
+              className="mt-0"
+            >
+              <div className="bg-cyan-950/40 backdrop-blur-md border-x border-b border-cyan-500/20 px-4 py-1 rounded-b-2xl flex items-center gap-3 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                  <span className="text-[8px] font-black text-cyan-400/80 uppercase tracking-[0.2em]">Silencio</span>
+                </div>
+                <div className="w-px h-3 bg-cyan-500/20" />
+                <div className="flex items-center gap-1">
+                  <Clock size={10} className="text-cyan-400/60" />
+                  <span className="text-[11px] font-mono font-black text-white drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">
+                    {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) / 60))}:
+                    {Math.max(0, Math.floor(((new Date(game.modifier_silence_until).getTime() - (Date.now() + serverTimeOffset)) / 1000) % 60)).toString().padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* 4. Defensas Anuladas */}
+          {game?.modifier_no_defense_until && (new Date(game.modifier_no_defense_until).getTime() > (Date.now() + serverTimeOffset)) && (
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
+              className="mt-0"
+            >
+              <div className="bg-orange-950/40 backdrop-blur-md border-x border-b border-orange-500/20 px-4 py-1 rounded-b-2xl flex items-center gap-2 shadow-[0_0_20px_rgba(249,115,22,0.15)]">
+                <ShieldOff size={10} className="text-orange-400 animate-pulse" />
+                <span className="text-[8px] font-black text-orange-200 uppercase tracking-[0.2em]">Defensas Anuladas</span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* 5. Bloqueo Rareza */}
+          {game?.modifier_no_rares_until && (new Date(game.modifier_no_rares_until).getTime() > (Date.now() + serverTimeOffset)) && (
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
+              className="mt-0"
+            >
+              <div className="bg-blue-950/40 backdrop-blur-md border-x border-b border-blue-500/20 px-4 py-1 rounded-b-2xl flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.15)]">
+                <Sparkles size={10} className="text-blue-400 animate-pulse" />
+                <span className="text-[8px] font-black text-blue-200 uppercase tracking-[0.2em]">Rarezas Bloqueadas</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Overlay de cierre — único overlay, con bg para que Android WebView lo detecte */}
         <AnimatePresence>
