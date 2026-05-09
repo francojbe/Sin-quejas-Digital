@@ -92,6 +92,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [zoomedCard, setZoomedCard] = useState<any | null>(null);
   const longPressTimer = useRef<any>(null);
 
+  // Efectos Especiales Globales (Sincronizados via Realtime)
+  const [activeEffect, setActiveEffect] = useState<'shield' | null>(null);
+
   const handlePressStart = (card: any) => {
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
     longPressTimer.current = setTimeout(() => {
@@ -257,8 +260,19 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         schema: 'public',
         table: 'game_history'
       }, (payload) => {
-        if (!showHistory && payload.new.game_id === game.id) {
-          setHasNewHistory(true);
+        if (payload.new.game_id === game.id) {
+          if (!showHistory) setHasNewHistory(true);
+          
+          // --- DETECTOR DE EFECTOS ESPECIALES ---
+          // Si alguien bloquea, disparamos el Escudo Sagrado para AMBOS
+          if (payload.new.action_type === 'BLOCKED') {
+            setActiveEffect('shield');
+            // Vibración extra si es posible
+            if (typeof window !== 'undefined' && window.navigator?.vibrate) {
+              window.navigator.vibrate([100, 50, 100]);
+            }
+            setTimeout(() => setActiveEffect(null), 3500); // 3.5 segundos de gloria
+          }
         }
       })
       .subscribe();
@@ -2592,6 +2606,103 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           onComplete={completeTutorial}
         />
       )}
+      {/* EFECTOS ESPECIALES (ESCUDO SAGRADO) */}
+      <AnimatePresence>
+        {activeEffect === 'shield' && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none overflow-hidden"
+          >
+            {/* Fondo de energía dorada */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute inset-0 bg-yellow-600/10 backdrop-blur-[2px]"
+            />
+            
+            <motion.div
+              initial={{ scale: 0.2, rotate: -180, opacity: 0 }}
+              animate={{ 
+                scale: [0.2, 1.2, 1], 
+                rotate: 0,
+                opacity: 1
+              }}
+              exit={{ scale: 2, opacity: 0, filter: "blur(20px)" }}
+              transition={{ type: "spring", damping: 15, stiffness: 200 }}
+              className="relative flex flex-col items-center"
+            >
+              {/* Resplandor Divino */}
+              <div className="absolute inset-0 bg-yellow-400 rounded-full blur-[100px] opacity-40 animate-pulse" />
+              
+              {/* El Escudo */}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-t from-yellow-600 to-yellow-200 rounded-[50px] blur-xl opacity-50" />
+                <div className="relative bg-gradient-to-b from-yellow-200 via-yellow-500 to-yellow-800 p-10 rounded-[50px] border-4 border-white/60 shadow-[0_0_80px_rgba(234,179,8,0.8)]">
+                  <Shield size={140} className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,1)]" strokeWidth={2.5} />
+                  
+                  {/* Ondas de choque de luz */}
+                  <motion.div 
+                    initial={{ scale: 0.5, opacity: 1 }}
+                    animate={{ scale: 3, opacity: 0 }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: "easeOut" }}
+                    className="absolute inset-0 border-8 border-yellow-200 rounded-[50px]"
+                  />
+                  <motion.div 
+                    initial={{ scale: 0.5, opacity: 1 }}
+                    animate={{ scale: 2.5, opacity: 0 }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: "easeOut", delay: 0.4 }}
+                    className="absolute inset-0 border-4 border-white/40 rounded-[50px]"
+                  />
+                </div>
+              </div>
+
+              {/* Texto de Acción Épica */}
+              <motion.div 
+                initial={{ y: 0, opacity: 0 }}
+                animate={{ y: 60, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="absolute"
+              >
+                <div className="relative">
+                  <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-yellow-200 to-yellow-500 uppercase tracking-[0.3em] drop-shadow-[0_0_15px_rgba(234,179,8,1)] text-center italic">
+                    BLOQUEADO
+                  </h2>
+                  <div className="text-center mt-2">
+                    <span className="text-xs font-black text-yellow-200/80 uppercase tracking-[0.5em] bg-black/40 px-4 py-1 rounded-full border border-yellow-500/30 backdrop-blur-sm">
+                      ESCUDO SAGRADO
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Partículas de destello */}
+            {Array.from({ length: 12 }).map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ 
+                  x: 0, 
+                  y: 0, 
+                  scale: 0 
+                }}
+                animate={{ 
+                  x: (Math.random() - 0.5) * 800, 
+                  y: (Math.random() - 0.5) * 800, 
+                  scale: [0, 1.5, 0],
+                  rotate: 360
+                }}
+                transition={{ duration: 2, ease: "easeOut", delay: 0.2 }}
+                className="absolute"
+              >
+                <Sparkles size={20} className="text-yellow-200" />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* OVERLAY DE ZOOM / PREVIEW */}
       <AnimatePresence>
         {zoomedCard && (
