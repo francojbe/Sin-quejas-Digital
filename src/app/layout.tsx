@@ -34,11 +34,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isAndroidNative = process.env.NEXT_PUBLIC_IS_CAPACITOR === "true";
+  
   return (
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased ${isAndroidNative ? 'is-native-android' : ''}`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">
         <CapacitorManager />
