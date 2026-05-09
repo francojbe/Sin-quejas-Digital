@@ -268,11 +268,16 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           // Si alguien bloquea, disparamos el Escudo Sagrado para AMBOS
           if (payload.new.action_type === 'BLOCKED') {
             setActiveEffect('shield');
-            // Vibración extra si es posible
             if (typeof window !== 'undefined' && window.navigator?.vibrate) {
               window.navigator.vibrate([100, 50, 100]);
             }
-            setTimeout(() => setActiveEffect(null), 3500); // 3.5 segundos de gloria
+            setTimeout(() => setActiveEffect(null), 3500); 
+          }
+
+          // Si es un efecto especial visual (Ojo Místico, etc)
+          if (payload.new.action_type === 'SPECIAL_EFFECT' && payload.new.metadata?.type) {
+            setActiveEvent(payload.new.metadata);
+            setTimeout(() => setActiveEvent(null), 5000); // 5 segundos de animación
           }
         }
       })
@@ -987,15 +992,16 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       });
 
       if (playerCard.cards_master?.id === 54) {
-        // Emitir evento visual para ambos jugadores
-        const { error: eventErr } = await supabase.from('game_events').insert({
+        // Emitir evento visual para ambos jugadores usando la tabla correcta (game_history)
+        await supabase.from('game_history').insert({
           game_id: game.id,
           user_id: userId,
           action_type: 'SPECIAL_EFFECT',
           metadata: { 
             type: 'view_hand', 
             user_name: profile?.display_name || 'Alguien',
-            card_title: getCardTitle(playerCard)
+            card_title: getCardTitle(playerCard),
+            timestamp: Date.now()
           }
         });
         
