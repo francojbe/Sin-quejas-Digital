@@ -2264,12 +2264,15 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
               if (isPending) {
                 const isUnblockable = displayedCard?.is_unblockable;
+                const isSpecial = item.cards_master?.category === "ESPECIAL";
                 
                 if (isReceiver && isDefenseCard && !isUnblockable) {
                   cardDisabled = false;
                   cardHighlight = true; // Parpadeo rojo para defensa permitida
+                } else if (isSpecial) {
+                  cardDisabled = false; // Permitir cartas especiales (modificadores, robos, etc) siempre
                 } else {
-                  cardDisabled = true; // Bloquea todo lo demás
+                  cardDisabled = true; // Bloquea todo lo demás (Retos normales)
                 }
               }
 
