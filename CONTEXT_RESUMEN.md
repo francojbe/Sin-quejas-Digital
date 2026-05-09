@@ -24,9 +24,9 @@ Hemos finalizado con éxito la implementación de la experiencia de cierre y la 
 - [ ] **Pasarela de Pago:** Integrar Stripe o similar para activar el flag `is_premium`.
 - [ ] **Fondos Personalizados:** Implementar selector de fondos exclusivos (texturas/gradientes) para el tablero Premium.
 
-### 2. Fase 9: Pulido Final (Prioridad Media)
-- [ ] **Safe Areas (Notch):** Ajustes de CSS en el header para evitar solapamiento con notches en móviles.
-- [ ] **Historial Detallado:** Convertir el "Connection Report" en una bitácora más descriptiva de la relación.
+### ✅ Fase 9: Pulido Final (Completada)
+- [x] **Safe Areas (Notch):** Ajustes de CSS en el header (`env(safe-area-inset-top)`) y `viewportFit` para evitar solapamiento con notches en móviles modernos.
+- [x] **Historial Detallado:** Convertida la "Memoria de Pareja" en una bitácora inmersiva con colores de acción y narrativa descriptiva.
 
 ---
 
