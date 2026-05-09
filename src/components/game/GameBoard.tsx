@@ -535,7 +535,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         const oldRecord = payload.old as any;
         
         // Update latest card if a card was played or status changed
-        if (newRecord?.status && newRecord.status !== 'in_hand') {
+        // ONLY if it wasn't played by us (to avoid overwriting optimistic state)
+        if (newRecord?.status && newRecord.status !== 'in_hand' && newRecord.user_id !== userId) {
           fetchLatestCard(game.id);
         }
         
@@ -913,26 +914,25 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       showNotification(`¡Has activado ${getCardTitle(playerCard)}!`, 'success');
       
-      // 4. Optimistic update
-      setHand(hand.filter(c => c.id !== playerCard.id));
+      // 5. Refrescar datos de apoyo (mano, contador) sin tocar displayedCard
+      await fetchHandOnly();
+      await fetchPartnerHandCount();
+      
+      // Refrescar el estado del juego (para modificadores)
+      const { data: gData } = await supabase.from('games').select('*').eq('id', game.id).single();
+      if (gData) setGame(gData as any);
+
+      // 6. ASEGURAR que el estado local de la carta especial es el último en mandarse
+      // Esto evita que cualquier fetch intermedio lo haya limpiado
       setDisplayedCard({
         ...playerCard,
         status: 'active',
         played_at: serverNow
       });
 
-      // 5. Casos especiales que requieren lógica adicional inmediata
-      if (playerCard.cards_master?.id === 54) { // Ver Mano
+      if (playerCard.cards_master?.id === 54) {
         setShowPartnerHand(true);
       }
-      
-      // 6. Refrescar solo lo necesario para evitar sobreescribir displayedCard
-      await fetchHandOnly();
-      await fetchPartnerHandCount();
-      
-      // Refrescar el estado del juego (para modificadores) sin tocar displayedCard
-      const { data: gData } = await supabase.from('games').select('*').eq('id', game.id).single();
-      if (gData) setGame(gData as any);
       
       setLoading(false);
       return;
@@ -2167,7 +2167,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     <div className="flex items-center gap-2 px-4 py-1.5 bg-common/10 rounded-full border border-common/20">
                       <CheckCircle2 size={14} className="text-common" />
                       <span className="text-[10px] font-black text-common uppercase tracking-widest">
-                        {displayedCard?.status === 'discarded' ? 'Carta Descartada/Bloqueada' : 'Carta Aceptada'}
+                        {displayedCard?.status === 'discarded' ? 'Carta Descartada/Bloqueada' : 
+                         displayedCard?.cards_master?.category === 'ESPECIAL' ? 'Efecto Especial Activo' : 'Carta Aceptada'}
                       </span>
                     </div>
                     {displayedCard?.cards_master?.id === 54 && !isReceiver && displayedCard?.status === 'active' && (
