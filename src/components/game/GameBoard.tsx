@@ -904,7 +904,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       if (playerCard.cards_master?.id === 60) { // Silencio
         const silenceUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-        await supabase.from("games").update({ modifier_silence_until: silenceUntil }).eq("id", game.id);
+        await supabase.from("games").update({ 
+          modifier_silence_until: silenceUntil,
+          last_event_data: { type: 'silence', user_id: userId, user_name: profile?.display_name || 'Tu pareja' }
+        }).eq("id", game.id);
       }
 
       if (playerCard.cards_master?.id === 53) { // Bloqueo Rareza (Ahora Temporal)
@@ -1945,6 +1948,44 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                     rarity={activeEvent.card_rarity} 
                   />
                 </div>
+              </div>
+            </motion.div>
+          )}
+          {activeEvent?.type === 'silence' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none bg-black/60 backdrop-blur-xl"
+            >
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", damping: 15 }}
+                className="relative mb-8"
+              >
+                <div className="absolute inset-0 bg-cyan-500/20 blur-[100px] rounded-full animate-pulse" />
+                <VolumeX size={120} className="text-cyan-400 drop-shadow-[0_0_30px_rgba(34,211,238,0.8)] relative z-10" />
+                
+                {/* Ondas de choque de silencio */}
+                {[...Array(3)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ scale: 0.8, opacity: 0.5 }}
+                    animate={{ scale: 2.5, opacity: 0 }}
+                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.6 }}
+                    className="absolute inset-0 border-4 border-cyan-400/30 rounded-full"
+                  />
+                ))}
+              </motion.div>
+
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-5xl md:text-8xl font-black text-cyan-400 uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(34,211,238,0.6)] text-center px-6">
+                  ¡SILENCIO!
+                </span>
+                <span className="text-white/40 font-black uppercase tracking-[0.3em] text-[10px] md:text-sm animate-pulse">
+                  {activeEvent.user_name.toUpperCase()} HA SILENCIADO EL MUNDO
+                </span>
               </div>
             </motion.div>
           )}
