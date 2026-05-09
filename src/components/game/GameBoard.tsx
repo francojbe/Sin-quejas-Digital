@@ -987,6 +987,18 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       });
 
       if (playerCard.cards_master?.id === 54) {
+        // Emitir evento visual para ambos jugadores
+        const { error: eventErr } = await supabase.from('game_events').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'SPECIAL_EFFECT',
+          metadata: { 
+            type: 'view_hand', 
+            user_name: profile?.display_name || 'Alguien',
+            card_title: getCardTitle(playerCard)
+          }
+        });
+        
         await fetchPartnerHand();
       }
       
@@ -2198,6 +2210,44 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               <span className="text-blue-500 font-black uppercase tracking-[0.3em] text-[10px] mt-6 px-8 py-2.5 bg-white rounded-full">
                 {activeEvent.freezer_name.toUpperCase()} PUSO EL JUEGO EN PAUSA
               </span>
+            </motion.div>
+          )}
+          {activeEvent?.type === 'view_hand' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none bg-epic/10 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0, rotate: 180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", damping: 15 }}
+                className="relative mb-8"
+              >
+                <div className="absolute inset-0 bg-epic/30 blur-[100px] rounded-full animate-pulse" />
+                <Eye size={120} className="text-white drop-shadow-[0_0_40px_rgba(168,85,247,0.8)] relative z-10" />
+                
+                {/* Ondas de choque visual */}
+                {[...Array(2)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ scale: 0.8, opacity: 0.5 }}
+                    animate={{ scale: 2.5, opacity: 0 }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.75 }}
+                    className="absolute inset-0 border-2 border-white/30 rounded-full"
+                  />
+                ))}
+              </motion.div>
+
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] text-center px-6 italic">
+                  {activeEvent.user_name === profile?.display_name ? 'OBSERVANDO MAZO' : '¡MIRANDO TU MANO!'}
+                </span>
+                <span className="text-epic font-black uppercase tracking-[0.3em] text-[10px] md:text-sm animate-pulse">
+                  {activeEvent.user_name.toUpperCase()} ESTÁ LEYENDO TUS SECRETOS
+                </span>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
