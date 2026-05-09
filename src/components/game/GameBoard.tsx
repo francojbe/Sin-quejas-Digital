@@ -6,7 +6,7 @@ import { CartaNaipe } from "@/components/ui/CartaNaipe";
 import { GameStatus } from "./GameStatus";
 import { PlayerCard, Card as CardType, Profile } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History, Sparkles, ChevronRight } from "lucide-react";
+import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History, Sparkles, ChevronRight, ShieldOff, VolumeX, Zap } from "lucide-react";
 import Link from "next/link";
 import { useToast, ToastType } from "@/lib/contexts/ToastContext";
 import { requestNotificationPermission } from "@/components/SWRegistration";
@@ -1324,7 +1324,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             className="flex justify-center px-4 mt-1 shrink-0"
           >
             <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center gap-2">
-              <Lock size={12} className="text-red-400" />
+              <Zap size={12} className="text-red-400" />
               <span className="text-[10px] font-black text-red-200 uppercase tracking-widest">¡Tu próximo ataque es imparable!</span>
             </div>
           </motion.div>
@@ -1378,19 +1378,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-rare/10 border border-rare/30 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
               <Sparkles size={12} className="text-rare" />
               <span className="text-[10px] font-black text-rare uppercase tracking-widest">Bloqueo de Rareza Activo</span>
-            </div>
-          </motion.div>
-        )}
-        {game?.modifier_unblockable_by === userId && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }} 
-            animate={{ opacity: 1, height: 'auto' }} 
-            exit={{ opacity: 0, height: 0 }}
-            className="flex justify-center px-4 mt-1 shrink-0"
-          >
-            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center gap-2">
-              <Zap size={12} className="text-red-400" />
-              <span className="text-[10px] font-black text-red-200 uppercase tracking-widest">Próximo Ataque Imparable</span>
             </div>
           </motion.div>
         )}
