@@ -467,15 +467,19 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   }
 
   async function fetchLatestCard(gameId: string) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('player_cards')
       .select('*, cards_master!inner(*)')
       .eq('game_id', gameId)
       .neq('status', 'in_hand')
-      .order('played_at', { ascending: false })
-      .order('id', { ascending: false })
+      .order('played_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
+    
+    if (error) {
+      console.error("[fetchLatestCard] Error:", error);
+    }
     
     setDisplayedCard(data ? (data as any) : null);
   }
