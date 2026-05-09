@@ -992,7 +992,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       });
 
       if (playerCard.cards_master?.id === 54) {
-        // Emitir evento visual para ambos jugadores usando la tabla correcta (game_history)
+        console.log("Activando efecto visual 'Ver Mano'...");
+        // Emitir evento visual para ambos jugadores
         await supabase.from('game_history').insert({
           game_id: game.id,
           user_id: userId,
@@ -1005,7 +1006,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           }
         });
         
-        await fetchPartnerHand();
+        // Pequeña espera para que el efecto visual respire antes de abrir el modal
+        setTimeout(async () => {
+          await fetchPartnerHand();
+        }, 800);
       }
       
       setLoading(false);
@@ -2223,36 +2227,40 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none bg-epic/10 backdrop-blur-sm"
+              className="fixed inset-0 z-[600] flex flex-col items-center justify-center pointer-events-none bg-black/40 backdrop-blur-md"
             >
               <motion.div
                 initial={{ scale: 0, rotate: 180 }}
                 animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", damping: 15 }}
+                transition={{ type: "spring", damping: 12, stiffness: 200 }}
                 className="relative mb-8"
               >
-                <div className="absolute inset-0 bg-epic/30 blur-[100px] rounded-full animate-pulse" />
-                <Eye size={120} className="text-white drop-shadow-[0_0_40px_rgba(168,85,247,0.8)] relative z-10" />
+                <div className="absolute inset-0 bg-epic/40 blur-[120px] rounded-full animate-pulse" />
+                <div className="relative z-10 bg-white/10 backdrop-blur-xl p-8 rounded-full border border-white/20 shadow-[0_0_50px_rgba(168,85,247,0.5)]">
+                  <Eye size={100} className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.8)]" />
+                </div>
                 
-                {/* Ondas de choque visual */}
-                {[...Array(2)].map((_, i) => (
+                {/* Ondas místicas */}
+                {[...Array(3)].map((_, i) => (
                   <motion.div
                     key={i}
-                    initial={{ scale: 0.8, opacity: 0.5 }}
-                    animate={{ scale: 2.5, opacity: 0 }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.75 }}
-                    className="absolute inset-0 border-2 border-white/30 rounded-full"
+                    initial={{ scale: 0.5, opacity: 0.8 }}
+                    animate={{ scale: 4, opacity: 0 }}
+                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.6 }}
+                    className="absolute inset-0 border border-epic/30 rounded-full"
                   />
                 ))}
               </motion.div>
 
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] text-center px-6 italic">
-                  {activeEvent.user_name === profile?.display_name ? 'OBSERVANDO MAZO' : '¡MIRANDO TU MANO!'}
-                </span>
-                <span className="text-epic font-black uppercase tracking-[0.3em] text-[10px] md:text-sm animate-pulse">
-                  {activeEvent.user_name.toUpperCase()} ESTÁ LEYENDO TUS SECRETOS
-                </span>
+              <div className="flex flex-col items-center gap-4 px-10">
+                <div className="bg-black/60 backdrop-blur-xl border border-white/10 px-8 py-4 rounded-[30px] flex flex-col items-center gap-1 shadow-2xl">
+                  <span className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter text-center leading-none">
+                    {activeEvent.user_name === profile?.display_name ? 'Leyendo Mente' : '¡Mirando tu Mano!'}
+                  </span>
+                  <span className="text-epic font-black uppercase tracking-[0.4em] text-[9px] md:text-xs animate-pulse mt-2">
+                    {activeEvent.user_name.toUpperCase()} ESTÁ VIENDO TUS CARTAS
+                  </span>
+                </div>
               </div>
             </motion.div>
           )}
