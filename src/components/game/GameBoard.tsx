@@ -71,6 +71,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [currentIndex, setCurrentIndex] = useState(1);
   const [displayedCard, setDisplayedCard] = useState<(PlayerCard & { cards_master: CardType }) | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [silenceTimeLeft, setSilenceTimeLeft] = useState<number>(0);
   const [restarting, setRestarting] = useState(false);
   const [durationOption, setDurationOption] = useState<number>(15);
   const [isCounterProposing, setIsCounterProposing] = useState(false);
@@ -718,6 +719,25 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
     return () => clearInterval(interval);
   }, [displayedCard, serverTimeOffset, timeSynced]);
+  
+  // Temporizador para el Modificador de Silencio
+  useEffect(() => {
+    if (!game?.modifier_silence_until) {
+      setSilenceTimeLeft(0);
+      return;
+    }
+
+    const updateSilenceTime = () => {
+      const now = new Date().getTime() + serverTimeOffset;
+      const expiryTime = new Date(game.modifier_silence_until).getTime();
+      const diff = Math.max(0, expiryTime - now);
+      setSilenceTimeLeft(Math.floor(diff / 1000));
+    };
+
+    updateSilenceTime();
+    const interval = setInterval(updateSilenceTime, 1000);
+    return () => clearInterval(interval);
+  }, [game?.modifier_silence_until, serverTimeOffset]);
 
   useEffect(() => {
     const el = document.getElementById('cards-carousel');
@@ -913,7 +933,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       }
 
       if (playerCard.cards_master?.id === 60) { // Silencio
-        const silenceUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        const silenceUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
         await supabase.from("games").update({ 
           modifier_silence_until: silenceUntil,
           last_event_data: { 
@@ -1347,16 +1367,24 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             </div>
           </motion.div>
         )}
-        {game?.modifier_silence_until && new Date(game.modifier_silence_until) > new Date() && (
+        {game?.modifier_silence_until && silenceTimeLeft > 0 && (
           <motion.div 
             initial={{ opacity: 0, height: 0 }} 
             animate={{ opacity: 1, height: 'auto' }} 
             exit={{ opacity: 0, height: 0 }}
             className="flex justify-center px-4 mt-1 shrink-0"
           >
-            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center gap-2">
-              <VolumeX size={12} className="text-cyan-400" />
-              <span className="text-[10px] font-black text-cyan-200 uppercase tracking-widest">Silencio Total Activo</span>
+            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between gap-2 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <VolumeX size={12} className="text-cyan-400" />
+                <span className="text-[10px] font-black text-cyan-200 uppercase tracking-widest">Silencio Total Activo</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-cyan-500/20 rounded-md border border-cyan-500/30">
+                <Clock size={10} className="text-cyan-400" />
+                <span className="text-[10px] font-mono font-black text-white">
+                  {Math.floor(silenceTimeLeft / 60)}:{(silenceTimeLeft % 60).toString().padStart(2, '0')}
+                </span>
+              </div>
             </div>
           </motion.div>
         )}
