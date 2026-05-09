@@ -113,8 +113,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   };
   const [achievementsCount, setAchievementsCount] = useState(0);
   const [totalCardsPlayed, setTotalCardsPlayed] = useState(0);
-  const [partnerHand, setPartnerHand] = useState<any[]>([]);
-  const [showPartnerHand, setShowPartnerHand] = useState(false);
 
   const [overrides, setOverrides] = useState<Record<number, any>>({});
 
@@ -324,18 +322,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     { id: '6', url: 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Zoe' },
   ];
 
-  const fetchPartnerHand = async () => {
-    if (!game) return;
-    setLoading(true);
-    const { data, error } = await supabase.rpc('get_partner_hand', { game_id_in: game.id });
-    if (error) {
-      toast("Error", { message: error.message, type: 'error' });
-    } else {
-      setPartnerHand(data || []);
-      setShowPartnerHand(true);
-    }
-    setLoading(false);
-  };
+
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -376,93 +363,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     }
   };
 
-  const handleStealCard = async () => {
-    if (!game || !displayedCard) return;
-    setLoading(true);
-    const { data, error } = await supabase.rpc('steal_random_card', { 
-      game_id_in: game.id,
-      player_card_id: displayedCard?.id 
-    });
-    
-    if (error) {
-      showNotification(error.message, 'error');
-    } else {
-      if (!data.success) {
-        showNotification(data.message, 'error');
-      }
-      await fetchGame();
-    }
-    setLoading(false);
-  };
-
-  const handleSwapHands = async () => {
-    if (!game || !displayedCard) return;
-    setLoading(true);
-    const { data, error } = await supabase.rpc('swap_game_hands', { 
-      game_id_in: game.id,
-      player_card_id: displayedCard?.id 
-    });
-    
-    if (error) {
-      showNotification(error.message, 'error');
-    } else {
-      if (!data.success) showNotification(data.message, 'error');
-      await fetchGame();
-    }
-    setLoading(false);
-  };
-
-  const handleResurrection = async () => {
-    if (!game || !displayedCard) return;
-    setLoading(true);
-    const { data, error } = await supabase.rpc('resurrect_discarded_cards', { 
-      game_id_in: game.id,
-      player_card_id: displayedCard?.id 
-    });
-    
-    if (error) {
-      showNotification(error.message, 'error');
-    } else {
-      if (!data.success) showNotification(data.message, 'error');
-      await fetchGame();
-    }
-    setLoading(false);
-  };
-
-  const handleFreezeGame = async () => {
-    if (!game || !displayedCard) return;
-    setLoading(true);
-    const { data, error } = await supabase.rpc('freeze_game', { 
-      game_id_in: game.id,
-      player_card_id: displayedCard?.id 
-    });
-    
-    if (error) {
-      showNotification(error.message, 'error');
-    } else {
-      if (!data.success) showNotification(data.message, 'error');
-      await fetchGame();
-    }
-    setLoading(false);
-  };
-
-  const handleActivateModifier = async (type: 'unblockable' | 'double') => {
-    if (!game || !displayedCard) return;
-    setLoading(true);
-    const { data, error } = await supabase.rpc('activate_modifier', { 
-      game_id_in: game.id,
-      player_card_id: displayedCard.id,
-      modifier_type: type
-    });
-    
-    if (error) {
-      toast("Error", { message: error.message, type: 'error' });
-    } else {
-      if (!data.success) toast("Aviso", { message: data.message, type: 'warning' });
-      await fetchGame();
-    }
-    setLoading(false);
-  };
 
   useEffect(() => {
     fetchGame();

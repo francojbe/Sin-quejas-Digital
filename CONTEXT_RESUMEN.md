@@ -1,5 +1,12 @@
 # Contexto y Estado Actual: Sin Quejas Digital
 
+## ✅ Fase 9: Pulido de Mecánicas y Especiales (Completada y Pulida)
+*   **Implementación de 10 Especiales:** Todas las cartas especiales (IDs 51-60) son funcionales y robustas.
+*   **Mecánica de Centro:** Las cartas especiales se mantienen en el centro del tablero tras ser jugadas para mayor claridad.
+*   **Interactividad:** Las cartas que requieren acción (Robar, Ver Mano, etc.) incluyen botones interactivos integrados.
+*   **Bloqueo de Rareza:** Refactorizado a 24 horas de duración con banner visual y bloqueo dinámico en mazo.
+*   **Sincronización:** Cambios pusheados a GitHub y proyecto Android sincronizado con Capacitor.
+
 ## ✅ Fase 7 & 8: Finalización y Monetización (Completadas)
 Hemos finalizado con éxito la implementación de la experiencia de cierre y la base de la monetización:
 
@@ -30,9 +37,9 @@ Hemos finalizado con éxito la implementación de la experiencia de cierre y la 
 - [x] **Mecánicas Especiales:** Implementación total de las 10 cartas de categoría ESPECIAL:
   - [x] ID 51 (Robo de Suerte): Robo instantáneo de carta.
   - [x] ID 52 (Pausa Temporal): Congelamiento global por 24h.
-  - [x] ID 53 (Bloqueo Rareza): Destrucción de cartas raras del oponente.
-  - [x] ID 54 (Ver Mano): Revelación temporal del mazo ajeno.
-  - [x] ID 55 (Cambiar Mazo): Intercambio atómico de manos.
+  - [x] ID 53 (Bloqueo Rareza): Bloqueo temporal de rarezas por 24h.
+  - [x] ID 54 (Ver Mano): Revelación interactiva del mazo ajeno.
+  - [x] ID 55 (Cambiar Mazo): Intercambio atómico de manos (SQL RPC).
   - [x] ID 56 (Doble Reto): Modificador x2 para el siguiente ataque.
   - [x] ID 57 (Anular Defensa): Bloqueo de escudos por 1 hora.
   - [x] ID 58 (Ataque Imparable): Modificador de invulnerabilidad.
