@@ -831,6 +831,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     const isDefense = playerCard.cards_master?.category === "DEFENSA";
     const serverNow = new Date(Date.now() + serverTimeOffset).toISOString();
     
+    // VERIFICAR SI EL JUEGO ESTÁ CONGELADO
+    if (game?.frozen_until && new Date(game.frozen_until) > new Date()) {
+      showNotification("El juego está congelado. Espera a que termine la pausa.", 'warning');
+      return;
+    }
+
     // --- LÓGICA OFFLINE ---
     if (!navigator.onLine) {
       if (isPending && isReceiver && isDefense) {
@@ -948,24 +954,180 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         setGame((prev: any) => prev ? { ...prev, modifier_unblockable_by: userId } : null);
         showNotification("¡Tu siguiente ataque será IMPARABLE! (Guardado localmente)", 'warning');
       } else {
-        // 1. Descartar la carta usada
         await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
-        // 2. Activar modificador en el juego
         await supabase.from("games").update({ modifier_unblockable_by: userId }).eq("id", game.id);
-        // 3. Registrar en historial
         await supabase.from('game_history').insert({
           game_id: game.id,
           user_id: userId,
           action_type: 'MODIFIER_ACTIVATED',
           card_id: playerCard.cards_master.id,
-          metadata: { 
-            card_title: "Ataque Imparable",
-            message: 'ha activado un Ataque Imparable'
-          }
+          metadata: { card_title: "Ataque Imparable", message: 'ha activado un Ataque Imparable' }
         });
         showNotification("¡Tu siguiente ataque será IMPARABLE!", 'success');
         await fetchGame();
       }
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setLoading(false);
+      return;
+    }
+
+    if (playerCard.cards_master?.id === 56) { // Doble Reto
+      setLoading(true);
+      if (!navigator.onLine) {
+        await savePendingAction({ type: 'play_card_modifier', payload: { playerCardId: playerCard.id, gameId: game?.id, modifierType: 'double', userId, cardId: playerCard.cards_master.id } });
+        setGame((prev: any) => prev ? { ...prev, modifier_double_by: userId } : null);
+        showNotification("¡Tu siguiente ataque valdrá DOBLE! (Guardado localmente)", 'warning');
+      } else {
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        await supabase.from("games").update({ modifier_double_by: userId }).eq("id", game.id);
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'MODIFIER_ACTIVATED',
+          card_id: playerCard.cards_master.id,
+          metadata: { card_title: "Doble Reto", message: 'ha activado un Doble Reto' }
+        });
+        showNotification("¡Tu siguiente ataque valdrá DOBLE!", 'success');
+        await fetchGame();
+      }
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setLoading(false);
+      return;
+    }
+
+    if (playerCard.cards_master?.id === 51) { // Robo de Suerte
+      setLoading(true);
+      // 1. Obtener cartas de la pareja
+      const { data: partnerCards } = await supabase
+        .from("player_cards")
+        .select("id")
+        .eq("game_id", game.id)
+        .neq("user_id", userId)
+        .eq("status", "in_hand");
+
+      if (partnerCards && partnerCards.length > 0) {
+        // 2. Elegir una al azar
+        const randomCard = partnerCards[Math.floor(Math.random() * partnerCards.length)];
+        // 3. Transferir al usuario actual
+        await supabase.from("player_cards").update({ user_id: userId }).eq("id", randomCard.id);
+        // 4. Descartar el modificador
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'SPECIAL_USED',
+          card_id: playerCard.cards_master.id,
+          metadata: { card_title: "Robo de Suerte", message: 'ha robado una carta de tu mazo' }
+        });
+        showNotification("¡Has robado una carta de tu pareja!", 'success');
+      } else {
+        showNotification("Tu pareja no tiene cartas para robar.", 'warning');
+      }
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setLoading(false);
+      return;
+    }
+
+    if (playerCard.cards_master?.id === 52) { // Pausa Temporal
+      setLoading(true);
+      const frozenUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      await supabase.from("games").update({ frozen_until: frozenUntil }).eq("id", game.id);
+      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+      
+      await supabase.from('game_history').insert({
+        game_id: game.id,
+        user_id: userId,
+        action_type: 'SPECIAL_USED',
+        card_id: playerCard.cards_master.id,
+        metadata: { card_title: "Pausa Temporal", message: 'ha congelado el juego por 24h' }
+      });
+      showNotification("¡Has congelado el juego por 24 horas!", 'success');
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setLoading(false);
+      return;
+    }
+
+    if (playerCard.cards_master?.id === 53) { // Bloqueo Rareza
+      setLoading(true);
+      const { data: partnerRares } = await supabase
+        .from("player_cards")
+        .select("id, cards_master!inner(rarity)")
+        .eq("game_id", game.id)
+        .neq("user_id", userId)
+        .eq("status", "in_hand")
+        .neq("cards_master.rarity", "common");
+
+      if (partnerRares && partnerRares.length > 0) {
+        const idsToDiscard = partnerRares.map(c => c.id);
+        await supabase.from("player_cards").update({ status: 'discarded' }).in("id", idsToDiscard);
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'SPECIAL_USED',
+          card_id: playerCard.cards_master.id,
+          metadata: { card_title: "Bloqueo Rareza", message: 'ha anulado tus cartas especiales' }
+        });
+        showNotification(`¡Has destruido ${partnerRares.length} cartas raras de tu pareja!`, 'success');
+      } else {
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        showNotification("Tu pareja no tenía cartas raras para destruir.", 'warning');
+      }
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setLoading(false);
+      return;
+    }
+
+    if (playerCard.cards_master?.id === 59) { // Resurrección
+      setLoading(true);
+      const { data: discards } = await supabase
+        .from("player_cards")
+        .select("id")
+        .eq("game_id", game.id)
+        .eq("user_id", userId)
+        .eq("status", "discarded");
+
+      if (discards && discards.length > 0) {
+        const shuffled = [...discards].sort(() => 0.5 - Math.random());
+        const selectedIds = shuffled.slice(0, 3).map(c => c.id);
+        
+        await supabase.from("player_cards").update({ status: 'in_hand', played_at: null }).in("id", selectedIds);
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        
+        await supabase.from('game_history').insert({
+          game_id: game.id,
+          user_id: userId,
+          action_type: 'SPECIAL_USED',
+          card_id: playerCard.cards_master.id,
+          metadata: { card_title: "Resurrección", message: 'ha recuperado cartas del descarte' }
+        });
+        showNotification("¡Has recuperado 3 cartas del descarte!", 'success');
+      } else {
+        await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+        showNotification("No tienes cartas en el descarte para recuperar.", 'warning');
+      }
+      setHand(hand.filter(c => c.id !== playerCard.id));
+      setLoading(false);
+      return;
+    }
+
+    if (playerCard.cards_master?.id === 54) { // Ver Mano
+      setLoading(true);
+      // Discard the card
+      await supabase.from("player_cards").update({ status: 'discarded', played_at: serverNow }).eq("id", playerCard.id);
+      await supabase.from('game_history').insert({
+        game_id: game.id,
+        user_id: userId,
+        action_type: 'SPECIAL_USED',
+        card_id: playerCard.cards_master.id,
+        metadata: { card_title: "Ver Mano", message: 'ha usado Ver Mano' }
+      });
+      
+      // Activar efecto local
+      setShowPartnerHand(true);
+      showNotification("¡Ahora puedes ver el mazo de tu pareja!", 'success');
       
       setHand(hand.filter(c => c.id !== playerCard.id));
       setLoading(false);
@@ -1212,7 +1374,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           </h1>
         </div>
 
-      {/* Indicador de Modificador Global Activo */}
+      {/* Indicadores de Modificadores Globales Activos */}
       <AnimatePresence>
         {game?.modifier_unblockable_by === userId && (
           <motion.div 
@@ -1221,8 +1383,22 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
             exit={{ opacity: 0, height: 0 }}
             className="flex justify-center px-4 mt-1 shrink-0"
           >
-            <div className="bg-red-600/90 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(220,38,38,0.6)] border border-red-400 flex items-center gap-2">
-              <Lock size={12} fill="white" /> ¡Tu próximo ataque es imparable!
+            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center gap-2">
+              <Lock size={12} className="text-red-400" />
+              <span className="text-[10px] font-black text-red-200 uppercase tracking-widest">¡Tu próximo ataque es imparable!</span>
+            </div>
+          </motion.div>
+        )}
+        {game?.modifier_double_by === userId && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            className="flex justify-center px-4 mt-1 shrink-0"
+          >
+            <div className="w-full max-w-sm py-1.5 px-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center gap-2">
+              <Layers size={12} className="text-yellow-400" />
+              <span className="text-[10px] font-black text-yellow-200 uppercase tracking-widest">¡Tu próximo ataque valdrá DOBLE!</span>
             </div>
           </motion.div>
         )}
