@@ -92,18 +92,17 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [zoomedCard, setZoomedCard] = useState<any | null>(null);
   const longPressTimer = useRef<any>(null);
 
-  const startLongPress = (card: any) => {
+  const handlePressStart = (card: any) => {
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
     longPressTimer.current = setTimeout(() => {
       setZoomedCard(card);
-      // Vibración háptica suave si está disponible
-      if (window.navigator && window.navigator.vibrate) {
+      if (typeof window !== 'undefined' && window.navigator?.vibrate) {
         window.navigator.vibrate(50);
       }
-    }, 600); // 600ms para activar el zoom
+    }, 500); // Bajamos a 500ms para mayor respuesta
   };
 
-  const stopLongPress = () => {
+  const handlePressEnd = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
@@ -2184,11 +2183,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                   key={item.id} 
                   whileHover={cardDisabled ? {} : { scale: 1.05, y: -4 }} 
                   className="shrink-0 snap-start relative"
-                  onPointerDown={() => !cardDisabled && startLongPress(item)}
-                  onPointerUp={stopLongPress}
-                  onPointerLeave={stopLongPress}
-                  onTouchStart={() => !cardDisabled && startLongPress(item)}
-                  onTouchEnd={stopLongPress}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onTouchStart={() => !cardDisabled && handlePressStart(item)}
+                  onTouchEnd={handlePressEnd}
+                  onTouchMove={handlePressEnd}
+                  onMouseDown={() => !cardDisabled && handlePressStart(item)}
+                  onMouseUp={handlePressEnd}
+                  onMouseLeave={handlePressEnd}
                 >
                   <CartaNaipe 
                     compact 
