@@ -72,17 +72,12 @@ body {
 
 /* 
  * Android Native Scaling
- * Aumenta la fuente 4 puntos base (20px) solo cuando se detecta el build de Capacitor (Android).
+ * Mantenemos el estándar de 16px para evitar que la UI se vea desproporcionada.
  */
 html.is-native-android {
-  font-size: 20px; /* +4 puntos respecto al default de 16px */
+  font-size: 16px;
 }
 
-@media (max-width: 360px) {
-  html.is-native-android {
-    font-size: 18px; /* Para pantallas diminutas en Android */
-  }
-}
 
 .glass {
   background: var(--card-glass);
