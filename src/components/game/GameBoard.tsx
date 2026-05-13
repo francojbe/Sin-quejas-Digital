@@ -977,6 +977,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           last_event_data: { 
             type: 'no_rares_blocked', 
             user_name: profile?.display_name || 'Tu pareja',
+            target_user_id: partnerId,
             timestamp: Date.now() 
           }
         }).eq("id", game.id);
@@ -2246,7 +2247,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               </span>
             </motion.div>
           )}
-          {activeEvent?.type === 'no_rares_blocked' && (
+          {activeEvent?.type === 'no_rares_blocked' && activeEvent.target_user_id === userId && (
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
