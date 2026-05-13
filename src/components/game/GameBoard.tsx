@@ -1403,14 +1403,16 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
   return (
     <div 
-      className="w-full h-[100dvh] flex flex-col gap-0 sm:gap-0.5 overflow-hidden px-0.5 sm:px-1"
+      className="w-full h-[100dvh] flex flex-col gap-0 overflow-hidden bg-background"
       style={{
-        paddingTop: 'max(0.125rem, env(safe-area-inset-top))',
-        paddingBottom: 'max(0.125rem, env(safe-area-inset-bottom))'
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)'
       }}
     >
       {/* HEADER con menú hamburguesa */}
-      <div className="shrink-0 flex items-center justify-between px-0.5 sm:px-1">
+      <div className="shrink-0 flex items-center justify-between px-4 py-2">
         {/* Banner de Notificaciones Rápidas */}
         <AnimatePresence>
           {!isPushEnabled && (
@@ -2811,14 +2813,14 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         </AnimatePresence>
       </div>
 
-      <div className="shrink-0 space-y-0.5 pb-1">
-        <div className="flex justify-between items-center px-4">
+      <div className="shrink-0 space-y-0.5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <div className="flex justify-between items-center px-6">
           <h3 className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Mi Mano ({hand.length})</h3>
           <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest">[Carta {currentIndex} de {hand.length}]</span>
         </div>
 
         <div id="tutorial-deck" className="w-full relative group -my-4">
-          <div id="cards-carousel" className="w-full overflow-x-auto pb-12 pt-12 scrollbar-hide snap-x snap-mandatory scroll-smooth flex gap-3 px-4">
+          <div id="cards-carousel" className="w-full overflow-x-auto pb-12 pt-12 scrollbar-hide snap-x snap-mandatory scroll-smooth flex gap-3 px-8">
             {hand.map((item) => {
               const isDefenseCard = item.cards_master?.category === "DEFENSA";
               

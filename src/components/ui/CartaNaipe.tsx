@@ -86,13 +86,13 @@ export function CartaNaipe({
         compact ? "pb-1 md:pb-2.5" : "pb-2"
       )}>
         <h3 className={cn(
-          "font-black text-white tracking-tight uppercase leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,1)]",
-          compact ? "text-[10px] md:text-xs" : "text-[15px]"
+          "font-black text-white tracking-tight uppercase leading-[1.1] drop-shadow-[0_2px_8px_rgba(0,0,0,1)] line-clamp-1",
+          compact ? "text-[9px] min-[360px]:text-[10px] md:text-xs" : "text-[15px]"
         )}>
           {title}
         </h3>
         <p className={cn(
-          "mt-0.5 font-bold text-gray-200 leading-[1.2] drop-shadow-[0_1px_2px_rgba(0,0,0,1)] max-w-[98%] overflow-hidden",
+          "mt-0.5 font-bold text-gray-200 leading-[1.1] drop-shadow-[0_1px_4px_rgba(0,0,0,1)] max-w-[98%] line-clamp-2",
           compact ? "text-[7px] min-[360px]:text-[8px] md:text-[10px]" : "text-xs"
         )}>
           {description}
