@@ -100,6 +100,18 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   // Efectos Especiales Globales (Sincronizados via Realtime)
   const [activeEffect, setActiveEffect] = useState<'shield' | null>(null);
 
+  // Referencias para evitar clausuras obsoletas en Realtime
+  const gameRef = useRef<any>(null);
+  const handRef = useRef<any[]>([]);
+
+  useEffect(() => {
+    gameRef.current = game;
+  }, [game]);
+
+  useEffect(() => {
+    handRef.current = hand;
+  }, [hand]);
+
   const handlePressStart = (card: any) => {
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
     longPressTimer.current = setTimeout(() => {
@@ -151,6 +163,24 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       setShowTutorial(true);
     }
   }, [profile, game?.status]);
+
+  // Detector de "Vuelta a la App" (Visibility API)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("[Sync] App visible, forzando actualización...");
+        fetchGame();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange); // Extra para navegadores
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
+    };
+  }, [coupleId]);
 
   const completeTutorial = async () => {
     setShowTutorial(false);
@@ -546,9 +576,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   };
 
   useEffect(() => {
-    if (!game || !userId) return;
+    if (!game?.id || !userId) return;
     const channel = supabase
-      .channel('game_updates')
+      .channel(`game_updates_${game.id}`) // Canal único por partida
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -558,17 +588,19 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         const newRecord = payload.new as any;
         const oldRecord = payload.old as any;
         
+        // Usar gameRef.current para tener el estado más fresco
+        const currentGame = gameRef.current;
+        if (!currentGame) return;
+
         // Update latest card if a card was played or status changed
-        // ONLY if it wasn't played by us (to avoid overwriting optimistic state)
         if (newRecord?.status && newRecord.status !== 'in_hand' && newRecord.user_id !== userId) {
-          fetchLatestCard(game.id);
+          fetchLatestCard(currentGame.id);
         }
         
         // Refresh hand if the card is related to the current user
         if (newRecord?.user_id === userId || oldRecord?.user_id === userId) {
           fetchHandOnly();
         } else {
-          // If it belongs to partner, refresh their count
           fetchPartnerHandCount();
         }
       })
@@ -581,27 +613,22 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     if (!coupleId) return;
 
     const channel = supabase
-      .channel('games-realtime')
+      .channel(`games_realtime_${coupleId}`)
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
         table: 'games',
         filter: `couple_id=eq.${coupleId}`
       }, (payload: any) => {
-        const oldGame = game;
+        const oldGame = gameRef.current; // USAR REF PARA COMPARACIÓN REAL
         const newGame = payload.new;
         
-        if (newGame.status === 'finished') {
-          // Para juegos terminados, fetchGame() limpiará todo correctamente.
-          // La suscripción 'game_creation' ya se encarga de esto.
-          return;
-        }
+        if (newGame.status === 'finished') return;
         
-        // Para pending_start Y active: actualizar el estado local directamente.
-        // Esto es crítico para que ambos dispositivos vean restart_requests y duration_days actualizados.
+        // Actualizar estado local
         setGame(newGame);
 
-        // Notificaciones de Solicitudes (Partner Request)
+        // Notificaciones de Solicitudes comparando con datos reales
         if (newGame.restart_requests?.length > (oldGame?.restart_requests?.length || 0) && !newGame.restart_requests.includes(userId)) {
           toast("¡Petición de Reinicio!", { 
             message: `${partnerName} ha solicitado reiniciar la partida.`, 
@@ -617,11 +644,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           });
         }
 
+        // Eventos Especiales (como Robos o Resurrección)
         if (newGame.last_event_data && JSON.stringify(newGame.last_event_data) !== JSON.stringify(oldGame?.last_event_data)) {
-          // Solo disparar si el evento es reciente (menos de 10 segundos) para evitar repeticiones en refresh
           const eventTime = newGame.last_event_data.timestamp || 0;
-          const now = Date.now();
-          if (now - eventTime < 10000) {
+          if (Date.now() - eventTime < 10000) {
             setActiveEvent(newGame.last_event_data);
             setTimeout(() => setActiveEvent(null), 5000);
           }
