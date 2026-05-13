@@ -1880,21 +1880,30 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                 <div className="space-y-4">
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Selecciona tu Avatar</label>
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-                      {/* Slot para Foto Personalizada / Actual (si no es un preset) */}
-                      {profile?.avatar_url && !AVATARS.some(av => av.url === profile.avatar_url) && (
+                      {/* Slot para Foto Personalizada / Actual (Dinámico) */}
+                      {( (profile?.avatar_url && !AVATARS.some(av => av.url === profile.avatar_url)) || (newAvatarUrl && !AVATARS.some(av => av.url === newAvatarUrl)) ) && (
                         <button
-                          onClick={() => setNewAvatarUrl(profile.avatar_url)}
+                          onClick={() => {
+                            const customUrl = (newAvatarUrl && !AVATARS.some(av => av.url === newAvatarUrl)) ? newAvatarUrl : profile?.avatar_url;
+                            if (customUrl) setNewAvatarUrl(customUrl);
+                          }}
                           className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all p-1 group/av ${
-                            newAvatarUrl === profile.avatar_url 
+                            (newAvatarUrl && !AVATARS.some(av => av.url === newAvatarUrl))
                               ? 'border-common bg-common/20 scale-105 shadow-[0_0_20px_rgba(208,255,0,0.4)]' 
-                              : 'border-white/20 bg-white/5'
+                              : 'border-white/20 bg-white/5 opacity-60 hover:opacity-100'
                           }`}
                         >
-                          <img src={profile.avatar_url} alt="Current" className="w-full h-full object-contain" />
+                          <img 
+                            src={(newAvatarUrl && !AVATARS.some(av => av.url === newAvatarUrl)) ? newAvatarUrl : profile?.avatar_url} 
+                            alt="Current/New" 
+                            className="w-full h-full object-contain" 
+                          />
                           <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 flex justify-center">
-                            <span className="text-[5px] font-black text-common uppercase tracking-tighter">Tu Foto</span>
+                            <span className="text-[5px] font-black text-common uppercase tracking-tighter">
+                              {(newAvatarUrl && !AVATARS.some(av => av.url === newAvatarUrl) && newAvatarUrl !== profile?.avatar_url) ? 'Nueva' : 'Tu Foto'}
+                            </span>
                           </div>
-                          {newAvatarUrl === profile.avatar_url && (
+                          {(newAvatarUrl && !AVATARS.some(av => av.url === newAvatarUrl)) && (
                             <div className="absolute top-1 right-1 bg-common text-black rounded-full p-0.5 shadow-lg">
                               <CheckCircle2 size={10} strokeWidth={4} />
                             </div>
