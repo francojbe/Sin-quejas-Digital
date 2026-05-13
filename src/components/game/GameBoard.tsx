@@ -970,10 +970,11 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         }).eq("id", game.id);
       }
 
-      if (playerCard.cards_master?.id === 53) { // Bloqueo Rareza (Ahora Temporal)
+      if (playerCard.cards_master?.id === 53) { // Bloqueo Rareza (Temporal, solo para el receptor)
         const noRaresUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
         await supabase.from("games").update({ 
           modifier_no_rares_until: noRaresUntil,
+          modifier_no_rares_target_user: partnerId,
           last_event_data: { 
             type: 'no_rares_blocked', 
             user_name: profile?.display_name || 'Tu pareja',
@@ -2641,7 +2642,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                 const isUnblockable = displayedCard?.is_unblockable;
                 const isSpecial = item.cards_master?.category === "ESPECIAL";
                 const isNoDefenseActive = game?.modifier_no_defense_until && new Date(game.modifier_no_defense_until) > new Date();
-                const isNoRaresActive = game?.modifier_no_rares_until && new Date(game.modifier_no_rares_until) > new Date();
+                const isNoRaresActive = game?.modifier_no_rares_until 
+                  && new Date(game.modifier_no_rares_until) > new Date()
+                  && game?.last_event_data?.type === 'no_rares_blocked'
+                  && game?.last_event_data?.target_user_id === userId;
                 const isRareOrHigher = item.cards_master?.rarity !== "common";
 
                 if (isNoRaresActive && isRareOrHigher) {
@@ -2660,8 +2664,11 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                   cardDisabled = true; // Bloquea todo lo demás (Retos normales)
                 }
               } else {
-                // Si no hay carta pendiente, verificar si hay bloqueo de raras global
-                const isNoRaresActive = game?.modifier_no_rares_until && new Date(game.modifier_no_rares_until) > new Date();
+                // Si no hay carta pendiente, verificar si hay bloqueo de raras dirigido a este usuario
+                const isNoRaresActive = game?.modifier_no_rares_until 
+                  && new Date(game.modifier_no_rares_until) > new Date()
+                  && game?.last_event_data?.type === 'no_rares_blocked'
+                  && game?.last_event_data?.target_user_id === userId;
                 const isRareOrHigher = item.cards_master?.rarity !== "common";
                 if (isNoRaresActive && isRareOrHigher) {
                   cardDisabled = true;
