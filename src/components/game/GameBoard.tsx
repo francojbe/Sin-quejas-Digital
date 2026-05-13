@@ -74,6 +74,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [silenceTimeLeft, setSilenceTimeLeft] = useState<number>(0);
   const [restarting, setRestarting] = useState(false);
   const [durationOption, setDurationOption] = useState<number>(15);
+  const [isCustomMode, setIsCustomMode] = useState(false);
   const [isCounterProposing, setIsCounterProposing] = useState(false);
   const [showPartnerHand, setShowPartnerHand] = useState(false);
   const [partnerHand, setPartnerHand] = useState<PlayerCard[]>([]);
@@ -2689,45 +2690,50 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                       ].map(({ days, icon: Icon }) => (
                         <button 
                           key={days}
-                          onClick={() => setDurationOption(days)}
+                          onClick={() => {
+                            setDurationOption(days);
+                            setIsCustomMode(false);
+                          }}
                           className={`relative flex flex-col items-center justify-center py-6 px-2 rounded-2xl border transition-all duration-300 overflow-hidden ${
-                            durationOption === days 
+                            durationOption === days && !isCustomMode
                               ? 'bg-[#1a1a24] border-transparent shadow-[0_0_30px_rgba(255,165,0,0.15)] scale-105' 
                               : 'bg-white/5 border-white/5 hover:bg-white/10 text-white/50'
                           }`}
                         >
                           {/* Gradient border for selected state */}
-                          {durationOption === days && (
+                          {durationOption === days && !isCustomMode && (
                             <div className="absolute inset-0 rounded-2xl p-[1px] bg-gradient-to-br from-orange-400 via-epic to-cyan-400 -z-10" />
                           )}
                           
-                          <span className={`text-4xl font-black tracking-tighter ${durationOption === days ? 'text-white' : ''}`}>{days}</span>
-                          <span className={`text-[10px] font-bold tracking-widest uppercase mb-4 ${durationOption === days ? 'text-white/80' : ''}`}>Días</span>
-                          <Icon size={24} strokeWidth={1.5} className={durationOption === days ? 'text-orange-300' : ''} />
+                          <span className={`text-4xl font-black tracking-tighter ${durationOption === days && !isCustomMode ? 'text-white' : ''}`}>{days}</span>
+                          <span className={`text-[10px] font-bold tracking-widest uppercase mb-4 ${durationOption === days && !isCustomMode ? 'text-white/80' : ''}`}>Días</span>
+                          <Icon size={24} strokeWidth={1.5} className={durationOption === days && !isCustomMode ? 'text-orange-300' : ''} />
                         </button>
                       ))}
                     </div>
 
                     <div className="mt-1">
                       <button 
-                        onClick={() => setDurationOption(0)}
+                        onClick={() => setIsCustomMode(true)}
                         className={`w-full flex items-center justify-center gap-3 p-4 rounded-2xl border transition-all duration-300 ${
-                          durationOption === 0 
+                          isCustomMode 
                             ? 'bg-[#1a1a24] border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.05)] scale-[1.02]' 
                             : 'bg-white/5 border-white/5 hover:bg-white/10 text-white/50'
                         }`}
                       >
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-black/30 border border-white/10">
-                          <Edit2 size={14} className={durationOption === 0 ? 'text-white' : 'text-white/50'} />
+                          <Edit2 size={14} className={isCustomMode ? 'text-white' : 'text-white/50'} />
                         </div>
-                        {durationOption === 0 ? (
+                        {isCustomMode ? (
                           <input 
                             type="number" 
                             min="1" max="365"
                             placeholder="Días"
+                            value={durationOption || ''}
                             className="bg-transparent text-white font-black text-xl outline-none w-20 text-center"
                             autoFocus
                             onChange={(e) => setDurationOption(parseInt(e.target.value) || 0)}
+                            onClick={(e) => e.stopPropagation()}
                           />
                         ) : (
                           <span className="font-bold tracking-widest uppercase text-sm">Personalizado</span>
@@ -2739,7 +2745,9 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                   <div className="flex flex-col w-full gap-2 px-4 mt-2">
                     <button 
                       onClick={async () => {
-                        if (durationOption === 0) return alert("Ingresa un número de días válido.");
+                        if (isCustomMode && (durationOption <= 0 || durationOption > 365)) {
+                          return alert("Ingresa un número de días válido (1-365).");
+                        }
                         setRestarting(true);
                         const { error } = await supabase.rpc('request_start_game', { proposed_duration_in: durationOption });
                         if (error) { alert(error.message); setRestarting(false); return; }

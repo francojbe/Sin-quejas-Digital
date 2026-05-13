@@ -10,6 +10,14 @@
 7. **Experiencia de Finalización (Connection Report):** Pantalla de victoria con trofeo personalizado, monograma de iniciales y estadísticas de sesión.
 8. **Sistema de Compartir Nativo:** Integración de Capacitor Share y Filesystem con renderizado manual en Canvas para compartir imágenes del trofeo personalizadas.
 
+### ✅ Logros Completados (Sesión 13 Mayo 2026 - Mecánicas Especiales & Realtime):
+1. **Feedback Premium en Cartas Especiales:** Implementación de modales animados con `framer-motion` para "Resurrección" y "Robo de Suerte", incluyendo previsualización 3D de cartas recuperadas/robadas.
+2. **Optimización de Modificadores (Doble Reto):** Refactorización de la lógica de limpieza de modificadores. Ahora las etiquetas "X2" e "Imparable" son persistentes hasta que se juega la siguiente carta.
+3. **Resiliencia de Realtime (Sync Anti-Bugs):** Implementación de `useRef` para evitar cierres obsoletos en las suscripciones y garantizar que los datos comparados sean siempre los más recientes.
+4. **Sincronización Foreground/Background:** Integración de la `Visibility API` para forzar una sincronización automática (`fetchGame`) en cuanto el usuario vuelve a poner la app en primer plano.
+5. **Arquitectura de Canales Únicos:** Migración a canales de Supabase dinámicos por ID de partida, mejorando el rendimiento y evitando colisiones de eventos.
+6. **Sincronización Android Nativo:** Ciclo completo de build y despliegue verificado con las nuevas animaciones y lógica de red optimizada.
+
 ### ⏳ Pendientes y Próximos Pasos (Hacia la v1.1):
 
 #### Fase 6: Resiliencia y PWA
