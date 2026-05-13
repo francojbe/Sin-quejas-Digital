@@ -2529,14 +2529,11 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               
               {/* Sticker de Doble Reto */}
               {/* Sticker de Doble Reto - Solo si está pendiente */}
-              {displayedCard?.is_double && displayedCard?.status === 'pending' && (
+              {displayedCard?.is_double && (displayedCard?.status === 'pending' || displayedCard?.status === 'active') && (
                 <motion.div 
                   initial={{ scale: 0, rotate: -20, opacity: 0 }} 
                   animate={{ scale: 1, rotate: 12, opacity: 1 }}
                   transition={{ duration: 0.5 }}
-                  // Desaparece después de 4 segundos para no tapar la carta
-                  animate={{ opacity: [1, 1, 0], scale: [1, 1, 0.8] }}
-                  transition={{ times: [0, 0.8, 1], duration: 4 }}
                   className="absolute top-4 right-2 z-30 bg-common text-black px-2 py-1 rounded-lg font-black shadow-[0_5px_15px_rgba(208,255,0,0.4)] border-2 border-white/30 flex flex-col items-center leading-tight pointer-events-none"
                 >
                   <span className="text-[6px] opacity-70 font-black tracking-tighter">VALE POR</span>
@@ -2545,13 +2542,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               )}
 
               {/* Indicador de Ataque Imparable - Solo si está pendiente */}
-              {displayedCard?.is_unblockable && displayedCard?.status === 'pending' && (
+              {displayedCard?.is_unblockable && (displayedCard?.status === 'pending' || displayedCard?.status === 'active') && (
                 <motion.div 
                   initial={{ y: -10, opacity: 0 }} 
                   animate={{ y: 0, opacity: 1 }}
-                  // Desaparece después de 4 segundos
-                  animate={{ opacity: [1, 1, 0], y: [0, 0, -10] }}
-                  transition={{ times: [0, 0.8, 1], duration: 4 }}
                   className="absolute top-2 left-0 right-0 flex justify-center z-20 pointer-events-none"
                 >
                   <div className="bg-red-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full shadow-[0_5px_15px_rgba(220,38,38,0.4)] border border-white/20 flex items-center gap-1.5">
