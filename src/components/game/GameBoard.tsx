@@ -1064,11 +1064,6 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       gameUpdates.modifier_double_by = null;
     }
 
-    // Limpiar bloqueo de raras siempre que se juegue una carta normal
-    if (game?.modifier_no_rares_until) {
-      gameUpdates.modifier_no_rares_until = null;
-      gameUpdates.modifier_no_rares_target_user = null;
-    }
 
     const { error } = await supabase
       .from("player_cards")
@@ -1084,6 +1079,21 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         await supabase.from("games").update(gameUpdates).eq("id", game.id);
       }
       
+      // Limpiar bloqueo de raras si estaba activo (siempre al jugar cualquier carta)
+      if (game?.modifier_no_rares_until) {
+        await supabase.from("games").update({ 
+          modifier_no_rares_until: null, 
+          modifier_no_rares_target_user: null,
+          last_event_data: null
+        }).eq("id", game.id);
+        setGame((prev: any) => prev ? { 
+          ...prev, 
+          modifier_no_rares_until: null, 
+          modifier_no_rares_target_user: null,
+          last_event_data: null
+        } : null);
+      }
+
       setHand(hand.filter(c => c.id !== playerCard.id));
       fetchLatestCard(game.id);
       await fetchGame(); // Refrescar para quitar stickers de la mano
