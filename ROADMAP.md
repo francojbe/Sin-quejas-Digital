@@ -10,22 +10,19 @@
 7. **Experiencia de Finalización (Connection Report):** Pantalla de victoria con trofeo personalizado, monograma de iniciales y estadísticas de sesión.
 8. **Sistema de Compartir Nativo:** Integración de Capacitor Share y Filesystem con renderizado manual en Canvas para compartir imágenes del trofeo personalizadas.
 
-### ✅ Logros Completados (Sesión 13 Mayo 2026 - Mecánicas Especiales & Realtime):
+### ✅ Logros Completados (Sesión 13 Mayo 2026 - Mecánicas Especiales, Realtime & Pulido Mobile):
 1. **Feedback Premium en Cartas Especiales:** Implementación de modales animados con `framer-motion` para "Resurrección" y "Robo de Suerte", incluyendo previsualización 3D de cartas recuperadas/robadas.
 2. **Optimización de Modificadores (Doble Reto):** Refactorización de la lógica de limpieza de modificadores. Ahora las etiquetas "X2" e "Imparable" son persistentes hasta que se juega la siguiente carta.
 3. **Resiliencia de Realtime (Sync Anti-Bugs):** Implementación de `useRef` para evitar cierres obsoletos en las suscripciones y garantizar que los datos comparados sean siempre los más recientes.
-4. **Sincronización Foreground/Background:** Integración de la `Visibility API` para forzar una sincronización automática (`fetchGame`) en cuanto el usuario vuelve a poner la app en primer plano.
-5. **Arquitectura de Canales Únicos:** Migración a canales de Supabase dinámicos por ID de partida, mejorando el rendimiento y evitando colisiones de eventos.
-6. **Sincronización Android Nativo:** Ciclo completo de build y despliegue verificado con las nuevas animaciones y lógica de red optimizada.
+4. **Sincronización Foreground/Background:** Integración de la `Visibility API` para forzar una sincronización automática (`fetchGame`) en cuanto el usuario vuelve a poner la app en primer plano en Android.
+5. **Identidad Visual Premium (Avatares):** 
+    - Implementación de **Zoom Modal** para fotos de perfil con desenfoque de fondo.
+    - Selector de avatar interactivo con indicadores de **"En Uso"** y vista previa dinámica de subidas.
+    - Estandarización de escalado `object-contain` para evitar recortes en fotos no cuadradas.
+6. **Soporte Nativo Android (Notch & Safe Areas):** Adaptación total de la UI (`GameBoard`, `Login`, `Victoria`) mediante `env(safe-area-inset-*)` para dispositivos con muescas y gestos de navegación.
+7. **Correcciones de UX Críticas:** Arreglado el problema de edición de tiempo personalizado (Input focus) y desbordamiento de texto en cartas (`line-clamp`).
 
 ### ⏳ Pendientes y Próximos Pasos (Hacia la v1.1):
-
-#### Fase 6: Resiliencia y PWA
-- [x] **Optimización Offline:** Service Worker personalizado con caché de App Shell, imágenes de cartas (TTL 7 días), navegación offline y página de fallback.
-- [x] **Sync de Fondo:** Implementación de cola de jugadas en IndexedDB para enviar acciones automáticamente al recuperar la conexión.
-
-#### Fase 7: Contenido y Comunidad
-- [x] **Sistema de Compartir:** Implementación de compartir imagen personalizada (Trofeo + Iniciales) y estadísticas mediante Capacitor Share (Nativo) y Canvas (Renderizado).
 
 #### Fase 8: Monetización (Premium SaaS)
 - [x] **Suscripción Premium:** Añadir flag `is_premium` a los perfiles.
@@ -33,6 +30,7 @@
 - [x] **Paywall Visual:** Interfaz en la "Colección" que muestra candados en las cartas y un popup de venta atractivo para convertirse en Premium.
 - [ ] **Fondos Personalizados:** Permitir que los usuarios Premium cambien el fondo del tablero (texturas, colores o gradientes exclusivos).
 
-#### Fase 9: Pulido Final
-- [ ] **Validación Final de Android:** Testeo en dispositivos con "Notch" agresivos y diferentes relaciones de aspecto (Tablets).
-
+#### Fase 9: Pulido Final e Infraestructura
+- [x] **Validación Final de Android:** Testeo exitoso en dispositivos con "Notch" agresivos y optimización de latencia en Realtime.
+- [ ] **Modo Espectador / Historial en Vivo:** Permitir ver los detalles de los desafíos pasados con más profundidad.
+- [ ] **Preparación para App Store / Play Store:** Generación de assets (iconos, splash screens) y revisión de políticas de privacidad.

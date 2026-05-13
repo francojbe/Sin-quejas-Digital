@@ -19,6 +19,11 @@ export const metadata: Metadata = {
   title: "Sin Quejas Digital | Juego para Parejas",
   description: "Digitaliza tu mazo de cartas para parejas. Sin quejas, solo retos y diversión.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/logo-app.png",
+    shortcut: "/logo-app.png",
+    apple: "/logo-app.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
