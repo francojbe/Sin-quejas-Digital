@@ -1879,70 +1879,91 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                 {/* Avatar Selection */}
                 <div className="space-y-4">
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Selecciona tu Avatar</label>
-                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-                    {AVATARS.map((av) => {
-                      const isCurrentlyUsing = profile?.avatar_url === av.url;
-                      const isSelected = newAvatarUrl === av.url;
-
-                      return (
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                      {/* Slot para Foto Personalizada / Actual (si no es un preset) */}
+                      {profile?.avatar_url && !AVATARS.some(av => av.url === profile.avatar_url) && (
                         <button
-                          key={av.id}
-                          onClick={() => setNewAvatarUrl(av.url)}
+                          onClick={() => setNewAvatarUrl(profile.avatar_url)}
                           className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all p-1 group/av ${
-                            isSelected 
+                            newAvatarUrl === profile.avatar_url 
                               ? 'border-common bg-common/20 scale-105 shadow-[0_0_20px_rgba(208,255,0,0.4)]' 
-                              : 'border-white/5 bg-white/5 hover:border-white/20'
+                              : 'border-white/20 bg-white/5'
                           }`}
                         >
-                          <img src={av.url} alt="Avatar" className="w-full h-full object-contain" />
-                          
-                          {/* Símbolo de "Seleccionado para Guardar" */}
-                          {isSelected && (
-                            <div className="absolute top-1 right-1 bg-common text-black rounded-full p-0.5 shadow-lg animate-in zoom-in-50 duration-300">
+                          <img src={profile.avatar_url} alt="Current" className="w-full h-full object-contain" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 flex justify-center">
+                            <span className="text-[5px] font-black text-common uppercase tracking-tighter">Tu Foto</span>
+                          </div>
+                          {newAvatarUrl === profile.avatar_url && (
+                            <div className="absolute top-1 right-1 bg-common text-black rounded-full p-0.5 shadow-lg">
                               <CheckCircle2 size={10} strokeWidth={4} />
                             </div>
                           )}
-
-                          {/* Símbolo de "Esta es la que estás usando" */}
-                          {isCurrentlyUsing && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 pb-0.5 flex justify-center">
-                              <span className="text-[6px] font-black text-common uppercase tracking-widest bg-black/40 px-1.5 py-0.5 rounded-full border border-common/30">
-                                Usando
-                              </span>
-                            </div>
-                          )}
-                          
-                          {/* Efecto de hover */}
-                          {!isSelected && (
-                            <div className="absolute inset-0 bg-white/0 group-hover/av:bg-white/5 transition-colors" />
-                          )}
                         </button>
-                      );
-                    })}
-
-                    {/* Upload Custom Photo */}
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingFile}
-                      className="aspect-square rounded-2xl border-2 border-dashed border-white/10 hover:border-common/40 bg-white/[0.02] hover:bg-common/5 transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden disabled:opacity-50"
-                    >
-                      {uploadingFile ? (
-                        <Loader2 size={16} className="text-common animate-spin" />
-                      ) : (
-                        <>
-                          <Camera size={16} className="text-white/20 group-hover:text-common transition-colors" />
-                          <span className="text-[7px] font-black text-white/20 uppercase group-hover:text-common transition-colors">Subir</span>
-                        </>
                       )}
-                      <input 
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileUpload}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                    </button>
-                  </div>
+
+                      {AVATARS.map((av) => {
+                        const isCurrentlyUsing = profile?.avatar_url === av.url;
+                        const isSelected = newAvatarUrl === av.url;
+
+                        return (
+                          <button
+                            key={av.id}
+                            onClick={() => setNewAvatarUrl(av.url)}
+                            className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all p-1 group/av ${
+                              isSelected 
+                                ? 'border-common bg-common/20 scale-105 shadow-[0_0_20px_rgba(208,255,0,0.4)]' 
+                                : 'border-white/5 bg-white/5 hover:border-white/20'
+                            }`}
+                          >
+                            <img src={av.url} alt="Avatar" className="w-full h-full object-contain" />
+                            
+                            {/* Símbolo de "Seleccionado para Guardar" */}
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 bg-common text-black rounded-full p-0.5 shadow-lg">
+                                <CheckCircle2 size={10} strokeWidth={4} />
+                              </div>
+                            )}
+
+                            {/* Símbolo de "Esta es la que estás usando" */}
+                            {isCurrentlyUsing && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 pb-0.5 flex justify-center">
+                                <span className="text-[6px] font-black text-common uppercase tracking-widest bg-black/40 px-1.5 py-0.5 rounded-full border border-common/30">
+                                  En Uso
+                                </span>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+
+                      {/* Botón para Subir Nueva Foto */}
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingFile}
+                        className={`aspect-square rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden disabled:opacity-50 ${
+                          newAvatarUrl !== profile?.avatar_url && !AVATARS.some(av => av.url === newAvatarUrl)
+                            ? 'border-common bg-common/10'
+                            : 'border-white/10 hover:border-common/40 bg-white/[0.02] hover:bg-common/5'
+                        }`}
+                      >
+                        {uploadingFile ? (
+                          <Loader2 size={16} className="text-common animate-spin" />
+                        ) : (
+                          <>
+                            <Camera size={16} className="text-white/20 group-hover:text-common transition-colors" />
+                            <span className="text-[7px] font-black text-white/20 uppercase group-hover:text-common transition-colors">Subir</span>
+                          </>
+                        )}
+                        <input 
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                      </button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
