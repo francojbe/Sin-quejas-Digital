@@ -1880,22 +1880,45 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                 <div className="space-y-4">
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Selecciona tu Avatar</label>
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-                    {AVATARS.map((av) => (
-                      <button
-                        key={av.id}
-                        onClick={() => setNewAvatarUrl(av.url)}
-                        className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all p-1 ${
-                          newAvatarUrl === av.url ? 'border-common bg-common/20 scale-110 shadow-[0_0_15px_rgba(208,255,0,0.3)]' : 'border-white/5 bg-white/5 hover:border-white/20'
-                        }`}
-                      >
-                        <img src={av.url} alt="Avatar" className="w-full h-full object-contain" />
-                        {newAvatarUrl === av.url && (
-                          <div className="absolute top-0.5 right-0.5 bg-common text-black rounded-full p-0.5">
-                            <CheckCircle2 size={8} strokeWidth={4} />
-                          </div>
-                        )}
-                      </button>
-                    ))}
+                    {AVATARS.map((av) => {
+                      const isCurrentlyUsing = profile?.avatar_url === av.url;
+                      const isSelected = newAvatarUrl === av.url;
+
+                      return (
+                        <button
+                          key={av.id}
+                          onClick={() => setNewAvatarUrl(av.url)}
+                          className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all p-1 group/av ${
+                            isSelected 
+                              ? 'border-common bg-common/20 scale-105 shadow-[0_0_20px_rgba(208,255,0,0.4)]' 
+                              : 'border-white/5 bg-white/5 hover:border-white/20'
+                          }`}
+                        >
+                          <img src={av.url} alt="Avatar" className="w-full h-full object-contain" />
+                          
+                          {/* Símbolo de "Seleccionado para Guardar" */}
+                          {isSelected && (
+                            <div className="absolute top-1 right-1 bg-common text-black rounded-full p-0.5 shadow-lg animate-in zoom-in-50 duration-300">
+                              <CheckCircle2 size={10} strokeWidth={4} />
+                            </div>
+                          )}
+
+                          {/* Símbolo de "Esta es la que estás usando" */}
+                          {isCurrentlyUsing && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 pb-0.5 flex justify-center">
+                              <span className="text-[6px] font-black text-common uppercase tracking-widest bg-black/40 px-1.5 py-0.5 rounded-full border border-common/30">
+                                Usando
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Efecto de hover */}
+                          {!isSelected && (
+                            <div className="absolute inset-0 bg-white/0 group-hover/av:bg-white/5 transition-colors" />
+                          )}
+                        </button>
+                      );
+                    })}
 
                     {/* Upload Custom Photo */}
                     <button
