@@ -6,7 +6,7 @@ import { CartaNaipe } from "@/components/ui/CartaNaipe";
 import { GameStatus } from "./GameStatus";
 import { PlayerCard, Card as CardType, Profile } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Eye, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History, Sparkles, ChevronRight, ShieldOff, VolumeX, Zap, Gem } from "lucide-react";
+import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Eye, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History, Sparkles, ChevronRight, ShieldOff, VolumeX, Zap, Gem, Hand, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useToast, ToastType } from "@/lib/contexts/ToastContext";
 import { requestNotificationPermission } from "@/components/SWRegistration";
@@ -81,6 +81,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [activeEvent, setActiveEvent] = useState<any>(null);
   const [resurrectedCards, setResurrectedCards] = useState<{title: string, rarity: string, category: string}[]>([]);
   const [showResurrectionModal, setShowResurrectionModal] = useState(false);
+  const [stolenCard, setStolenCard] = useState<{title: string, rarity: string, category: string} | null>(null);
+  const [showStealModal, setShowStealModal] = useState(false);
 
   const [showPartnerModal, setShowPartnerModal] = useState(false);
   const [partnerProfile, setPartnerProfile] = useState<any>(null);
@@ -1269,26 +1271,35 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const handleStealCard = async () => {
     if (!game || !userId || !partnerId || !displayedCard) return;
     setLoading(true);
-    const { data: partnerCards } = await supabase
-      .from("player_cards")
-      .select("id")
-      .eq("game_id", game.id)
-      .eq("user_id", partnerId)
-      .eq("status", "in_hand");
+    try {
+      const { data, error } = await supabase.rpc('steal_random_card', {
+        game_id_in: game.id,
+        player_card_id: displayedCard.id
+      });
 
-    if (partnerCards && partnerCards.length > 0) {
-      const randomCard = partnerCards[Math.floor(Math.random() * partnerCards.length)];
-      await supabase.from("player_cards").update({ user_id: userId }).eq("id", randomCard.id);
-      await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
-      showNotification("¡Has robado una carta!", 'success');
+      if (error) throw error;
+
+      const result = data as any;
+      if (result?.success) {
+        if (result.card) {
+          setStolenCard(result.card);
+          setShowStealModal(true);
+          setTimeout(() => {
+            setShowStealModal(false);
+            setStolenCard(null);
+          }, 5000);
+        }
+        showNotification(result.message || '¡Has robado una carta!', 'success');
+      } else {
+        showNotification(result.message || "Tu pareja no tiene cartas para robar.", 'warning');
+      }
       setDisplayedCard(null);
-    } else {
-      showNotification("Tu pareja no tiene cartas para robar.", 'warning');
-      await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
-      setDisplayedCard(null);
+      await fetchGame();
+    } catch (err: any) {
+      showNotification(err.message || 'Error al robar carta', 'error');
+    } finally {
+      setLoading(false);
     }
-    await fetchGame();
-    setLoading(false);
   };
 
   const handleSwapHands = async () => {
@@ -2284,6 +2295,87 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               </motion.div>
             </motion.div>
           )}
+          {activeEvent?.type === 'steal_success' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[80] flex flex-col items-center justify-center pointer-events-none bg-common/10 backdrop-blur-md"
+            >
+              {/* Efecto de robo: mano o partículas volando */}
+              <div className="relative w-full h-40 flex items-center justify-center mb-8">
+                <motion.div
+                  initial={{ x: 100, opacity: 0, rotate: 20 }}
+                  animate={{ x: -100, opacity: [0, 1, 0], rotate: -20 }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute"
+                >
+                  <Hand size={80} className="text-common drop-shadow-[0_0_30px_rgba(208,255,0,0.6)]" />
+                </motion.div>
+                <div className="absolute w-32 h-48 border-2 border-white/20 rounded-xl bg-white/5 backdrop-blur-sm animate-pulse" />
+              </div>
+
+              <div className="relative z-10 flex flex-col items-center gap-5 px-6">
+                <span className="text-3xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(208,255,0,0.8)] text-center">
+                  ¡ROBO EXITOSO!
+                </span>
+                <div className="flex flex-col items-center">
+                  <span className="text-common font-black uppercase tracking-[0.3em] text-[10px] px-8 py-2.5 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,0.4)]">
+                    {activeEvent.stealer_name.toUpperCase()} HA ROBADO UNA CARTA
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeEvent?.type === 'steal_fail' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.1 }}
+              className="absolute inset-0 z-[80] flex flex-col items-center justify-center pointer-events-none bg-red-500/10 backdrop-blur-md"
+            >
+              <div className="relative mb-8">
+                <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 0.5, repeat: Infinity }}>
+                  <ShieldAlert size={80} className="text-red-500" />
+                </motion.div>
+              </div>
+              <span className="text-2xl font-black text-white uppercase tracking-tighter text-center px-8">
+                {activeEvent.stealer_name.toUpperCase()} INTENTÓ ROBAR... ¡PERO FALLÓ!
+              </span>
+            </motion.div>
+          )}
+
+          {/* MODAL LOCAL: Muestra al ladrón qué carta robó */}
+          {showStealModal && stolenCard && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[95] flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl pointer-events-none"
+            >
+              <motion.div
+                initial={{ scale: 0.5, rotateY: 180 }}
+                animate={{ scale: 1, rotateY: 0 }}
+                className="flex flex-col items-center gap-6"
+              >
+                <div className="relative">
+                  <div className="absolute -inset-10 bg-common/20 blur-3xl animate-pulse" />
+                  <CartaNaipe 
+                    title={stolenCard.title}
+                    description={stolenCard.category}
+                    rarity={stolenCard.rarity as any}
+                    compact={false}
+                  />
+                  <div className="absolute -top-4 -right-4 bg-common text-black font-black px-4 py-1 rounded-full shadow-xl rotate-12 border-2 border-white/40">
+                    ¡ROBADA!
+                  </div>
+                </div>
+                <span className="text-white font-black uppercase tracking-[0.4em] text-xs">¡Añadida a tu mano!</span>
+              </motion.div>
+            </motion.div>
+          )}
+
           {activeEvent?.type === 'freeze' && (
             <motion.div 
               initial={{ scale: 1.5, opacity: 0 }}
