@@ -593,8 +593,15 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         const currentGame = gameRef.current;
         if (!currentGame) return;
 
-        // Update latest card if a card was played or status changed
-        if (newRecord?.status && newRecord.status !== 'in_hand' && newRecord.user_id !== userId) {
+        // --- SOLUCIÓN ANDROID / REALTIME ---
+        // Refrescamos la carta central si:
+        // 1. Es una carta nueva jugada por la pareja
+        // 2. O el STATUS de la carta ha cambiado (ej: de pending a active/rejected)
+        // Esto asegura que si el remitente está esperando, vea el "Aceptado" al instante.
+        const statusChanged = oldRecord && newRecord && oldRecord.status !== newRecord.status;
+        const isPartnerPlay = newRecord?.status && newRecord.status !== 'in_hand' && newRecord.user_id !== userId;
+
+        if (isPartnerPlay || statusChanged) {
           fetchLatestCard(currentGame.id);
         }
         
@@ -605,9 +612,33 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           fetchPartnerHandCount();
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        // Si el canal se reconecta después de una caída (típico en Android), refrescamos todo
+        if (status === 'SUBSCRIBED') {
+          fetchGame();
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, [game?.id, userId]);
+
+  // --- RESILIENCIA ANDROID: VISIBILITY API ---
+  // Fuerza un refresco total cuando la app vuelve del segundo plano o se desbloquea el teléfono
+  useEffect(() => {
+    const handleSync = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("[Sync] App visible/enfocada, forzando sincronización...");
+        fetchGame();
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleSync);
+    window.addEventListener('focus', handleSync);
+    
+    return () => {
+      window.removeEventListener('visibilitychange', handleSync);
+      window.removeEventListener('focus', handleSync);
+    };
+  }, [coupleId]);
 
   // Suscripción a cambios en la partida (Eventos globales, reinicios, ruptura)
   useEffect(() => {
