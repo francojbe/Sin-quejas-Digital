@@ -1022,6 +1022,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
           await fetchPartnerHand();
         }, 800);
       }
+      // Limpiar bloqueo de raras si existe y no estamos tirando la misma carta
+      if (game?.modifier_no_rares_until && playerCard.cards_master?.id !== 53) {
+        await supabase.from("games").update({ 
+          modifier_no_rares_until: null, 
+          modifier_no_rares_target_user: null 
+        }).eq("id", game.id);
+      }
       
       setLoading(false);
       return;
@@ -1055,6 +1062,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     if (game?.modifier_double_by === userId && !isDefense) {
       updates.is_double = true;
       gameUpdates.modifier_double_by = null;
+    }
+
+    // Limpiar bloqueo de raras siempre que se juegue una carta normal
+    if (game?.modifier_no_rares_until) {
+      gameUpdates.modifier_no_rares_until = null;
+      gameUpdates.modifier_no_rares_target_user = null;
     }
 
     const { error } = await supabase
