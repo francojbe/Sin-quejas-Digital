@@ -6,7 +6,7 @@ import { CartaNaipe } from "@/components/ui/CartaNaipe";
 import { GameStatus } from "./GameStatus";
 import { PlayerCard, Card as CardType, Profile } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Eye, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History, Sparkles, ChevronRight, ShieldOff, VolumeX, Zap } from "lucide-react";
+import { Loader2, Clock, Shield, CheckCircle2, RotateCcw, Heart, Calendar, Moon, Sun, Edit2, RefreshCw, Snowflake, Lock, Eye, Menu, X, LogOut, User, Camera, Link as LinkIcon, Upload, Layers, Trophy, Bell, History, Sparkles, ChevronRight, ShieldOff, VolumeX, Zap, Gem } from "lucide-react";
 import Link from "next/link";
 import { useToast, ToastType } from "@/lib/contexts/ToastContext";
 import { requestNotificationPermission } from "@/components/SWRegistration";
@@ -2260,9 +2260,19 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                 className="relative mb-8"
               >
                 <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full animate-pulse" />
-                <Sparkles size={120} className="text-blue-400 drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] relative z-10" />
+                <div className="relative z-10 flex items-center justify-center">
+                  <Gem size={120} className="text-white/20 grayscale blur-[1px] drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]" />
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.5, type: "spring" }}
+                    className="absolute"
+                  >
+                    <Lock size={60} className="text-blue-400 drop-shadow-[0_0_30px_rgba(59,130,246,1)]" />
+                  </motion.div>
+                </div>
                 
-                {/* Ondas de choque */}
+                {/* Ondas de choque frías */}
                 {[...Array(3)].map((_, i) => (
                   <motion.div
                     key={i}
