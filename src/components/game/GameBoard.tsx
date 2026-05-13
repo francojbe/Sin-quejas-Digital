@@ -1834,7 +1834,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-common to-epic p-0.5 shadow-[0_0_15px_rgba(208,255,0,0.2)] group-hover:shadow-[0_0_20px_rgba(208,255,0,0.4)] transition-all">
                 <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
                   {profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-contain" />
                   ) : (
                     <User size={14} className="text-common" />
                   )}
