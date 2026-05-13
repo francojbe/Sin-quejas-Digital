@@ -1164,9 +1164,16 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       showNotification(status === 'active' ? "¡Desafío aceptado!" : "Desafío bloqueado", 'success');
       
-      // 4. Limpiar cualquier evento visual (como el de raras) al aceptar/bloquear
-      if (game?.last_event_data) {
-        await supabase.from("games").update({ last_event_data: null }).eq("id", game.id);
+      // 4. Limpiar modificador de bloqueo de raras y evento visual al aceptar/bloquear
+      const actionGameUpdates: any = {};
+      if (game?.last_event_data) actionGameUpdates.last_event_data = null;
+      if (game?.modifier_no_rares_until) {
+        actionGameUpdates.modifier_no_rares_until = null;
+        actionGameUpdates.modifier_no_rares_target_user = null;
+      }
+      if (Object.keys(actionGameUpdates).length > 0) {
+        await supabase.from("games").update(actionGameUpdates).eq("id", game.id);
+        setGame((prev: any) => prev ? { ...prev, ...actionGameUpdates } : null);
       }
 
       // 5. Refrescar todo
