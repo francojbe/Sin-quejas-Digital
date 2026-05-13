@@ -1,54 +1,36 @@
-# Contexto y Estado Actual: Sin Quejas Digital
+# Sin Quejas Digital - Estado de Avance y Estabilización
 
-## ✅ Fase 9: Pulido de Mecánicas y Especiales (Completada y Pulida)
-*   **Implementación de 10 Especiales:** Todas las cartas especiales (IDs 51-60) son funcionales y robustas.
-*   **Mecánica de Centro:** Las cartas especiales se mantienen en el centro del tablero tras ser jugadas para mayor claridad.
-*   **Interactividad:** Las cartas que requieren acción (Robar, Ver Mano, etc.) incluyen botones interactivos integrados.
-*   **Bloqueo de Rareza:** Refactorizado a 24 horas de duración con banner visual y bloqueo dinámico en mazo.
-*   **Sincronización:** Cambios pusheados a GitHub y proyecto Android sincronizado con Capacitor.
+## 🛡️ Funcionalidades Blindadas (¡NO TOCAR!)
+Estas funciones han sido testeadas y validadas en esta sesión. Funcionan correctamente tanto en Web como en Android.
 
-## ✅ Fase 7 & 8: Finalización y Monetización (Completadas)
-Hemos finalizado con éxito la implementación de la experiencia de cierre y la base de la monetización:
+### 1. Sistema de Cartas Especiales
+*   **Carta "Ver Mano" (ID 54):** 
+    *   Carga automática del mazo de la pareja.
+    *   Efecto visual "Ojo Místico" sincronizado para ambos jugadores.
+    *   Vibración en Android al recibir el efecto.
+    *   Carrusel de cartas fluido.
+*   **Carta "Anular Defensa" (ID 58):** 
+    *   Consumo de un solo uso (el banner se borra tras el ataque).
+    *   Efecto "Imparable" aplicado correctamente a la carta lanzada.
 
-1.  **Experiencia de Finalización (GameCompletion):**
-    *   Pantalla de victoria premium con trofeo dinámico.
-    *   **Monograma:** Grabado de iniciales en la placa del trofeo basado en los perfiles de la pareja.
-    *   **Estadísticas:** Resumen de días jugados, logros y cartas totales.
-2.  **Sistema de Compartir Visual (Nativo):**
-    *   **Renderizado Manual:** Motor de dibujo en Canvas para generar el trofeo personalizado con fondo sólido (máxima compatibilidad).
-    *   **Integración Nativa:** Uso de `@capacitor/share` y `@capacitor/filesystem` para enviar el archivo real a WhatsApp/Instagram.
-    *   **Resiliencia:** Fallback inteligente a Web Share o Link de WhatsApp si el modo nativo falla.
-3.  **Monetización Premium:**
-    *   Columna `is_premium` en `profiles`.
-    *   Tabla `custom_card_overrides` para personalización de cartas.
-    *   Paywall visual en la sección de Colección ("¿Quieren más?").
+### 2. UI & UX Premium
+*   **Banners de Modificadores:** Estilo de píldoras flotantes centralizadas (Glassmorphism).
+*   **Z-Index (Capas):** Los efectos visuales de cartas especiales están en la capa `600`, garantizando visibilidad total.
+*   **Contador Reactivo:** El banner de Silencio se oculta automáticamente al llegar a `00:00` sin refrescar página.
 
----
+## ⏳ Pendientes de Revisión (En mazo de Frankeitor)
+Estas cartas están en tu mano y deben ser validadas en la próxima sesión:
+1.  **Bloqueo Rareza (ID 53):** Validar banner y bloqueo de cartas raras.
+2.  **Pausa Temporal (ID 52):** Testear efecto de congelación global.
+3.  **Doble Reto (ID 56):** Validar multiplicador de daño/efecto.
+4.  **Resurrección (ID 59):** Validar recuperación de descartes.
+5.  **Robo de Suerte (ID 51):** Validar transferencia de carta entre jugadores.
 
-## ⏳ Pendientes y Roadmap (Hacia v1.1)
+## 🚀 Despliegue y Sincronización
+*   **GitHub:** Rama `main` actualizada.
+*   **Android:** Sincronización nativa realizada.
+*   **Base de Datos:** Estructura de `game_history` validada.
 
-### 1. Fase 8+: Lógica de Pago y Fondos (Prioridad Alta)
-- [ ] **Pasarela de Pago:** Integrar Stripe o similar para activar el flag `is_premium`.
-- [ ] **Fondos Personalizados:** Implementar selector de fondos exclusivos (texturas/gradientes) para el tablero Premium.
-
-### ✅ Fase 9: Pulido Final y Mecánicas Especiales (Completada)
-- [x] **Safe Areas (Notch):** Ajustes de CSS en el header (`env(safe-area-inset-top)`) y `viewportFit` para evitar solapamiento con notches en móviles modernos.
-- [x] **Historial Detallado:** Convertida la "Memoria de Pareja" en una bitácora inmersiva con colores de acción y narrativa descriptiva.
-- [x] **Mecánicas Especiales:** Implementación total de las 10 cartas de categoría ESPECIAL:
-  - [x] ID 51 (Robo de Suerte): Robo instantáneo de carta.
-  - [x] ID 52 (Pausa Temporal): Congelamiento global por 24h.
-  - [x] ID 53 (Bloqueo Rareza): Bloqueo temporal de rarezas por 24h.
-  - [x] ID 54 (Ver Mano): Revelación interactiva del mazo ajeno.
-  - [x] ID 55 (Cambiar Mazo): Intercambio atómico de manos (SQL RPC).
-  - [x] ID 56 (Doble Reto): Modificador x2 para el siguiente ataque.
-  - [x] ID 57 (Anular Defensa): Bloqueo de escudos por 1 hora.
-  - [x] ID 58 (Ataque Imparable): Modificador de invulnerabilidad.
-  - [x] ID 59 (Resurrección): Recuperación de 3 cartas del descarte.
-  - [x] ID 60 (Silencio Total): Reto social con indicador de 15 min.
-
----
-
-## 🛠️ Notas de Desarrollo
-- **Plugins Nuevos:** Se añadieron `@capacitor/share` y `@capacitor/filesystem` para el compartir nativo.
-- **Renderizado:** Se utiliza Canvas puro en lugar de `html2canvas` para el trofeo por temas de fiabilidad en Android WebView.
-- **Android:** Build optimizada con `NEXT_PUBLIC_IS_CAPACITOR=true` y sincronización completa de assets.
+## 📝 Notas para la próxima sesión
+*   El sistema de "Ojo Místico" ahora es el estándar para otros efectos visuales globales.
+*   Cualquier nuevo modificador debe seguir el patrón de "Píldora Premium" en la parte superior.

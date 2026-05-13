@@ -975,8 +975,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
         await supabase.from("games").update({ 
           modifier_no_rares_until: noRaresUntil,
           last_event_data: { 
-            type: 'global_modifier', 
-            message: '¡Cartas Raras Bloqueadas!',
+            type: 'no_rares_blocked', 
+            user_name: profile?.display_name || 'Tu pareja',
             timestamp: Date.now() 
           }
         }).eq("id", game.id);
@@ -2244,6 +2244,44 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               <span className="text-blue-500 font-black uppercase tracking-[0.3em] text-[10px] mt-6 px-8 py-2.5 bg-white rounded-full">
                 {activeEvent.freezer_name.toUpperCase()} PUSO EL JUEGO EN PAUSA
               </span>
+            </motion.div>
+          )}
+          {activeEvent?.type === 'no_rares_blocked' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none bg-blue-900/40 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", damping: 15 }}
+                className="relative mb-8"
+              >
+                <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full animate-pulse" />
+                <Sparkles size={120} className="text-blue-400 drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] relative z-10" />
+                
+                {/* Ondas de choque */}
+                {[...Array(3)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ scale: 0.8, opacity: 0.5 }}
+                    animate={{ scale: 2.5, opacity: 0 }}
+                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.6 }}
+                    className="absolute inset-0 border-4 border-blue-400/30 rounded-full"
+                  />
+                ))}
+              </motion.div>
+
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-4xl md:text-7xl font-black text-blue-400 uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] text-center px-6">
+                  ¡RAREZAS BLOQUEADAS!
+                </span>
+                <span className="text-white/40 font-black uppercase tracking-[0.3em] text-[10px] md:text-sm animate-pulse">
+                  {activeEvent.user_name.toUpperCase()} HA ANULADO LAS CARTAS RARAS
+                </span>
+              </div>
             </motion.div>
           )}
           {activeEvent?.type === 'view_hand' && (
