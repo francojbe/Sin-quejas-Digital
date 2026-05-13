@@ -1054,7 +1054,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
     // CONSUMIR MODIFICADORES GLOBALES Y ASIGNARLOS A LA CARTA
     const updates: any = { status: "pending", played_at: serverNow };
-    const gameUpdates: any = {};
+    const gameUpdates: any = {
+      modifier_double_by: null,
+      modifier_unblockable_by: null,
+      modifier_no_rares_until: null,
+      modifier_no_rares_target_user: null,
+      last_event_data: null
+    };
     
     // 1. Si hay defensa anulada (vía tiempo o flag)
     const isNoDefenseActive = game?.modifier_no_defense_until && (new Date(game.modifier_no_defense_until).getTime() > (Date.now() + serverTimeOffset));
@@ -1063,21 +1069,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       gameUpdates.modifier_no_defense_until = null;
     }
 
-    // 2. Modificadores de jugador
+    // 2. Aplicar modificadores a la carta antes de limpiar el juego
     if (game?.modifier_unblockable_by === userId && !isDefense) {
       updates.is_unblockable = true;
-      gameUpdates.modifier_unblockable_by = null;
     }
     if (game?.modifier_double_by === userId && !isDefense) {
       updates.is_double = true;
-      gameUpdates.modifier_double_by = null;
-    }
-
-    // 3. Limpiar bloqueo de raras siempre que se juegue una carta normal
-    if (game?.modifier_no_rares_until) {
-      gameUpdates.modifier_no_rares_until = null;
-      gameUpdates.modifier_no_rares_target_user = null;
-      gameUpdates.last_event_data = null;
     }
 
     const { error } = await supabase
@@ -1168,17 +1165,17 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       showNotification(status === 'active' ? "¡Desafío aceptado!" : "Desafío bloqueado", 'success');
       
-      // 4. Limpiar modificador de bloqueo de raras y evento visual al aceptar/bloquear
-      const actionGameUpdates: any = {};
-      if (game?.last_event_data) actionGameUpdates.last_event_data = null;
-      if (game?.modifier_no_rares_until) {
-        actionGameUpdates.modifier_no_rares_until = null;
-        actionGameUpdates.modifier_no_rares_target_user = null;
-      }
-      if (Object.keys(actionGameUpdates).length > 0) {
-        await supabase.from("games").update(actionGameUpdates).eq("id", game.id);
-        setGame((prev: any) => prev ? { ...prev, ...actionGameUpdates } : null);
-      }
+      // 4. Limpieza profunda de modificadores al aceptar/bloquear
+      const actionGameUpdates: any = {
+        last_event_data: null,
+        modifier_no_rares_until: null,
+        modifier_no_rares_target_user: null,
+        modifier_double_by: null,
+        modifier_unblockable_by: null
+      };
+      
+      await supabase.from("games").update(actionGameUpdates).eq("id", game.id);
+      setGame((prev: any) => prev ? { ...prev, ...actionGameUpdates } : null);
 
       // 5. Refrescar todo
       await fetchGame();
@@ -2534,9 +2531,13 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               {/* Sticker de Doble Reto - Solo si está pendiente */}
               {displayedCard?.is_double && displayedCard?.status === 'pending' && (
                 <motion.div 
-                  initial={{ scale: 0, rotate: -20 }} 
-                  animate={{ scale: 1, rotate: 12 }}
-                  className="absolute top-4 right-2 z-30 bg-common text-black px-2 py-1 rounded-lg font-black shadow-[0_5px_15px_rgba(208,255,0,0.4)] border-2 border-white/30 flex flex-col items-center leading-tight"
+                  initial={{ scale: 0, rotate: -20, opacity: 0 }} 
+                  animate={{ scale: 1, rotate: 12, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  // Desaparece después de 4 segundos para no tapar la carta
+                  animate={{ opacity: [1, 1, 0], scale: [1, 1, 0.8] }}
+                  transition={{ times: [0, 0.8, 1], duration: 4 }}
+                  className="absolute top-4 right-2 z-30 bg-common text-black px-2 py-1 rounded-lg font-black shadow-[0_5px_15px_rgba(208,255,0,0.4)] border-2 border-white/30 flex flex-col items-center leading-tight pointer-events-none"
                 >
                   <span className="text-[6px] opacity-70 font-black tracking-tighter">VALE POR</span>
                   <span className="text-sm">X2</span>
@@ -2548,7 +2549,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                 <motion.div 
                   initial={{ y: -10, opacity: 0 }} 
                   animate={{ y: 0, opacity: 1 }}
-                  className="absolute top-2 left-0 right-0 flex justify-center z-20"
+                  // Desaparece después de 4 segundos
+                  animate={{ opacity: [1, 1, 0], y: [0, 0, -10] }}
+                  transition={{ times: [0, 0.8, 1], duration: 4 }}
+                  className="absolute top-2 left-0 right-0 flex justify-center z-20 pointer-events-none"
                 >
                   <div className="bg-red-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full shadow-[0_5px_15px_rgba(220,38,38,0.4)] border border-white/20 flex items-center gap-1.5">
                     <Lock size={10} fill="white" /> Ataque Imparable
