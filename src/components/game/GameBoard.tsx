@@ -79,6 +79,8 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const [partnerHand, setPartnerHand] = useState<PlayerCard[]>([]);
   const [showReflected, setShowReflected] = useState(false);
   const [activeEvent, setActiveEvent] = useState<any>(null);
+  const [resurrectedCards, setResurrectedCards] = useState<{title: string, rarity: string, category: string}[]>([]);
+  const [showResurrectionModal, setShowResurrectionModal] = useState(false);
 
   const [showPartnerModal, setShowPartnerModal] = useState(false);
   const [partnerProfile, setPartnerProfile] = useState<any>(null);
@@ -1303,27 +1305,36 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
   const handleResurrection = async () => {
     if (!game || !userId || !displayedCard) return;
     setLoading(true);
-    const { data: discards } = await supabase
-      .from("player_cards")
-      .select("id")
-      .eq("game_id", game.id)
-      .eq("user_id", userId)
-      .eq("status", "discarded")
-      .limit(3);
+    try {
+      const { data, error } = await supabase.rpc('resurrect_discarded_cards', {
+        game_id_in: game.id,
+        player_card_id: displayedCard.id
+      });
 
-    if (discards && discards.length > 0) {
-      const ids = discards.map(d => d.id);
-      await supabase.from("player_cards").update({ status: 'in_hand' }).in("id", ids);
-      await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
-      showNotification("¡Cartas resucitadas!", 'success');
+      if (error) throw error;
+
+      const result = data as any;
+      if (result?.success) {
+        const cards = result.cards || [];
+        if (cards.length > 0) {
+          setResurrectedCards(cards);
+          setShowResurrectionModal(true);
+          setTimeout(() => {
+            setShowResurrectionModal(false);
+            setResurrectedCards([]);
+          }, 5000);
+        }
+        showNotification(result.message || '¡Cartas resucitadas!', 'success');
+      } else {
+        showNotification("No hay cartas para resucitar.", 'warning');
+      }
       setDisplayedCard(null);
-    } else {
-      showNotification("No hay cartas para resucitar.", 'warning');
-      await supabase.from("player_cards").update({ status: 'discarded' }).eq("id", displayedCard.id);
-      setDisplayedCard(null);
+      await fetchGame();
+    } catch (err: any) {
+      showNotification(err.message || 'Error al resucitar cartas', 'error');
+    } finally {
+      setLoading(false);
     }
-    await fetchGame();
-    setLoading(false);
   };
 
   const handleActivateModifier = async (type: 'double' | 'unblockable') => {
@@ -2204,51 +2215,73 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               exit={{ opacity: 0 }}
               className="absolute inset-0 z-[80] flex flex-col items-center justify-center pointer-events-none bg-epic/10 backdrop-blur-md"
             >
-              <div className="relative w-full h-80 flex items-center justify-center mb-8 overflow-hidden">
-                {/* Lluvia de corazones ascendente */}
-                {[...Array(8)].map((_, i) => (
+              {/* Lluvia de partículas ascendentes */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {[...Array(10)].map((_, i) => (
                   <motion.div
                     key={i}
-                    initial={{ y: 150, x: (i - 3.5) * 40, opacity: 0, scale: 0.5 }}
-                    animate={{ 
-                      y: -250, 
-                      opacity: [0, 1, 1, 0],
-                      scale: [0.5, 1.2, 0.8],
-                    }}
-                    transition={{ 
-                      duration: 2.5, 
-                      delay: i * 0.15,
-                      repeat: 2,
-                      ease: "easeOut"
-                    }}
+                    initial={{ y: '110%', x: `${10 + i * 8}%`, opacity: 0, scale: 0.5 }}
+                    animate={{ y: '-10%', opacity: [0, 1, 1, 0], scale: [0.5, 1.2, 0.8] }}
+                    transition={{ duration: 3, delay: i * 0.2, repeat: Infinity, ease: "easeOut" }}
                     className="absolute"
                   >
-                    <Heart 
-                      size={24 + (i % 3) * 12} 
-                      className="text-white fill-white/30 drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]" 
-                    />
+                    <Heart size={16 + (i % 3) * 10} className="text-epic fill-epic/40 drop-shadow-[0_0_12px_rgba(168,85,247,0.9)]" />
                   </motion.div>
                 ))}
-                
-                {/* Aura central de resurrección */}
-                <motion.div 
-                  animate={{ 
-                    scale: [1, 1.2, 1],
-                    opacity: [0.3, 0.6, 0.3]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="absolute inset-0 bg-epic/20 blur-[100px] rounded-full"
-                />
               </div>
 
-              <div className="relative z-10 flex flex-col items-center">
-                <span className="text-2xl min-[360px]:text-3xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(168,85,247,0.8)] text-center px-6">
+              <div className="relative z-10 flex flex-col items-center gap-5 px-6 w-full max-w-sm">
+                <span className="text-2xl min-[360px]:text-3xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(168,85,247,0.8)] text-center">
                   ¡RESURRECCIÓN!
                 </span>
-              <span className="text-epic font-black uppercase tracking-[0.3em] text-[10px] mt-6 px-8 py-2.5 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,0.4)]">
+                <span className="text-epic font-black uppercase tracking-[0.2em] text-[9px] px-6 py-2 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)]">
                   {activeEvent.resurrector_name.toUpperCase()} RECUPERÓ {activeEvent.count} CARTAS
                 </span>
               </div>
+            </motion.div>
+          )}
+
+          {/* MODAL LOCAL: Muestra al jugador exactamente qué cartas recuperó */}
+          {showResurrectionModal && resurrectedCards.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[90] flex flex-col items-center justify-center bg-black/70 backdrop-blur-lg pointer-events-none"
+            >
+              <motion.div
+                initial={{ scale: 0.8, y: 40 }}
+                animate={{ scale: 1, y: 0 }}
+                className="flex flex-col items-center gap-4 w-full max-w-xs px-4"
+              >
+                <span className="text-white font-black uppercase tracking-widest text-sm text-center drop-shadow-[0_0_20px_rgba(168,85,247,1)]">¡Cartas Recuperadas!</span>
+                <div className="flex flex-col gap-2 w-full">
+                  {resurrectedCards.map((card, i) => {
+                    const colorMap: Record<string, string> = {
+                      common: 'border-common/50 bg-common/10 text-common',
+                      rare: 'border-rare/50 bg-rare/10 text-rare',
+                      epic: 'border-epic/50 bg-epic/10 text-epic',
+                      special: 'border-yellow-400/50 bg-yellow-400/10 text-yellow-300',
+                    };
+                    const color = colorMap[card.rarity] || colorMap.common;
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ x: -30, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: i * 0.15 }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${color} backdrop-blur-sm`}
+                      >
+                        <Heart size={16} className="fill-current shrink-0" />
+                        <div className="flex flex-col">
+                          <span className="font-black text-xs uppercase tracking-tight">{card.title}</span>
+                          <span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{card.category} · {card.rarity.toUpperCase()}</span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
             </motion.div>
           )}
           {activeEvent?.type === 'freeze' && (
