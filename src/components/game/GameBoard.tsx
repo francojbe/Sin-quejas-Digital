@@ -926,25 +926,21 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       // 1. Poner la carta en el centro (active) para que sea visible
       await supabase.from("player_cards").update({ status: 'active', played_at: serverNow }).eq("id", playerCard.id);
       
-      // 1.1 Limpiar modificadores si se juega una especial que deba consumirlos (opcional, por ahora solo aseguramos que no se dupliquen)
-      const gameUpdates: any = {};
-      if (game?.modifier_unblockable_by === userId) gameUpdates.modifier_unblockable_by = null;
-      if (game?.modifier_double_by === userId) gameUpdates.modifier_double_by = null;
-      
-      if (Object.keys(gameUpdates).length > 0) {
-        await supabase.from("games").update(gameUpdates).eq("id", game.id);
-        setGame((prev: any) => prev ? { ...prev, ...gameUpdates } : null);
+      // 1.1 Limpiar modificadores si se juega una especial que deba consumirlos
+      const specialGameUpdates: any = {};
+      if (game?.modifier_no_rares_until && playerCard.cards_master?.id !== 53) {
+        specialGameUpdates.modifier_no_rares_until = null;
+        specialGameUpdates.modifier_no_rares_target_user = null;
+        specialGameUpdates.last_event_data = null;
+      }
+      if (game?.modifier_unblockable_by === userId) specialGameUpdates.modifier_unblockable_by = null;
+      if (game?.modifier_double_by === userId) specialGameUpdates.modifier_double_by = null;
+
+      if (Object.keys(specialGameUpdates).length > 0) {
+        await supabase.from("games").update(specialGameUpdates).eq("id", game.id);
+        setGame((prev: any) => prev ? { ...prev, ...specialGameUpdates } : null);
       }
 
-      // Limpiar bloqueo de raras si había uno activo y no es la misma carta
-      if (game?.modifier_no_rares_until && playerCard.cards_master?.id !== 53) {
-        await supabase.from("games").update({ 
-          modifier_no_rares_until: null, 
-          modifier_no_rares_target_user: null,
-          last_event_data: null
-        }).eq("id", game.id);
-      }
-      
       // 2. Registrar en el historial
       await supabase.from('game_history').insert({
         game_id: game.id,
@@ -1052,27 +1048,18 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       return;
     }
 
-    // Shadowed blocks removed because they are now handled above or by action buttons
-
     // CONSUMIR MODIFICADORES GLOBALES Y ASIGNARLOS A LA CARTA
     const updates: any = { status: "pending", played_at: serverNow };
-    
-    // Si hay defensa anulada (vía tiempo o flag), la aplicamos a ESTA carta y la limpiamos del juego
-    const isNoDefenseActive = game?.modifier_no_defense_until && (new Date(game.modifier_no_defense_until).getTime() > (Date.now() + serverTimeOffset));
-    
-    if (isNoDefenseActive) {
-      updates.is_unblockable = true; // Hacemos esta carta imparable
-      
-      // Limpiar el modificador global de la DB (seteando a null para que el banner desaparezca)
-      await supabase
-        .from('games')
-        .update({ modifier_no_defense_until: null })
-        .eq('id', game.id);
-        
-      console.log("Modificador 'Defensa Anulada' consumido y banner eliminado.");
-    }
     const gameUpdates: any = {};
     
+    // 1. Si hay defensa anulada (vía tiempo o flag)
+    const isNoDefenseActive = game?.modifier_no_defense_until && (new Date(game.modifier_no_defense_until).getTime() > (Date.now() + serverTimeOffset));
+    if (isNoDefenseActive) {
+      updates.is_unblockable = true;
+      gameUpdates.modifier_no_defense_until = null;
+    }
+
+    // 2. Modificadores de jugador
     if (game?.modifier_unblockable_by === userId && !isDefense) {
       updates.is_unblockable = true;
       gameUpdates.modifier_unblockable_by = null;
@@ -1082,6 +1069,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
       gameUpdates.modifier_double_by = null;
     }
 
+    // 3. Limpiar bloqueo de raras siempre que se juegue una carta normal
+    if (game?.modifier_no_rares_until) {
+      gameUpdates.modifier_no_rares_until = null;
+      gameUpdates.modifier_no_rares_target_user = null;
+      gameUpdates.last_event_data = null;
+    }
 
     const { error } = await supabase
       .from("player_cards")
@@ -1091,25 +1084,10 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
     if (error) {
       showNotification(error.message, 'error');
     } else {
-      // Limpiar modificadores globales del juego
+      // Aplicar todas las actualizaciones del juego en una sola llamada
       if (Object.keys(gameUpdates).length > 0) {
-        setGame((prev: any) => prev ? { ...prev, ...gameUpdates } : null); // Optimistic clear
         await supabase.from("games").update(gameUpdates).eq("id", game.id);
-      }
-      
-      // Limpiar bloqueo de raras si estaba activo (siempre al jugar cualquier carta)
-      if (game?.modifier_no_rares_until) {
-        await supabase.from("games").update({ 
-          modifier_no_rares_until: null, 
-          modifier_no_rares_target_user: null,
-          last_event_data: null
-        }).eq("id", game.id);
-        setGame((prev: any) => prev ? { 
-          ...prev, 
-          modifier_no_rares_until: null, 
-          modifier_no_rares_target_user: null,
-          last_event_data: null
-        } : null);
+        setGame((prev: any) => prev ? { ...prev, ...gameUpdates } : null);
       }
 
       setHand(hand.filter(c => c.id !== playerCard.id));
@@ -1186,7 +1164,12 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
       showNotification(status === 'active' ? "¡Desafío aceptado!" : "Desafío bloqueado", 'success');
       
-      // 4. Refrescar todo
+      // 4. Limpiar cualquier evento visual (como el de raras) al aceptar/bloquear
+      if (game?.last_event_data) {
+        await supabase.from("games").update({ last_event_data: null }).eq("id", game.id);
+      }
+
+      // 5. Refrescar todo
       await fetchGame();
       
     } catch (err: any) {
