@@ -45,7 +45,7 @@ export function GameStatus({
             className="w-10 h-10 rounded-full border-2 border-white/10 bg-black/40 flex items-center justify-center relative overflow-hidden shadow-lg hover:scale-110 hover:border-epic/50 hover:z-20 transition-all cursor-pointer group"
           >
             {partnerAvatar ? (
-              <img src={partnerAvatar} alt={partnerName} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
+              <img src={partnerAvatar} alt={partnerName} className="w-full h-full object-contain group-hover:opacity-80 transition-opacity" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/5 to-white/10">
                 <User className="text-white/20 group-hover:text-epic transition-colors" size={18} />
@@ -60,7 +60,7 @@ export function GameStatus({
             className="w-10 h-10 rounded-full border-2 border-common/40 bg-common/10 flex items-center justify-center relative overflow-hidden shadow-lg hover:scale-110 hover:border-common hover:z-20 transition-all cursor-pointer group"
           >
             {userAvatar ? (
-              <img src={userAvatar} alt={userName} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
+              <img src={userAvatar} alt={userName} className="w-full h-full object-contain group-hover:opacity-80 transition-opacity" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-common/10 to-common/20">
                 <User className="text-common" size={18} />
