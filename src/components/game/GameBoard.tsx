@@ -1610,16 +1610,19 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               style={{ background: '#080810', willChange: 'transform' }}
             >
 
-              {/* Perfil Mini Preview */}
+              {/* Perfil Mini Preview - Click en foto para Zoom */}
               <div className="px-3 py-3 mb-1 flex items-center gap-3 bg-white/5 rounded-2xl border border-white/5">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-common/20 to-epic/20 flex items-center justify-center border border-white/10 shrink-0 overflow-hidden">
+                <div 
+                  onClick={() => profile?.avatar_url && setZoomedImage(profile.avatar_url)}
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-common/20 to-epic/20 flex items-center justify-center border border-white/10 shrink-0 overflow-hidden cursor-zoom-in hover:scale-105 transition-transform active:scale-95"
+                >
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-contain" />
                   ) : (
                     <User size={18} className="text-common" />
                   )}
                 </div>
-                <div className="flex flex-col min-w-0">
+                <div className="flex flex-col min-w-0 flex-1">
                   <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Sesión Activa</span>
                   <span className="text-sm font-black text-white truncate leading-none">{profile?.display_name || 'Usuario'}</span>
                 </div>
@@ -1823,15 +1826,18 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
 
           {/* Perfil de usuario estilizado - Ahora interactivo */}
           {profile && (
-            <button 
-              onClick={() => setShowProfileModal(true)}
-              className="flex items-center gap-2 bg-white/5 border border-white/10 px-2 sm:px-3 py-1.5 rounded-full shadow-lg backdrop-blur-md hover:bg-white/10 hover:scale-105 transition-all cursor-pointer group"
-            >
-              <div className="hidden xs:flex flex-col items-end">
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-2 sm:px-3 py-1.5 rounded-full shadow-lg backdrop-blur-md hover:bg-white/10 transition-all group">
+              <div 
+                onClick={() => setShowProfileModal(true)}
+                className="hidden xs:flex flex-col items-end cursor-pointer"
+              >
                 <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.2em] leading-none mb-1 group-hover:text-common transition-colors">Sesión</span>
                 <span className="text-[10px] font-black text-white leading-none">{profile.display_name}</span>
               </div>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-common to-epic p-0.5 shadow-[0_0_15px_rgba(208,255,0,0.2)] group-hover:shadow-[0_0_20px_rgba(208,255,0,0.4)] transition-all">
+              <div 
+                onClick={() => profile.avatar_url && setZoomedImage(profile.avatar_url)}
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-common to-epic p-0.5 shadow-[0_0_15px_rgba(208,255,0,0.2)] group-hover:shadow-[0_0_20px_rgba(208,255,0,0.4)] transition-all cursor-zoom-in hover:scale-110 active:scale-90"
+              >
                 <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
                   {profile.avatar_url ? (
                     <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-contain" />
@@ -1840,7 +1846,7 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
                   )}
                 </div>
               </div>
-            </button>
+            </div>
           )}
         </div>
       </div>
@@ -3443,6 +3449,50 @@ export function GameBoard({ coupleId, profile, onLogout, onProfileUpdate }: { co
               <p className="text-center text-white/60 text-[11px] font-black uppercase tracking-[0.2em] mt-10 animate-pulse bg-black/40 px-4 py-2 rounded-full border border-white/5 backdrop-blur-sm">
                 Suelte para cerrar
               </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* OVERLAY DE ZOOM DE AVATAR */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1001] bg-black/80 backdrop-blur-xl flex items-center justify-center p-8"
+            onClick={() => setZoomedImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.5, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative max-w-sm w-full aspect-square"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Marco Estilizado */}
+              <div className="absolute -inset-4 bg-gradient-to-br from-common/20 to-epic/20 rounded-[40px] blur-2xl opacity-50" />
+              
+              <div className="relative h-full w-full rounded-[40px] border-2 border-white/20 overflow-hidden shadow-2xl bg-black flex items-center justify-center p-2">
+                <img 
+                  src={zoomedImage} 
+                  alt="Avatar Zoom" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Controles / Info */}
+              <div className="absolute -bottom-16 left-0 right-0 flex flex-col items-center gap-2">
+                <span className="text-xs font-black text-white/40 uppercase tracking-[0.4em]">{profile?.display_name}</span>
+                <button 
+                  onClick={() => setZoomedImage(null)}
+                  className="bg-white/10 hover:bg-white/20 text-white font-black text-[10px] uppercase tracking-widest px-6 py-2 rounded-full border border-white/10 transition-all"
+                >
+                  Cerrar Vista
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
