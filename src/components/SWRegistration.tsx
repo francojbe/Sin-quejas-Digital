@@ -29,8 +29,9 @@ export function SWRegistration() {
       .then((registration) => {
         console.log("[SW] Registrado con scope:", registration.scope);
 
-        // Detectar nueva versión: NO auto-activar (causa bucle de refresh).
-        // En su lugar, guardamos el SW en espera y notificamos al usuario.
+        // Detectar nueva versión y activarla inmediatamente.
+        // El bucle de refresh anterior fue causado por funciones inestables en
+        // useEffect deps (ya corregido con refs), NO por skipWaiting.
         const handleUpdateFound = () => {
           const newWorker = registration.installing;
           if (!newWorker) return;
@@ -40,9 +41,8 @@ export function SWRegistration() {
               newWorker.state === "installed" &&
               navigator.serviceWorker.controller
             ) {
-              // Hay una nueva versión lista. No llamar skipWaiting() aquí.
-              // El usuario puede actualizar cerrando y reabriendo la pestaña.
-              console.log("[SW] Nueva versión lista (en espera).");
+              console.log("[SW] Nueva versión detectada, activando...");
+              newWorker.postMessage({ type: "SKIP_WAITING" });
             }
           });
         };

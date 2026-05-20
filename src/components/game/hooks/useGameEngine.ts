@@ -49,27 +49,25 @@ export function useGameEngine({
   const [partnerProfile, setPartnerProfile] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
 
-  // Sync time with server
+  // Sync time with server — use Supabase auth session timestamp instead of
+  // HEAD /rest/v1/ which returns 401 in some configurations.
   useEffect(() => {
     async function syncTime() {
-      const start = Date.now();
       try {
-        // Use a lightweight public endpoint to sync time
-        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-        const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/`, { 
-          method: 'HEAD', 
-          headers: { 
-            'apikey': anonKey,
-            'Authorization': `Bearer ${anonKey}`
-          } 
-        });
-        const dateHeader = res.headers.get('Date');
-        if (dateHeader) {
-          const end = Date.now();
-          const rtt = end - start;
-          const serverTime = new Date(dateHeader).getTime();
-          const localTime = start + (rtt / 2);
-          setServerTimeOffset(serverTime - localTime);
+        const start = Date.now();
+        // Use the auth session which we already have — no extra network request
+        const { data } = await supabase.auth.getSession();
+        const end = Date.now();
+        if (data?.session?.expires_at) {
+          // expires_at is a Unix timestamp (seconds). Use it to estimate server time.
+          // This avoids the 401 from HEAD /rest/v1/ entirely.
+          const serverNowEstimate = (data.session.expires_at * 1000) - 3600000; // issued ~1h before expiry
+          const localTime = start + ((end - start) / 2);
+          const offset = serverNowEstimate - localTime;
+          // Only apply if offset is reasonable (< 30 seconds drift)
+          if (Math.abs(offset) < 30000) {
+            setServerTimeOffset(offset);
+          }
         }
       } catch {
         // Time sync failed silently — serverTimeOffset stays 0
@@ -79,9 +77,6 @@ export function useGameEngine({
     }
     syncTime();
   }, []);
-
-  // Prevent repeated syncTime calls — only runs once on mount
-  // 401s from the HEAD request are ignored safely above
 
   // Load card overrides (custom cards for Premium)
   useEffect(() => {
@@ -107,7 +102,13 @@ export function useGameEngine({
     return overrides[card.cards_master.id]?.custom_description || card.cards_master.description;
   };
 
-  // Fetch Game Core
+  // Initial load — fetch game immediately on mount, don't wait for realtime channels
+  useEffect(() => {
+    fetchGame();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coupleId]);
+
+  // Fetch Game Core — parallelized for fast startup
   async function fetchGame(silent = false) {
     if (!silent) setLoading(true);
     try {
@@ -128,54 +129,53 @@ export function useGameEngine({
         const { data: { user } } = await supabase.auth.getUser();
         if (user) setUserId(user.id);
         
-        const { data: cardsData } = await supabase
-          .from("player_cards")
-          .select("*, cards_master!inner(*)")
-          .eq("game_id", gameData.id)
-          .eq("user_id", user?.id)
-          .eq("status", "in_hand");
+        // ── PARALLEL QUERIES: run all independent queries at once ──
+        const [handResult, partnerCountResult, achievementsResult, totalCardsResult, profilesResult] = await Promise.all([
+          // 1. My hand
+          supabase
+            .from("player_cards")
+            .select("*, cards_master!inner(*)")
+            .eq("game_id", gameData.id)
+            .eq("user_id", user?.id)
+            .eq("status", "in_hand"),
+          // 2. Partner hand count
+          supabase
+            .from("player_cards")
+            .select("*", { count: 'exact', head: true })
+            .eq("game_id", gameData.id)
+            .neq("user_id", user?.id)
+            .eq("status", "in_hand"),
+          // 3. Achievements count
+          supabase
+            .from('achievements')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user?.id)
+            .in('achievement_code', [
+              'ACHV_UNBREAKABLE', 
+              'ACHV_CONSTANCY', 
+              'ACHV_DESIRE_MASTERS', 
+              'ACHV_IRON_SHIELD'
+            ]),
+          // 4. Total cards in game
+          supabase
+            .from("player_cards")
+            .select("*", { count: 'exact', head: true })
+            .eq("game_id", gameData.id),
+          // 5. Profiles (both players)
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("couple_id", coupleId),
+        ]);
 
-        setHand(cardsData ? (cardsData as any) : []);
-
-        // Contar cartas de la pareja
-        const { count: pCount } = await supabase
-          .from("player_cards")
-          .select("*", { count: 'exact', head: true })
-          .eq("game_id", gameData.id)
-          .neq("user_id", user?.id)
-          .eq("status", "in_hand");
+        // Apply results
+        setHand(handResult.data ? (handResult.data as any) : []);
+        setPartnerHandCount(partnerCountResult.count || 0);
+        setAchievementsCount(achievementsResult.count || 0);
+        setTotalCardsPlayed(totalCardsResult.count || 0);
         
-        setPartnerHandCount(pCount || 0);
-
-        // Obtener conteo de logros oficiales
-        const { count: aCount } = await supabase
-          .from('achievements')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user?.id)
-          .in('achievement_code', [
-            'ACHV_UNBREAKABLE', 
-            'ACHV_CONSTANCY', 
-            'ACHV_DESIRE_MASTERS', 
-            'ACHV_IRON_SHIELD'
-          ]);
-        
-        setAchievementsCount(aCount || 0);
-
-        // Contar todas las cartas de la sesión para el resumen final
-        const { count: totalCardsInGame } = await supabase
-          .from("player_cards")
-          .select("*", { count: 'exact', head: true })
-          .eq("game_id", gameData.id);
-        
-        setTotalCardsPlayed(totalCardsInGame || 0);
-
-        const { data: partnerProfiles } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("couple_id", coupleId);
-        
-        if (partnerProfiles) {
-          const partner = partnerProfiles.find(p => p.id !== user?.id);
+        if (profilesResult.data) {
+          const partner = profilesResult.data.find(p => p.id !== user?.id);
           if (partner) {
             setPartnerProfile(partner);
             setPartnerName(partner.display_name);

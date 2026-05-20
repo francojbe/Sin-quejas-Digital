@@ -76,15 +76,16 @@ export async function processPendingActions() {
   console.log(`[OfflineSync] Procesando ${actions.length} acciones pendientes...`);
   
   // Calcular offset para no tener desface de reloj con el partner
+  // Usa la sesión de auth en lugar de HEAD /rest/v1/ que da 401
   let serverTimeOffset = 0;
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/`, { 
-      method: 'HEAD', 
-      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! } 
-    });
-    const dateHeader = res.headers.get('Date');
-    if (dateHeader) {
-      serverTimeOffset = new Date(dateHeader).getTime() - Date.now();
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.expires_at) {
+      const serverNowEstimate = (data.session.expires_at * 1000) - 3600000;
+      const offset = serverNowEstimate - Date.now();
+      if (Math.abs(offset) < 30000) {
+        serverTimeOffset = offset;
+      }
     }
   } catch (err) {
     console.warn("No se pudo obtener el tiempo del servidor en sync:", err);
