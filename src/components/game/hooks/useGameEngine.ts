@@ -54,9 +54,14 @@ export function useGameEngine({
     async function syncTime() {
       const start = Date.now();
       try {
+        // Use a lightweight public endpoint to sync time
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
         const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/`, { 
           method: 'HEAD', 
-          headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! } 
+          headers: { 
+            'apikey': anonKey,
+            'Authorization': `Bearer ${anonKey}`
+          } 
         });
         const dateHeader = res.headers.get('Date');
         if (dateHeader) {
@@ -66,14 +71,17 @@ export function useGameEngine({
           const localTime = start + (rtt / 2);
           setServerTimeOffset(serverTime - localTime);
         }
-      } catch (err) {
-        console.warn("No se pudo sincronizar el tiempo usando HEAD:", err);
+      } catch {
+        // Time sync failed silently — serverTimeOffset stays 0
       } finally {
         setTimeSynced(true);
       }
     }
     syncTime();
   }, []);
+
+  // Prevent repeated syncTime calls — only runs once on mount
+  // 401s from the HEAD request are ignored safely above
 
   // Load card overrides (custom cards for Premium)
   useEffect(() => {
@@ -100,8 +108,8 @@ export function useGameEngine({
   };
 
   // Fetch Game Core
-  async function fetchGame() {
-    setLoading(true);
+  async function fetchGame(silent = false) {
+    if (!silent) setLoading(true);
     try {
       // Auto-finalizar si el tiempo ha expirado
       await supabase.rpc('auto_finalize_games', { couple_id_in: coupleId });

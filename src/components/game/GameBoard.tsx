@@ -121,21 +121,27 @@ export function GameBoard({
     }
   };
 
-  // Re-sync game when the user returns to the app (focus / visible changes)
+  // Re-sync game when the user returns to the app (visible tab only, debounced)
   useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        console.log("[Sync] App visible, forcing update...");
-        engine.fetchGame();
+        // Debounce: ignore rapid consecutive events (SW updates, focus flickers)
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          console.log("[Sync] App visible, forcing update...");
+          engine.fetchGame(/* silent */ true);
+        }, 1000);
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleVisibilityChange);
+    // NOTE: 'focus' event removed — fires too frequently in PWAs and causes loops
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleVisibilityChange);
+      if (debounceTimer) clearTimeout(debounceTimer);
     };
   }, [coupleId]);
 
