@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface UseGameTimersProps {
   displayedCard: any;
@@ -21,6 +21,12 @@ export function useGameTimers({
 }: UseGameTimersProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [silenceTimeLeft, setSilenceTimeLeft] = useState<number>(0);
+
+  // Store handleAction in a ref to avoid it in effect deps (it changes every render)
+  const handleActionRef = useRef(handleAction);
+  useEffect(() => {
+    handleActionRef.current = handleAction;
+  });
 
   // Temporizador del desafío activo (10 min)
   useEffect(() => {
@@ -49,7 +55,7 @@ export function useGameTimers({
       
       // Auto-aceptar si llega a 0 (Solo el receptor lo dispara para evitar conflictos)
       if (remainingSeconds <= 0 && displayedCard?.user_id !== userId && timeSynced) {
-        handleAction('active').catch(err => console.error("Error auto-accepting challenge:", err));
+        handleActionRef.current('active').catch(err => console.error("Error auto-accepting challenge:", err));
       }
     };
     
@@ -57,7 +63,7 @@ export function useGameTimers({
     const interval = setInterval(updateTime, 1000);
 
     return () => clearInterval(interval);
-  }, [displayedCard, serverTimeOffset, timeSynced, userId, handleAction]);
+  }, [displayedCard, serverTimeOffset, timeSynced, userId]); // handleAction removed — accessed via ref
 
   // Temporizador para el Modificador de Silencio
   useEffect(() => {

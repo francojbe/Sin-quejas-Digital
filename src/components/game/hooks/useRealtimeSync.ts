@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface UseRealtimeSyncProps {
@@ -13,7 +13,7 @@ interface UseRealtimeSyncProps {
   timeSynced: boolean;
   timeOffset: number;
   toast: (title: string, options: any) => void;
-  fetchGame: () => Promise<void>;
+  fetchGame: (silent?: boolean) => Promise<void>;
   fetchLatestCard: (gameId: string) => Promise<void>;
   fetchHandOnly: () => Promise<void>;
   fetchPartnerHandCount: () => Promise<void>;
@@ -48,6 +48,32 @@ export function useRealtimeSync({
   const [activeEffect, setActiveEffect] = useState<'shield' | 'freeze' | null>(null);
   const [activeEvent, setActiveEvent] = useState<any>(null);
   const [hasNewHistory, setHasNewHistory] = useState(false);
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // CRITICAL FIX: Store all callback functions in refs.
+  // These functions are recreated on every render in useGameEngine (they're
+  // not wrapped in useCallback). If we put them directly in useEffect deps,
+  // the effects re-run every render → re-subscribe to channels → call
+  // fetchGame() → state change → re-render → infinite loop.
+  // ──────────────────────────────────────────────────────────────────────────
+  const fetchGameRef = useRef(fetchGame);
+  const fetchLatestCardRef = useRef(fetchLatestCard);
+  const fetchHandOnlyRef = useRef(fetchHandOnly);
+  const fetchPartnerHandCountRef = useRef(fetchPartnerHandCount);
+  const toastRef = useRef(toast);
+  const onProfileUpdateRef = useRef(onProfileUpdate);
+  const partnerNameRef = useRef(partnerName);
+
+  // Keep refs in sync with latest values (runs after every render, no deps)
+  useEffect(() => {
+    fetchGameRef.current = fetchGame;
+    fetchLatestCardRef.current = fetchLatestCard;
+    fetchHandOnlyRef.current = fetchHandOnly;
+    fetchPartnerHandCountRef.current = fetchPartnerHandCount;
+    toastRef.current = toast;
+    onProfileUpdateRef.current = onProfileUpdate;
+    partnerNameRef.current = partnerName;
+  });
 
   // 1. Canal de Historial y Efectos Especiales en Tiempo Real
   useEffect(() => {
@@ -109,7 +135,7 @@ export function useRealtimeSync({
       }, (payload) => {
         const newStatus = (payload.new as any)?.status;
         if (payload.eventType === 'INSERT' || newStatus === 'finished' || newStatus === 'pending_start') {
-          fetchGame();
+          fetchGameRef.current();
         }
       })
       .subscribe();
@@ -117,7 +143,7 @@ export function useRealtimeSync({
     return () => {
       supabase.removeChannel(gameChannel);
     };
-  }, [coupleId, fetchGame]);
+  }, [coupleId]); // fetchGame removed from deps — accessed via ref
 
   // 3. Canal de Cambios en Player Cards (Mano y Cartas Jugadas)
   useEffect(() => {
@@ -140,25 +166,25 @@ export function useRealtimeSync({
         const isPartnerPlay = newRecord?.status && newRecord.status !== 'in_hand' && newRecord.user_id !== userId;
 
         if (isPartnerPlay || statusChanged) {
-          fetchLatestCard(currentGame.id);
+          fetchLatestCardRef.current(currentGame.id);
         }
         
         if (newRecord?.user_id === userId || oldRecord?.user_id === userId) {
-          fetchHandOnly();
+          fetchHandOnlyRef.current();
         } else {
-          fetchPartnerHandCount();
+          fetchPartnerHandCountRef.current();
         }
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          fetchGame();
+          fetchGameRef.current();
         }
       });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [game?.id, userId, gameRef, fetchLatestCard, fetchHandOnly, fetchPartnerHandCount, fetchGame]);
+  }, [game?.id, userId, gameRef]); // All fetch functions removed from deps — accessed via refs
 
   // 4. Canal de Cambios Globales del Juego (Reinicios, Ruptura, Eventos Especiales)
   useEffect(() => {
@@ -181,15 +207,15 @@ export function useRealtimeSync({
 
         // Notificaciones de Solicitudes
         if (newGame.restart_requests?.length > (oldGame?.restart_requests?.length || 0) && !newGame.restart_requests.includes(userId)) {
-          toast("¡Petición de Reinicio!", { 
-            message: `${partnerName} ha solicitado reiniciar la partida.`, 
+          toastRef.current("¡Petición de Reinicio!", { 
+            message: `${partnerNameRef.current} ha solicitado reiniciar la partida.`, 
             type: 'partner-request' 
           });
         }
         
         if (newGame.break_requests?.length > (oldGame?.break_requests?.length || 0) && !newGame.break_requests.includes(userId)) {
-          toast("¡Solicitud de Ruptura!", { 
-            message: `${partnerName} ha solicitado eliminar el vínculo.`, 
+          toastRef.current("¡Solicitud de Ruptura!", { 
+            message: `${partnerNameRef.current} ha solicitado eliminar el vínculo.`, 
             type: 'partner-request',
             duration: Infinity
           });
@@ -209,7 +235,7 @@ export function useRealtimeSync({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [coupleId, userId, gameRef, partnerName, toast, setGame]);
+  }, [coupleId, userId, gameRef, setGame]); // toast, partnerName removed from deps — accessed via refs
 
   // 5. Canal de Actualización del Perfil de la Pareja
   useEffect(() => {
@@ -229,7 +255,7 @@ export function useRealtimeSync({
           setPartnerAvatar(updatedProfile.avatar_url ?? null);
           setPartnerProfile(updatedProfile);
         } else {
-          onProfileUpdate?.(); 
+          onProfileUpdateRef.current?.(); 
         }
       })
       .subscribe();
@@ -237,7 +263,7 @@ export function useRealtimeSync({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [coupleId, userId, onProfileUpdate, setPartnerName, setPartnerAvatar, setPartnerProfile]);
+  }, [coupleId, userId, setPartnerName, setPartnerAvatar, setPartnerProfile]); // onProfileUpdate removed — accessed via ref
 
   // 6. Canal de Presencia en Tiempo Real (Online / Offline)
   useEffect(() => {
