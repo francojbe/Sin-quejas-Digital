@@ -13,9 +13,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true, // Yo ya valido los tipos en local
   },
-  eslint: {
-    ignoreDuringBuilds: true, // Ahorra tiempo y CPU
-  },
   // Limitar procesos en paralelo para evitar saturar la RAM
   experimental: {
     cpus: 1,

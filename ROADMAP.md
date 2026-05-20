@@ -22,6 +22,12 @@
 6. **Soporte Nativo Android (Notch & Safe Areas):** Adaptación total de la UI (`GameBoard`, `Login`, `Victoria`) mediante `env(safe-area-inset-*)` para dispositivos con muescas y gestos de navegación.
 7. **Correcciones de UX Críticas:** Arreglado el problema de edición de tiempo personalizado (Input focus) y desbordamiento de texto en cartas (`line-clamp`).
 
+### ✅ Logros Completados (Sesión 20 Mayo 2026 - Refactorización de Arquitectura & Resiliencia Offline):
+1. **Modularización de GameBoard.tsx:** Extracción exitosa del monolito de ~173 KB en custom hooks independientes (`useGameEngine`, `useRealtimeSync`, `useGameTimers`) y subcomponentes visuales puros en `/parts/`.
+2. **Orquestador Ultra-Compacto:** El tablero principal se redujo de más de 3,500 líneas a menos de 380 líneas legibles y mantenibles.
+3. **Resiliencia de Cola Offline:** Incorporación de límites de intentos (`attempts: 3`) en `offlineSync.ts` para evitar bloqueos por transacciones obsoletas, incluyendo un despachador de eventos `offline-sync-discarded`.
+4. **Validación y Estabilización de Compilación:** Corrección de tipos de TypeScript críticos (enlace de props de avatares y llamadas asíncronas inapropiadas en JSX de `ActiveChallengeArea`) y eliminación de directivas obsoletas en Next.js 16/Turbopack para un build 100% libre de advertencias.
+
 ### ⏳ Pendientes y Próximos Pasos (Hacia la v1.1):
 
 #### Fase 8: Monetización (Premium SaaS)

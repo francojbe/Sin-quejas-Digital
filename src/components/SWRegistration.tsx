@@ -71,12 +71,22 @@ export function SWRegistration() {
       await processPendingActions();
     };
 
+    const handleSyncDiscarded = (e: any) => {
+      toast("Jugada descartada", {
+        message: "Una acción offline fue descartada tras varios intentos fallidos al restaurar la red.",
+        type: "error",
+        duration: 7000,
+      });
+    };
+
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
+    window.addEventListener("offline-sync-discarded", handleSyncDiscarded);
 
     return () => {
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline-sync-discarded", handleSyncDiscarded);
     };
   }, [toast]);
 

@@ -2,9 +2,10 @@ import { supabase } from './supabase';
 
 export interface OfflineAction {
   id?: number;
-  type: 'play_card_mirror' | 'play_card_block' | 'play_card_normal' | 'handle_action';
+  type: 'play_card_mirror' | 'play_card_block' | 'play_card_normal' | 'play_card_modifier' | 'handle_action';
   payload: any;
   timestamp: number;
+  attempts?: number;
 }
 
 const DB_NAME = 'SinQuejasOfflineDB';
@@ -33,7 +34,7 @@ export async function savePendingAction(action: Omit<OfflineAction, 'id' | 'time
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    const request = store.add({ ...action, timestamp: Date.now() });
+    const request = store.add({ ...action, timestamp: Date.now(), attempts: 0 });
 
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
@@ -184,8 +185,35 @@ export async function processPendingActions() {
       }
     } catch (error) {
       console.error(`[OfflineSync] Error procesando acción ${action.id}:`, error);
-      // Rompemos el ciclo para mantener el orden cronológico. Se reintentará luego.
-      break;
+      const currentAttempts = (action.attempts || 0) + 1;
+      
+      if (currentAttempts >= 3) {
+        console.warn(`[OfflineSync] Acción ${action.id} falló 3 veces. Descartando para evitar bloqueo.`);
+        if (action.id) {
+          await removePendingAction(action.id);
+          // Emitir un evento para notificar al usuario
+          if (typeof window !== "undefined") {
+            const ev = new CustomEvent("offline-sync-discarded", { 
+              detail: { type: action.type, payload: action.payload } 
+            });
+            window.dispatchEvent(ev);
+          }
+        }
+      } else {
+        // Guardar el incremento de intentos
+        if (action.id) {
+          try {
+            const db = await getDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            store.put({ ...action, attempts: currentAttempts });
+          } catch (putErr) {
+            console.error("[OfflineSync] Error actualizando intentos:", putErr);
+          }
+        }
+        // Rompemos el ciclo para mantener el orden cronológico. Se reintentará luego.
+        break;
+      }
     }
   }
 }
