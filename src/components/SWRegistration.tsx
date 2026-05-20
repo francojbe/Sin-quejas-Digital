@@ -15,7 +15,7 @@ declare global {
 export function SWRegistration() {
   const { toast } = useToast();
 
-  // ── Registro del Service Worker ──────────────────────────────────────────
+  // ── Registro del Service Worker ────────────────────────────────────────────────
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
@@ -29,20 +29,25 @@ export function SWRegistration() {
       .then((registration) => {
         console.log("[SW] Registrado con scope:", registration.scope);
 
-        // Si hay una nueva versión esperando, activarla al recargar
-        registration.addEventListener("updatefound", () => {
+        // Detectar nueva versión: NO auto-activar (causa bucle de refresh).
+        // En su lugar, guardamos el SW en espera y notificamos al usuario.
+        const handleUpdateFound = () => {
           const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener("statechange", () => {
-              if (
-                newWorker.state === "installed" &&
-                navigator.serviceWorker.controller
-              ) {
-                console.log("[SW] Nueva versión disponible.");
-              }
-            });
-          }
-        });
+          if (!newWorker) return;
+
+          newWorker.addEventListener("statechange", () => {
+            if (
+              newWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
+              // Hay una nueva versión lista. No llamar skipWaiting() aquí.
+              // El usuario puede actualizar cerrando y reabriendo la pestaña.
+              console.log("[SW] Nueva versión lista (en espera).");
+            }
+          });
+        };
+
+        registration.addEventListener("updatefound", handleUpdateFound);
       })
       .catch((err) => {
         console.warn("[SW] Error registrando:", err);

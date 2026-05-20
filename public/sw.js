@@ -1,9 +1,9 @@
-// Service Worker — Sin Quejas Digital v3
+// Service Worker — Sin Quejas Digital v4
 // Estrategia: App Shell + Image Cache + Navigation Fallback
 // OneSignal y Supabase NUNCA se cachean.
 
-const CACHE_SHELL = 'sqd-shell-v3';
-const CACHE_IMAGES = 'sqd-images-v3';
+const CACHE_SHELL = 'sqd-shell-v4';
+const CACHE_IMAGES = 'sqd-images-v4';
 const IMAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
 
 // App Shell: páginas y assets críticos pre-cacheados en install
@@ -15,7 +15,11 @@ const SHELL_URLS = [
 
 // ── INSTALL: pre-cachear App Shell ──────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  // NO llamamos skipWaiting() aquí.
+  // Si lo hacemos, el nuevo SW se activa inmediatamente, llama clients.claim()
+  // y eso dispara visibilitychange en todas las pestañas → bucle de refresh.
+  // El nuevo SW esperará a que no haya pestañas abiertas, o hasta que
+  // SWRegistration.tsx envíe el mensaje SKIP_WAITING.
   event.waitUntil(
     caches.open(CACHE_SHELL).then((cache) => {
       return cache.addAll(SHELL_URLS).catch((err) => {
